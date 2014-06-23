@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class Main {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
     public static final String PATH = new File("").getAbsolutePath();
 
@@ -31,7 +31,7 @@ public class Main {
                 StringBuffer sb = TinyZUtil.Excel2Json(inPath);
                 TinyZUtil.writeFile(outPath, sb);
 
-                LOG.info("Successful");
+                //LOG.info("Successful");
             }
         } catch (Exception e) {
             e.printStackTrace();
