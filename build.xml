@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="tinyzExcel" default="deploy" basedir=".">
+
+    <property name="version" value="0.1"/>
+
+	<property name="src" value="${basedir}/src" />
+	<property name="build" value="${basedir}/build" />
+	<property name="classes" value="${build}/classes" />
+	<property name="lib" value="${basedir}/lib" />
+	<property name="jar-file" value="${build}/${ant.project.name}-${version}.jar" />
+	<property name="jar-source-file" value="${build}/${ant.project.name}-source-${version}.jar" />
+	<property name="deploy" value="${basedir}/target" />
+	
+	<!--======================== JAR FILE LOCATIONS ================== -->
+	<path id="server.classpath">
+		<fileset dir="${lib}" includes="*.jar" />
+	</path>
+
+    <pathconvert property="lib.classpath" pathsep=" ">
+        <path>
+            <fileset dir="${lib}" includes="*.jar" />
+        </path>
+    </pathconvert>
+
+	<!--=========================== TARGETS ========================== -->
+	<target name="clean">
+		<delete dir="${build}" />
+		<delete dir="${deploy}" />
+	</target>
+
+	<target name="prepare" depends="clean">
+		<mkdir dir="${build}" />
+		<mkdir dir="${classes}" />
+		<mkdir dir="${deploy}" />
+	</target>
+
+	<target name="compile" depends="prepare">
+		<javac srcdir="${src}" destdir="${classes}" classpathref="server.classpath" includeAntRuntime="false" />
+		<!--
+		<iajc debug="true" destdir="${classes}" source="1.6" classpathRef="server.classpath">
+			<sourceroots>
+				<pathelement location="${src}" />
+			</sourceroots>
+		</iajc>
+		-->
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar destfile="${jar-file}" basedir="${classes}" >
+            <manifest>
+                <attribute name="Main-Class" value="dev.CommandLine" />
+                <attribute name="Class-Path" value="${lib.classpath}" />
+            </manifest>
+		</jar>
+		<jar destfile="${jar-source-file}" basedir="${src}" /><!-- excludesfile="${src}/log4j.properties"  -->
+	</target>
+
+	<target name="deploy" depends="jar">
+		<copy file="${jar-file}" todir="${deploy}" />
+	</target>
+
+
+</project>

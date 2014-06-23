@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="tinyzExcel" default="init" basedir=".">
+    <!-- 工程目录结构
+        project
+            |-bin
+            |-src
+            |-lib
+            |-out
+            |-build.xml
+        -->
+
+    <!-- 定义基础信息 -->
+    <property name="version" value="0.1"/>
+
+    <property name="dirSrc" value="${basedir}/src"/>
+    <property name="dirLib" value="${basedir}/lib"/>
+
+    <property name="dirDeploy" value="${basedir}/out/deploy"/>
+    <property name="dirBuild" value="${basedir}/out/build"/>
+
+    <property name="dirClasses" value="${dirBuild}/classes"/>
+    <property name="jar-file" value="${dirBuild}/${ant.project.name}-${version}.jar"/>
+    <property name="jar-source-file" value="${dirBuild}/${ant.project.name}-source-${version}.jar"/>
+
+    <!-- 第三方类库 -->
+<!--<path id="lib.classpath">
+        <fileset dir="${dirLib}">
+            <include name="**/*jar"/>
+        </fileset>
+    </path>-->
+    <path id="server.classpath" >
+        <fileset dir="${dirLib}" includes="*.jar" />
+    </path>
+    <pathconvert property="lib.classpath" pathsep=" ">
+        <mapper>
+            <chainedmapper>
+                <flattenmapper />
+                <globmapper from="*" to="lib/*" />
+            </chainedmapper>
+        </mapper>
+        <path>
+            <fileset dir="${dirLib}" includes="*.jar" />
+        </path>
+    </pathconvert>
+
+    <!-- TARGET -->
+    <target name="init">
+        <!-- 清理文件夹 -->
+        <delete dir="${dirBuild}"/>
+        <delete dir="${dirDeploy}"/>
+
+        <mkdir dir="${dirBuild}"/>
+        <mkdir dir="${dirDeploy}"/>
+        <mkdir dir="${dirClasses}"/>
+
+        <javac srcdir="${dirSrc}" destdir="${dirClasses}" classpathref="server.classpath" includeAntRuntime="false" />
+
+        <copy todir="${dirClasses}/lib">
+            <fileset dir="${dirLib}"/>
+        </copy>
+
+        <!-- jar文件的输出路径 -->
+        <jar destfile="${jar-file}" basedir="${dirClasses}">
+            <manifest>
+                <attribute name="Main-class" value="tinyz.tools.Main"/>
+                <attribute name="Class-Path" value="${lib.classpath}"/>
+            </manifest>
+        </jar>
+        <jar destfile="${jar-source-file}" basedir="${dirSrc}"/>
+
+    </target>
+
+
+</project>
