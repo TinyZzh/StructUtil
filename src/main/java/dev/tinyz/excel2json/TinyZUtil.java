@@ -101,6 +101,9 @@ public class TinyZUtil {
                                 case 's':
                                     list.add(s);
                                     break;
+                                case 'b':
+                                    list.add(s.toLowerCase().equals("true"));
+                                    break;
                                 default:
                                     break;
                             }
