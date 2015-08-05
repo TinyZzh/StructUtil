@@ -1,6 +1,5 @@
 package dev.tinyz.excel2json;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -14,15 +13,18 @@ import java.util.List;
  */
 public class Main {
 
-    public static final String PATH = new File("").getAbsolutePath();
-
     public static void main(String[] args) {
-        List<String> fileList = TinyFileReader.listFile();
+        String root = "./excel/";
+        List<String> fileList = TinyFileReader.listFile(root, "xlsx");
         for (String filePath : fileList) {
-            String outPath = PATH + "\\" + filePath.substring(0, filePath.lastIndexOf(".")) + "." + "data";
-            String inPath = PATH + "\\" + filePath;
+            String outPath = root + "\\" + filePath.substring(0, filePath.lastIndexOf(".")) + "." + "data";
+            String inPath = root + "\\" + filePath;
 
-            TinyZUtil.writeFile(outPath, String.valueOf(TinyZUtil.Excel2Json(inPath)));
+//            TinyZUtil.writeFile(outPath, String.valueOf(TinyZUtil.Excel2Json(inPath)));
+            String cfgData = TinyZUtil.E2Json(inPath);
+            if (cfgData != null) {
+                TinyZUtil.writeFile(outPath, String.valueOf(cfgData));
+            }
         }
     }
 }

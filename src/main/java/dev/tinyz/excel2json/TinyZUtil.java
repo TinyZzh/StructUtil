@@ -6,15 +6,158 @@ import org.apache.poi.ss.usermodel.*;
 
 import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author TinyZ on 2014/5/23.
  */
 public class TinyZUtil {
+
+    public static String E2Json(String filePath) {
+        try {
+            InputStream inp = new FileInputStream(filePath);
+            Workbook wb = WorkbookFactory.create(inp);
+            Sheet sheet = wb.getSheetAt(0);
+            int firstRowNum = sheet.getFirstRowNum();
+            int lastRowNum = sheet.getLastRowNum();
+            boolean isLoadData = false;
+            Map<Object, Object> cache = new HashMap<>();
+            StringBuilder sbData = null;
+            Map<String, Integer> except = new HashMap<>();
+            for (int i = firstRowNum; i < lastRowNum + 1; i++) {
+                Row row = sheet.getRow(i);
+                if (row != null) {
+                    if (!isLoadData) {
+                        Cell cell = row.getCell(0);
+                        String obj = String.valueOf(readCell(cell));
+                        switch (obj.toLowerCase()) {
+                            case "class":
+                            case "key":
+                            case "redis":
+                            case "fields":
+                            case "groupby":
+                                cache.put(obj, readCell(row.getCell(1)));
+                                break;
+                            case "except":
+                                List<String> eList = (List<String>) readCell(row.getCell(1));
+                                for (String s : eList) {
+                                    except.put(s, 1);
+                                }
+                                break;
+                            case "data":
+                                isLoadData = true;
+                                break;
+                            default:
+                                cache.put(obj, readCell(row.getCell(1)));
+                                break;
+                        }
+                    } else {
+                        List<Object> data = null;
+                        if (except.isEmpty()) {
+                            data = TinyZUtil.loadCache(sheet, i, lastRowNum);
+                        } else {
+                            data = TinyZUtil.loadCache(sheet, i, lastRowNum, except);
+                        }
+//                        cache.put("data", TinyZUtil.loadCache(sheet, i, lastRowNum));
+//                        List<Object> data = TinyZUtil.loadCache(sheet, i, lastRowNum);
+                        if (!data.isEmpty()) {
+                            cache.put("data", "<data>");
+                            sbData = new StringBuilder();
+                            sbData.append("\r\n[\r\n");
+                            for (Object o : data) {
+                                sbData.append(JSON.toJSONString(o)).append(",\r\n");
+                            }
+                            sbData.delete(sbData.length() - 3, sbData.length()).append("\r\n]\r\n");
+//                            System.out.println(String.valueOf(sbData));
+                        }
+                        break;
+                    }
+                }
+            }
+            if (cache.containsKey("data")) {
+                String json = JSON.toJSONString(cache);
+                if (sbData != null && sbData.length() > 0) {
+                    json = json.replace("\"<data>\"", String.valueOf(sbData));
+                }
+                return json;
+            } else {
+                return null;
+            }
+        } catch (InvalidFormatException | IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 从excel表中加载配置表数据
+     *
+     * @param sheet       表单
+     * @param firstRowNum 首行
+     * @param lastRowNum  尾行
+     * @param except      排除列表
+     * @return 数据列表
+     */
+    public static List<Object> loadCache(Sheet sheet, int firstRowNum, int lastRowNum, Map<String, Integer> except) {
+        // The first row must be the field name row, defined the field name. and the cell value must be not null.
+        Row headRow = sheet.getRow(firstRowNum);
+        int physicalNumberOfCells = headRow.getPhysicalNumberOfCells();
+        List<Object> data = new ArrayList<>();
+        for (int i = firstRowNum + 1; i < lastRowNum + 1; i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) {
+                continue;
+            }
+            Map<String, Object> map = new TreeMap<String, Object>();
+            for (int j = row.getFirstCellNum(); j < row.getLastCellNum(); j++) {
+                Cell cell = row.getCell(j);
+                if (cell != null) {
+                    String fieldName = headRow.getCell(j).getStringCellValue();
+                    if (!except.containsKey(fieldName)) {
+                        map.put(fieldName, readCell(cell));
+                    }
+                }
+            }
+            // the filed name count must equal the map size
+            if (!map.isEmpty() && physicalNumberOfCells == map.size()) {
+                data.add(map);
+            }
+        }
+        return data;
+    }
+
+    /**
+     * 从excel表中加载配置表数据
+     *
+     * @param sheet       表单
+     * @param firstRowNum 首行
+     * @param lastRowNum  尾行
+     * @return 数据列表
+     */
+    public static List<Object> loadCache(Sheet sheet, int firstRowNum, int lastRowNum) {
+        // The first row must be the field name row, defined the field name. and the cell value must be not null.
+        Row headRow = sheet.getRow(firstRowNum);
+        int physicalNumberOfCells = headRow.getPhysicalNumberOfCells();
+        List<Object> data = new ArrayList<>();
+        for (int i = firstRowNum + 1; i < lastRowNum + 1; i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) {
+                continue;
+            }
+            Map<String, Object> map = new TreeMap<String, Object>();
+            for (int j = row.getFirstCellNum(); j < row.getLastCellNum(); j++) {
+                Cell cell = row.getCell(j);
+                if (cell != null) {
+                    map.put(headRow.getCell(j).getStringCellValue(), readCell(cell));
+                }
+            }
+            // the filed name count must equal the map size
+            if (!map.isEmpty() && physicalNumberOfCells == map.size()) {
+                data.add(map);
+            }
+        }
+        return data;
+    }
 
     /**
      * Excel convert JSON data
@@ -83,7 +226,7 @@ public class TinyZUtil {
                 obj = cell.getBooleanCellValue();
                 break;
             case Cell.CELL_TYPE_STRING:
-                str = cell.getStringCellValue().toLowerCase();
+                str = cell.getStringCellValue();
                 if (str.indexOf("|") == 0) {
                     // |i1988|1909|1890
                     char switchChar = str.charAt(1);
@@ -93,16 +236,25 @@ public class TinyZUtil {
                         for (String s : array) {
                             switch (switchChar) {
                                 case 'i':
+                                case 'I':
                                     list.add(Integer.parseInt(s));
                                     break;
                                 case 'd':
+                                case 'D':
                                     list.add(Double.parseDouble(s));
                                     break;
                                 case 's':
+                                case 'S':
                                     list.add(s);
                                     break;
                                 case 'b':
+                                case 'B':
                                     list.add(s.toLowerCase().equals("true"));
+                                    break;
+                                case 'a':
+                                case 'A':
+                                    // Array  split with ','
+                                    list.add(Arrays.asList(s.split(",")));
                                     break;
                                 default:
                                     break;
@@ -154,7 +306,8 @@ public class TinyZUtil {
             case Cell.CELL_TYPE_FORMULA:
             case Cell.CELL_TYPE_BLANK:
             case Cell.CELL_TYPE_ERROR:
-                throw new UnknownError("Unknown Cell type" + cell.getCellType());
+                return null;
+//                throw new UnknownError("Unknown Cell type" + cell.getCellType());
             default:
                 throw new UnknownError("Unknown Cell type");
         }
