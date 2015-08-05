@@ -14,7 +14,7 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-        String root = "./excel/";
+        String root = "./";
         List<String> fileList = TinyFileReader.listFile(root, "xlsx");
         for (String filePath : fileList) {
             String outPath = root + "\\" + filePath.substring(0, filePath.lastIndexOf(".")) + "." + "data";

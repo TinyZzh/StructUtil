@@ -137,7 +137,7 @@ public class TinyZUtil {
     public static List<Object> loadCache(Sheet sheet, int firstRowNum, int lastRowNum) {
         // The first row must be the field name row, defined the field name. and the cell value must be not null.
         Row headRow = sheet.getRow(firstRowNum);
-        int physicalNumberOfCells = headRow.getPhysicalNumberOfCells();
+//        int physicalNumberOfCells = headRow.getPhysicalNumberOfCells();
         List<Object> data = new ArrayList<>();
         for (int i = firstRowNum + 1; i < lastRowNum + 1; i++) {
             Row row = sheet.getRow(i);
@@ -147,12 +147,15 @@ public class TinyZUtil {
             Map<String, Object> map = new TreeMap<String, Object>();
             for (int j = row.getFirstCellNum(); j < row.getLastCellNum(); j++) {
                 Cell cell = row.getCell(j);
-                if (cell != null) {
+                if (cell == null) {
+                    // 出现空格, 直接切换到下一行
+                    break;
+                } else {
                     map.put(headRow.getCell(j).getStringCellValue(), readCell(cell));
                 }
             }
             // the filed name count must equal the map size
-            if (!map.isEmpty() && physicalNumberOfCells == map.size()) {
+            if (!map.isEmpty()) { //  && physicalNumberOfCells == map.size()
                 data.add(map);
             }
         }
