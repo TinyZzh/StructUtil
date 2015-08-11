@@ -62,7 +62,7 @@ public class TinyZUtil {
                     } else {
                         List<Object> data = null;
                         if (except.isEmpty()) {
-                            data = TinyZUtil.loadCache(sheet, i, lastRowNum);
+                            data = TinyZUtil.loadCache(sheet, i, lastRowNum, null);
                         } else {
                             data = TinyZUtil.loadCache(sheet, i, lastRowNum, except);
                         }
@@ -110,6 +110,7 @@ public class TinyZUtil {
         // The first row must be the field name row, defined the field name. and the cell value must be not null.
         Row headRow = sheet.getRow(firstRowNum);
         List<Object> data = new ArrayList<>();
+        int firstRowLength = -1;
         for (int i = firstRowNum + 1; i < lastRowNum + 1; i++) {
             Row row = sheet.getRow(i);
             if (row == null) {
@@ -123,50 +124,16 @@ public class TinyZUtil {
                     break;
                 } else {
                     String fieldName = headRowCell.getStringCellValue();
-                    if (!except.containsKey(fieldName)) {
+                    if (except == null || !except.containsKey(fieldName)) {
                         map.put(fieldName, readCell(cell));
                     }
                 }
             }
-            // the filed name count must equal the map size
-            if (!map.isEmpty()) {
-                data.add(map);
-            }
-        }
-        return data;
-    }
-
-    /**
-     * 从excel表中加载配置表数据
-     *
-     * @param sheet       表单
-     * @param firstRowNum 首行
-     * @param lastRowNum  尾行
-     * @return 数据列表
-     */
-    public static List<Object> loadCache(Sheet sheet, int firstRowNum, int lastRowNum) {
-        // The first row must be the field name row, defined the field name. and the cell value must be not null.
-        Row headRow = sheet.getRow(firstRowNum);
-//        int physicalNumberOfCells = headRow.getPhysicalNumberOfCells();
-        List<Object> data = new ArrayList<>();
-        for (int i = firstRowNum + 1; i < lastRowNum + 1; i++) {
-            Row row = sheet.getRow(i);
-            if (row == null) {
-                continue;
-            }
-            Map<String, Object> map = new TreeMap<String, Object>();
-            for (int j = row.getFirstCellNum(); j < row.getLastCellNum(); j++) {
-                Cell headRowCell = headRow.getCell(j);
-                Cell cell = row.getCell(j);
-                if (cell == null || headRowCell == null) {
-                    // 出现空格, 直接切换到下一行
-                    break;
-                } else {
-                    map.put(headRowCell.getStringCellValue(), readCell(cell));
-                }
+            if (firstRowLength == -1) {
+                firstRowLength = map.size();
             }
             // the filed name count must equal the map size
-            if (!map.isEmpty()) { //  && physicalNumberOfCells == map.size()
+            if (!map.isEmpty() && firstRowLength == map.size()) {
                 data.add(map);
             }
         }
