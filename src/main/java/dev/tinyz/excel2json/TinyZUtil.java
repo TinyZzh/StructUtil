@@ -33,15 +33,23 @@ public class TinyZUtil {
                         switch (obj.toLowerCase()) {
                             case "class":
                             case "key":
-                            case "redis":
                             case "fields":
                             case "groupby":
                                 cache.put(obj, readCell(row.getCell(1)));
                                 break;
+                            case "redis":
+                                // Redis 中保存的key
+                                String redisKey = String.valueOf(readCell(row.getCell(1)));
+                                Main.outFileName = redisKey.replaceAll(":", "_");
+                                System.out.println(Main.outFileName);
+                                cache.put(obj, redisKey);
+                                break;
                             case "except":
-                                List<String> eList = (List<String>) readCell(row.getCell(1));
-                                for (String s : eList) {
-                                    except.put(s, 1);
+                                Object objExcept = readCell(row.getCell(1));
+                                if (objExcept instanceof Object[]) {
+                                    for (Object s : (Object[])objExcept) {
+                                        except.put(String.valueOf(s), 1);
+                                    }
                                 }
                                 break;
                             case "data":
@@ -74,7 +82,7 @@ public class TinyZUtil {
                     }
                 }
             }
-            if (cache.containsKey("data")) {
+            if (cache.containsKey("data") && cache.containsKey("redis")) {
                 String json = JSON.toJSONString(cache);
                 if (sbData != null && sbData.length() > 0) {
                     json = json.replace("\"<data>\"", String.valueOf(sbData));
@@ -101,7 +109,6 @@ public class TinyZUtil {
     public static List<Object> loadCache(Sheet sheet, int firstRowNum, int lastRowNum, Map<String, Integer> except) {
         // The first row must be the field name row, defined the field name. and the cell value must be not null.
         Row headRow = sheet.getRow(firstRowNum);
-        int physicalNumberOfCells = headRow.getPhysicalNumberOfCells();
         List<Object> data = new ArrayList<>();
         for (int i = firstRowNum + 1; i < lastRowNum + 1; i++) {
             Row row = sheet.getRow(i);
@@ -110,16 +117,19 @@ public class TinyZUtil {
             }
             Map<String, Object> map = new TreeMap<String, Object>();
             for (int j = row.getFirstCellNum(); j < row.getLastCellNum(); j++) {
+                Cell headRowCell = headRow.getCell(j);
                 Cell cell = row.getCell(j);
-                if (cell != null) {
-                    String fieldName = headRow.getCell(j).getStringCellValue();
+                if (cell == null || headRowCell == null) {
+                    break;
+                } else {
+                    String fieldName = headRowCell.getStringCellValue();
                     if (!except.containsKey(fieldName)) {
                         map.put(fieldName, readCell(cell));
                     }
                 }
             }
             // the filed name count must equal the map size
-            if (!map.isEmpty() && physicalNumberOfCells == map.size()) {
+            if (!map.isEmpty()) {
                 data.add(map);
             }
         }
@@ -146,12 +156,13 @@ public class TinyZUtil {
             }
             Map<String, Object> map = new TreeMap<String, Object>();
             for (int j = row.getFirstCellNum(); j < row.getLastCellNum(); j++) {
+                Cell headRowCell = headRow.getCell(j);
                 Cell cell = row.getCell(j);
-                if (cell == null) {
+                if (cell == null || headRowCell == null) {
                     // 出现空格, 直接切换到下一行
                     break;
                 } else {
-                    map.put(headRow.getCell(j).getStringCellValue(), readCell(cell));
+                    map.put(headRowCell.getStringCellValue(), readCell(cell));
                 }
             }
             // the filed name count must equal the map size
@@ -212,6 +223,9 @@ public class TinyZUtil {
      * 获取Cell
      */
     private static Object readCell(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
         String str = "";
         Object obj = null;
         switch (cell.getCellType()) {
