@@ -1,5 +1,8 @@
 package dev.tinyz.excel2json;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 
@@ -13,20 +16,24 @@ import java.util.List;
  */
 public class Main {
 
-    public static String outFileName = "";
-
     public static void main(String[] args) {
+//        String root = "./excel/";
         String root = "./";
         List<String> fileList = TinyFileReader.listFile(root, "xlsx");
         for (String filePath : fileList) {
-            outFileName = "";
             String inPath = root + "\\" + filePath;
-
-//            TinyZUtil.writeFile(outPath, String.valueOf(TinyZUtil.Excel2Json(inPath)));
-            String cfgData = TinyZUtil.E2Json(inPath);
-            if (cfgData != null) {
-                String outPath = root + "\\" + outFileName + "." + "data";
-                TinyZUtil.writeFile(outPath, String.valueOf(cfgData));
+            File file = new File(inPath);
+            String fileName = file.getName();
+            String substring = fileName.substring(0, fileName.length() - 5);
+            try {
+                String json = TiUtil.excel2JsonV3(new FileInputStream(file));
+                if (json != null) {
+                    String outPath = root + "\\" + substring + "." + "data";
+                    TinyZUtil.writeFile(outPath, String.valueOf(json));
+                }
+            } catch (Exception e) {
+                System.out.println("Load file error. File name : " + fileName);
+                e.printStackTrace();
             }
         }
     }

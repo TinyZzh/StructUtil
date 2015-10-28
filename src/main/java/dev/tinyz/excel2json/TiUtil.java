@@ -3,6 +3,7 @@ package dev.tinyz.excel2json;
 import com.alibaba.fastjson.JSON;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCell;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -11,7 +12,24 @@ import java.util.*;
 /**
  * @author TinyZ on 2014/5/23.
  */
-public class TinyZUtil {
+public class TiUtil {
+
+    public static String excel2JsonV3(InputStream inp) throws Exception {
+        Workbook wb = WorkbookFactory.create(inp);
+        Sheet sheet = wb.getSheetAt(0);
+        int firstRowNum = 1; //sheet.getFirstRowNum(); // 从第二行开始
+        int lastRowNum = sheet.getLastRowNum();
+        StringBuilder sb = new StringBuilder();
+        List<Object> data = TiUtil.loadCache(sheet, firstRowNum, lastRowNum);
+        if (data != null && !data.isEmpty()) {
+            sb.append("[\r\n");
+            for (Object o : data) {
+                sb.append(JSON.toJSONString(o)).append(",\r\n");
+            }
+            sb.delete(sb.length() - 3, sb.length()).append("\r\n]");
+        }
+        return String.valueOf(sb);
+    }
 
     /**
      * 从excel表中加载配置表数据
@@ -19,10 +37,9 @@ public class TinyZUtil {
      * @param sheet       表单
      * @param firstRowNum 首行
      * @param lastRowNum  尾行
-     * @param except      排除列表
      * @return 数据列表
      */
-    public static List<Object> loadCache(Sheet sheet, int firstRowNum, int lastRowNum, Map<String, Integer> except) {
+    public static List<Object> loadCache(Sheet sheet, int firstRowNum, int lastRowNum) {
         // The first row must be the field name row, defined the field name. and the cell value must be not null.
         Row headRow = sheet.getRow(firstRowNum);
         List<Object> data = new ArrayList<>();
@@ -40,9 +57,16 @@ public class TinyZUtil {
                     break;
                 } else {
                     String fieldName = headRowCell.getStringCellValue();
-                    if (except == null || !except.containsKey(fieldName)) {
+                    if (!"".equals(fieldName)) {
                         map.put(fieldName, readCell(cell));
                     }
+//                    try {
+//
+//                    } catch (Exception e) {
+//                        System.out.println("首行错误 - 检查配置表首行是否为空");
+//                        e.printStackTrace();
+//                        return null;
+//                    }
                 }
             }
             if (firstRowLength == -1) {
@@ -204,6 +228,9 @@ public class TinyZUtil {
 //                }
                 break;
             case Cell.CELL_TYPE_FORMULA:
+//                int cachedFormulaResultType = cell.getCachedFormulaResultType();
+                obj = ((XSSFCell)cell).getRawValue();
+                break;
             case Cell.CELL_TYPE_BLANK:
             case Cell.CELL_TYPE_ERROR:
                 return null;
