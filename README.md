@@ -1,21 +1,21 @@
-# ExcelUtil 1.0.0.alpha
+# Excel Util
 --------------------
 
-Simple excel util based POI-3.10-final.
-Author @TinyZ
-Version 1.0.0.alpha
+Author: TinyZ
+
+Version: 1.0.1.alpha
+
+## 介绍
+    将Excel数据转换为对应的JSON格式. 在程序中读取JSON格式数据比Excel简单方便.
 
 ## Why use this tool ?
-    In develop game. game component need some complex config data.
-
-## matters
-1.
+    covert excel data to JSON data struct.
 
 ## Features
 
 * 1.Support load excel file (*.xlsx or *.xls), covert excel to json content and write to file named *.data.
 * 2.Support excel cell object convert to java Object. Example:
-    * NUMERIC covert to Integer, Double
+    * NUMERIC covert to Integer, Double, Long
     * BOOLEAN covert to Boolean
     * STRING content is
         1 - "true|false" No mater string upper or lower, Will be covert to Boolean,
@@ -30,8 +30,8 @@ Version 1.0.0.alpha
 
 You require the following to build it:
 * [Oracle JDK 7 or above](http://www.oracle.com/technetwork/java/)
-* POI-3.12
-* Fastjson 1.1.45 above
+* POI-3.16
+* Fastjson 1.2.6
 * slf4j-1.7.2 [non-necessity]
 
 
