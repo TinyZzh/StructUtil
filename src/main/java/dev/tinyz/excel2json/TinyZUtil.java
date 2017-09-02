@@ -1,8 +1,11 @@
 package dev.tinyz.excel2json;
 
 import com.alibaba.fastjson.JSON;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -22,13 +25,22 @@ public class TinyZUtil {
      * @param filePath The excel file path
      * @return Return the json string.
      */
-    public static StringBuilder Excel2Json(String filePath) {
+    public static StringBuilder excel2Json(String filePath) {
+        System.out.println("File : " + filePath);
         StringBuilder sb = new StringBuilder();
         try {
             InputStream inp = new FileInputStream(filePath);
             Workbook wb = WorkbookFactory.create(inp);
             Sheet sheet = wb.getSheetAt(0);
 
+            //
+            FormulaEvaluator evaluator;
+            if (new File(filePath).getName().toLowerCase().endsWith("xlsx")) {
+                evaluator = new XSSFFormulaEvaluator((XSSFWorkbook) wb);
+            } else {
+                evaluator = new HSSFFormulaEvaluator((HSSFWorkbook) wb);
+            }
+            //
             int firstRowNum = sheet.getFirstRowNum();
             int lastRowNum = sheet.getLastRowNum();
             sb.append("[\r\n");
@@ -44,7 +56,7 @@ public class TinyZUtil {
                 for (int j = row.getFirstCellNum(); j < row.getLastCellNum(); j++) {
                     Cell cell = row.getCell(j);
                     if (cell != null) {
-                        map.put(headRow.getCell(j).getStringCellValue(), readCell(cell));
+                        map.put(headRow.getCell(j).getStringCellValue(), covert(cell, evaluator));
                     }
                 }
                 // the filed name count must equal the map size
@@ -56,109 +68,109 @@ public class TinyZUtil {
                 }
             }
             sb.delete(sb.length() - 3, sb.length()).append("\r\n]");
-        } catch (InvalidFormatException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return sb;
     }
 
-    /**
-     * 获取Cell
-     */
-    private static Object readCell(Cell cell) {
-        String str = "";
+    private static Object covert(Cell cell, FormulaEvaluator evaluator) throws Exception {
         Object obj = null;
-        switch (cell.getCellType()) {
-            case Cell.CELL_TYPE_NUMERIC:
-                Double d = cell.getNumericCellValue();
-                str = new DecimalFormat("#.00000").format(d);
-                if (str.substring(str.indexOf(".")).equals(".00000")) {
-                    Double dt = Double.parseDouble(str);
-                    obj = dt.intValue();
-                } else {
-                    obj = Double.parseDouble(str);
+        switch (cell.getCellTypeEnum()) {
+            case _NONE:
+            case BLANK:
+                return "";
+            case NUMERIC:
+                return getNumericValue(cell);
+            case STRING:
+                return getStringValue(cell);
+            case FORMULA:
+                CellValue val = evaluator.evaluate(cell);
+                switch (val.getCellTypeEnum()) {
+                    case _NONE:
+                    case BLANK:
+                        return "";
+                    case NUMERIC:
+                        return getNumericValue(val);
+                    case STRING:
+                        return getStringValue(val);
+                    case BOOLEAN:
+                        return getBooleanValue(val);
+                    default:
+                        throw new Exception("Unknown Cell type");
                 }
-                break;
-            case Cell.CELL_TYPE_BOOLEAN:
-                obj = cell.getBooleanCellValue();
-                break;
-            case Cell.CELL_TYPE_STRING:
-                str = cell.getStringCellValue().toLowerCase();
-                if (str.indexOf("|") == 0) {
-                    // |i1988|1909|1890
-                    char switchChar = str.charAt(1);
-                    String[] array = str.substring(2, str.length()).split("\\|");//str.split("\\|i");
-                    List<Object> list = new ArrayList<Object>();
-                    if (array.length > 0) {
-                        for (String s : array) {
-                            switch (switchChar) {
-                                case 'i':
-                                    list.add(Integer.parseInt(s));
-                                    break;
-                                case 'd':
-                                    list.add(Double.parseDouble(s));
-                                    break;
-                                case 's':
-                                    list.add(s);
-                                    break;
-                                case 'b':
-                                    list.add(s.toLowerCase().equals("true"));
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                    if (!list.isEmpty()) {
-                        obj = list.toArray();
-                    } else {
-                        obj = str;
-                    }
-                } else if (str.equals("true") || str.equals("false")) {
-                    obj = str.equals("true");
-                } else {
-                    obj = str;
-                }
-                // Method 1 : (Deprecated)
-//                if ((str.equals("true")) || (str.equals("false"))) {
-//                    obj = Boolean.parseBoolean(str);
-//                } else if (str.contains("|i")) {
-//                    String[] array = str.substring(2, str.length() - 1).split("\\|");//str.split("\\|i");
-//                    if (array.length != 0) {
-//                        Integer[] numArray = new Integer[array.length - 1];
-//                        for (int k = 1; k < array.length; k++) {
-//                            numArray[(k - 1)] = Integer.parseInt(array[k]);
-//                        }
-//                        obj = numArray;
-//                    }
-//                } else if (str.contains("|d")) {
-//                    String[] array = str.split("\\|d");
-//                    if (array.length != 0) {
-//                        Double[] numArray = new Double[array.length - 1];
-//                        for (int k = 1; k < array.length; k++) {
-//                            numArray[(k - 1)] = Double.parseDouble(array[k]);
-//                        }
-//                        obj = numArray;
-//                    }
-//                } else if (str.contains("|s")) {
-//                    String[] array = str.split("\\|s");
-//                    if (array.length != 0) {
-//                        String[] strArray = new String[array.length - 1];
-//                        System.arraycopy(array, 1, strArray, 0, array.length - 1);
-//                        obj = strArray;
-//                    }
-//                } else {
-//                    obj = str;
-//                }
-                break;
-            case Cell.CELL_TYPE_FORMULA:
-            case Cell.CELL_TYPE_BLANK:
-            case Cell.CELL_TYPE_ERROR:
-                throw new UnknownError("Unknown Cell type" + cell.getCellType());
+            case BOOLEAN:
+                return getBooleanValue(cell);
             default:
-                throw new UnknownError("Unknown Cell type");
+                throw new Exception("Unknown Cell type");
         }
-        return obj;
+    }
+
+    private static Object getNumericValue(Object cell) throws Exception {
+        Double val = cell instanceof Cell ? ((Cell) cell).getNumericCellValue() :
+                cell instanceof CellValue ? ((CellValue) cell).getNumberValue() : 0.0D;
+        String str = new DecimalFormat("#.00000").format(val);
+        if (str.substring(str.indexOf(".")).equals(".00000")) {
+            Double dt = Double.parseDouble(str);
+            if (dt.longValue() > Integer.MAX_VALUE) {
+                return dt.longValue();
+            } else
+                return dt.intValue();
+        } else {
+            return Double.parseDouble(str);
+        }
+    }
+
+    private static Object getStringValue(Object cell) throws Exception {
+        String str = "";
+        if (cell instanceof CellValue) {
+            str = ((CellValue) cell).getStringValue();
+        } else if (cell instanceof Cell) {
+            str = ((Cell) cell).getStringCellValue();
+        } else {
+            throw new Exception("Unknown cell type");
+        }
+        String lowerStr = str.toLowerCase();
+        if (lowerStr.indexOf("|") == 0) {
+            // |i1988|1909|1890
+            char switchChar = lowerStr.charAt(1);
+            String[] array = lowerStr.substring(2, lowerStr.length()).split("\\|");//str.split("\\|i");
+            List<Object> list = new ArrayList<Object>();
+            if (array.length > 0) {
+                for (String s : array) {
+                    switch (switchChar) {
+                        case 'i':
+                            list.add(Integer.parseInt(s));
+                            break;
+                        case 'd':
+                            list.add(Double.parseDouble(s));
+                            break;
+                        case 's':
+                            list.add(s);
+                            break;
+                        case 'b':
+                            list.add(s.toLowerCase().equals("true"));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            if (list.isEmpty()) {
+                return str;
+            } else {
+                return list.toArray();
+            }
+        } else if (lowerStr.equals("true") || lowerStr.equals("false")) {
+            return lowerStr.equals("true");
+        } else {
+            return str;
+        }
+    }
+
+    private static Object getBooleanValue(Object cell) throws Exception {
+        return cell instanceof Cell ? ((Cell) cell).getBooleanCellValue() :
+                cell instanceof CellValue && ((CellValue) cell).getBooleanValue();
     }
 
     /**

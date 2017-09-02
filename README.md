@@ -5,6 +5,12 @@ Simple excel util based POI-3.10-final.
 Author @TinyZ
 Version 1.0.0.alpha
 
+## Why use this tool ?
+    In develop game. game component need some complex config data.
+
+## matters
+1.
+
 ## Features
 
 * 1.Support load excel file (*.xlsx or *.xls), covert excel to json content and write to file named *.data.
