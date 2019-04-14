@@ -16,26 +16,6 @@ public abstract class AnnotationUtils {
         //  no-op
     }
 
-    public static List<Method> findMethodByAnnotation(Class annotation, Class clazz, boolean declared) {
-        return findElementByAnnotation(annotation, clazz, (clz) -> declared ? clz.getDeclaredMethods() : clz.getMethods());
-    }
-
-    public static List<Field> findFieldByAnnotation(final Class annotation, final Class clazz, final boolean declared) {
-        return findElementByAnnotation(annotation, clazz, (clz) -> declared ? clz.getDeclaredFields() : clz.getFields());
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T extends AnnotatedElement> List<T> findElementByAnnotation(Class annotation, Class clazz, Function<Class, T[]> func) {
-        List<T> elements = new ArrayList<>();
-        if (clazz == Object.class)
-            return elements;
-        elements.addAll(Arrays.stream(func.apply(clazz))
-                .filter(field -> field.getAnnotation(annotation) != null)
-                .collect(Collectors.toList()));
-        elements.addAll(findElementByAnnotation(annotation, clazz.getSuperclass(), func));
-        return elements;
-    }
-
     public static <A extends Annotation> A findAnnotation(final Class<A> targetAnnotation, final Class<?> annotatedType) {
         A foundAnnotation = annotatedType.getAnnotation(targetAnnotation);
         if (foundAnnotation == null) {
@@ -49,22 +29,4 @@ public abstract class AnnotationUtils {
         }
         return foundAnnotation;
     }
-
-    public static boolean isAnnotationPresent(final Class<? extends Annotation> targetAnnotation, final Class<?> annotatedType) {
-        return findAnnotation(targetAnnotation, annotatedType) != null;
-    }
-
-    public static List<Method> getMethodsAnnotatedWith(final Class<? extends Annotation> annotation, final Object object, boolean isOnlyPublic) {
-        Method[] methods = isOnlyPublic
-                ? object.getClass().getMethods()
-                : object.getClass().getDeclaredMethods();
-        List<Method> annotatedMethods = new ArrayList<>();
-        for (Method method : methods) {
-            if (method.isAnnotationPresent(annotation)) {
-                annotatedMethods.add(method);
-            }
-        }
-        return annotatedMethods;
-    }
-
 }

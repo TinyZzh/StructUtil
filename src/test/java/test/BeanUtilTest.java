@@ -11,12 +11,13 @@ public class BeanUtilTest {
 
     @Test
     public void test() throws Exception {
-        final String rootPath = "./out/test/resources/com/hob/gameserver/excel/";
+        final String rootPath = "./out/test/resources/";
         ExcelWorker<Animal> worker = new ExcelWorker<>(rootPath, Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
+        System.out.println();
     }
 
-    @ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
+    @ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet2")
     public static class Classification {
         private int id;
         private String domain;
@@ -28,7 +29,7 @@ public class BeanUtilTest {
         private String species;
     }
 
-    @ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet2")
+    @ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
     public static class Animal {
 
         private int id;
