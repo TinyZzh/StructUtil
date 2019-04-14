@@ -1,8 +1,8 @@
 package test;
 
-import dev.tinyz.excel2json.annotation.ExcelField;
-import dev.tinyz.excel2json.annotation.ExcelSheet;
-import dev.tinyz.excel2json.core.ExcelWorker;
+import org.excel.annotation.ExcelField;
+import org.excel.annotation.ExcelSheet;
+import org.excel.core.ExcelWorker;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ public class BeanUtilTest {
     @Test
     public void test() throws Exception {
         final String rootPath = "./out/test/resources/";
-        ExcelWorker<Animal> worker = new ExcelWorker<>(rootPath, Animal.class);
+        ExcelWorker<Animal> worker = ExcelWorker.of(rootPath, Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
         System.out.println();
     }

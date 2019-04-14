@@ -1,4 +1,4 @@
-package dev.tinyz.excel2json.core;
+package org.excel.core;
 
 import java.util.function.Function;
 

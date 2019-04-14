@@ -1,6 +1,6 @@
-package dev.tinyz.excel2json.annotation;
+package org.excel.annotation;
 
-import dev.tinyz.excel2json.core.Converter;
+import org.excel.core.Converter;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

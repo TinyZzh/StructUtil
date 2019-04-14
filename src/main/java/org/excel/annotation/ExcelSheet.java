@@ -1,4 +1,6 @@
-package dev.tinyz.excel2json.annotation;
+package org.excel.annotation;
+
+import org.excel.core.ExcelWorker;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -28,13 +30,13 @@ public @interface ExcelSheet {
     String sheetName() default "Sheet1";
 
     /**
-     * @return the first row's order of excel. {@link dev.tinyz.excel2json.core.ExcelWorker} will load
+     * @return the first row's order of excel. {@link ExcelWorker} will load
      * from startOrder to endOrder. default 1. it is means from the second row
      */
     int startOrder() default 1;
 
     /**
-     * @return the last row's order of excel. {@link dev.tinyz.excel2json.core.ExcelWorker} will load
+     * @return the last row's order of excel. {@link ExcelWorker} will load
      * from startOrder to endOrder. default -1. it is means ths real excel's last row.
      */
     int endOrder() default -1;

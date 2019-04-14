@@ -1,4 +1,4 @@
-package dev.tinyz.excel2json.util;
+package org.excel.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
