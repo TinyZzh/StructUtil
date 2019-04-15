@@ -8,8 +8,8 @@ branches:
   only:
     - master
 before_install:
-  - 'gradle --version'
   - 'chmod +x gradlew'
-  - 'gradle assemble'
+  - './gradlew --version'
 install:
-  - gradle build -x test
+  - './gradlew assemble'
+script: ./gradlew build -x test
