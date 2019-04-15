@@ -186,7 +186,7 @@ public class ExcelWorker<T> {
                 || Modifier.isAbstract(annotation.converter().getModifiers())
         )
             return Optional.empty();
-        return Optional.of((Converter<?>) annotation.converter().getConstructor().newInstance());
+        return Optional.of(ConverterRegistry.lookup(annotation.converter()));
     }
 
     /// Excel
