@@ -1,0 +1,15 @@
+language: java
+
+jdk:
+  - openjdk11
+  - openjdk8
+
+branches:
+  only:
+    - master
+before_install:
+  - 'gradle --version'
+  - 'chmod +x gradlew'
+  - 'gradle assemble'
+install:
+  - gradle build -x test
