@@ -1,5 +1,7 @@
 language: java
-
+env:
+  global:
+    - CODECOV_TOKEN=28627f9d-cc37-4651-a0c7-731a3370d5c1
 jdk:
   - openjdk11
   - openjdk8
@@ -13,3 +15,5 @@ before_install:
 install:
   - './gradlew assemble'
 script: ./gradlew build -x test
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

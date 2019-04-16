@@ -3,6 +3,8 @@ plugins {
     id 'maven-publish'
 }
 
+apply plugin: 'jacoco'
+
 repositories {
     mavenLocal()
     mavenCentral()
@@ -33,3 +35,13 @@ publishing {
         }
     }
 }
+
+task codeCoverageReport(type: JacocoReport) {
+    reports {
+        xml.enabled false
+        html.enabled false
+        csv.enabled false
+    }
+}
+
+check.dependsOn codeCoverageReport
