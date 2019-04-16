@@ -16,6 +16,5 @@ install:
   - './gradlew assemble'
 script: ./gradlew build -x test
 after_success:
-  - ./gradlew check
-  - ./gradlew jacocoTestReport
+  - ./gradlew test
   - bash <(curl -s https://codecov.io/bash)

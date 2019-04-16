@@ -30,11 +30,9 @@ compileTestJava.options.setEncoding("UTF-8")
 jacocoTestReport {
     reports {
         xml.enabled true
-        xml.destination file("${buildDir}/jacocoXml")
+        xml.destination file("${buildDir}/jacoco/report.xml")
         html.enabled false
     }
-
-    onlyIf = { true }
 }
 
 check.dependsOn jacocoTestReport
