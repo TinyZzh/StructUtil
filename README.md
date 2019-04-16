@@ -1,6 +1,7 @@
 # Excel Util
 
 [![Build Status](https://travis-ci.org/TinyZzh/ExcelUtil.svg?branch=master)](https://travis-ci.org/TinyZzh/ExcelUtil)
+[![codecov](https://codecov.io/gh/TinyZzh/ExcelUtil/branch/master/graph/badge.svg)](https://codecov.io/gh/TinyZzh/ExcelUtil)
 
 Excel转Java Bean工具. 方便策划童鞋配置模板表. 同时降低开发同事的代码开发.
 
