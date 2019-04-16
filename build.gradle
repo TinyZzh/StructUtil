@@ -27,12 +27,17 @@ targetCompatibility = 1.8
 compileJava.options.setEncoding("UTF-8")
 compileTestJava.options.setEncoding("UTF-8")
 
+//  codecov
 jacocoTestReport {
+    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
     reports {
         xml.enabled true
-        xml.destination file("${buildDir}/jacoco/report.xml")
+        xml.destination file("${buildDir}/report.xml")
         html.enabled false
     }
+    executionData = files('build/jacoco/test.exec')
 }
 
-check.dependsOn jacocoTestReport
+test {
+    finalizedBy jacocoTestReport
+}
