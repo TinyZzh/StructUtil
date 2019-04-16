@@ -18,11 +18,6 @@
 
 package org.excel.core;
 
-import org.excel.annotation.ExcelField;
-import org.excel.annotation.ExcelSheet;
-import org.excel.util.AnnotationUtils;
-import org.excel.util.ConverterUtil;
-import org.excel.util.ExcelUtil;
 import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -33,11 +28,17 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.excel.annotation.ExcelField;
+import org.excel.annotation.ExcelSheet;
+import org.excel.util.AnnotationUtils;
+import org.excel.util.ConverterUtil;
+import org.excel.util.ExcelUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -319,10 +320,10 @@ public class ExcelWorker<T> {
         if (null == annotation) {
             throw new IllegalArgumentException("class " + clzOfBean + " undefined @ExcelSheet annotation");
         }
-        String filePath = rootPath + "/" + annotation.fileName();
+        String filePath = resolveFilePath(annotation);
         File file = new File(filePath);
         if (!file.exists()) {
-            throw new IllegalArgumentException("file not exists. path:" + filePath);
+            throw new IllegalArgumentException("file not exists. path: " + filePath);
         }
         try (FileInputStream fis = new FileInputStream(filePath)) {
             Workbook wb = WorkbookFactory.create(fis);
@@ -342,6 +343,24 @@ public class ExcelWorker<T> {
                     .forEach(cellHandler);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Resolve excel file's path.
+     * 1. classpath:   the path is class's path
+     */
+    private String resolveFilePath(ExcelSheet annotation) {
+        if (this.rootPath.startsWith("classpath:")) {
+            String path = this.rootPath.substring(this.rootPath.indexOf(":") + 1) + "/" + annotation.fileName();
+            URL resource = ExcelWorker.class.getResource(path);
+            return resource == null
+                    ? (this.rootPath + (this.rootPath.endsWith("/") ? "" : "/") + annotation.fileName())
+                    : resource.getPath();
+        } else if (this.rootPath.startsWith("file:")) {
+            return this.rootPath.substring(this.rootPath.indexOf(":") + 1) + "/" + annotation.fileName();
+        } else {
+            return this.rootPath + "/" + annotation.fileName();
         }
     }
 

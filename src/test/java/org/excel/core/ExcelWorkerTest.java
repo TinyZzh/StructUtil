@@ -1,19 +1,23 @@
-package test;
+package org.excel.core;
 
 import org.excel.annotation.ExcelField;
 import org.excel.annotation.ExcelSheet;
-import org.excel.core.ExcelWorker;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.URL;
 import java.util.ArrayList;
 
-public class BeanUtilTest {
-
+public class ExcelWorkerTest {
     @Test
     public void test() throws Exception {
-        final String rootPath = "./out/test/resources/";
-        ExcelWorker<Animal> worker = ExcelWorker.of(rootPath, Animal.class);
+        //
+        URL resource = ExcelWorkerTest.class.getResource("Bean.xlsx");
+        final String rootPath = ExcelWorkerTest.class.getResource("/").getPath();
+        ExcelWorker<Animal> worker = ExcelWorker.of("classpath:/org/excel/core/", Animal.class);
+//        ExcelWorker<Animal> worker = ExcelWorker.of("./out/test/resources/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
+        Assert.assertTrue(!list.isEmpty());
         System.out.println();
     }
 
@@ -41,5 +45,4 @@ public class BeanUtilTest {
         @ExcelField(ref = Classification.class, refUniqueKey = {"id"})
         private Classification bean;
     }
-
 }
