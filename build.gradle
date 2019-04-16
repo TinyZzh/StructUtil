@@ -1,9 +1,8 @@
 plugins {
     id 'java'
     id 'maven-publish'
+    id 'jacoco'
 }
-
-apply plugin: 'jacoco'
 
 repositories {
     mavenLocal()
@@ -28,21 +27,14 @@ targetCompatibility = 1.8
 compileJava.options.setEncoding("UTF-8")
 compileTestJava.options.setEncoding("UTF-8")
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            from(components.java)
-        }
-    }
-}
-
-codeCoverageReport {
+jacocoTestReport {
     reports {
         xml.enabled true
+        xml.destination file("${buildDir}/jacocoXml")
         html.enabled false
     }
 
     onlyIf = { true }
 }
 
-check.dependsOn codeCoverageReport
+check.dependsOn jacocoTestReport
