@@ -18,6 +18,9 @@
 
 package org.excel.core;
 
+import org.excel.util.Reflects;
+
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class ConverterRegistry {
 
-    private static final Map<Class, Converter> registeredConverterMap = new ConcurrentHashMap<>();
+    private static final Map<Class, Converter<?>> registeredConverterCacheMap = new ConcurrentHashMap<>();
 
     private ConverterRegistry() {
         //  no-op
@@ -37,29 +40,45 @@ public final class ConverterRegistry {
     /**
      * register custom converter implement.
      */
-    public static void register(Converter<?> converter) {
-        registeredConverterMap.putIfAbsent(converter.getClass(), converter);
+    public static <T> void register(Class<T> actualType, Converter<T> converter) {
+        registeredConverterCacheMap.putIfAbsent(actualType, converter);
     }
 
-    public static void register(Class<? extends Converter> clzOfConverter) throws Exception {
-        registeredConverterMap.putIfAbsent(clzOfConverter, clzOfConverter.getConstructor().newInstance());
+    public static <T> void register(Class<T> actualType, Class<? extends Converter<T>> clzOfConverter, Object... params) {
+        if (Modifier.isAbstract(clzOfConverter.getModifiers())
+                || Modifier.isInterface(clzOfConverter.getModifiers())
+                || clzOfConverter.isAnonymousClass()) {
+            throw new IllegalArgumentException("clazz :" + clzOfConverter.getName() + " must be real class.");
+        }
+        Converter converter = Reflects.newInstance(clzOfConverter, params);
+        if (null == converter) {
+            throw new IllegalArgumentException("clazz :" + clzOfConverter.getName() + " could't new instance.");
+        }
+        registeredConverterCacheMap.putIfAbsent(actualType, converter);
+    }
+
+    public static void unregister(Class<?> actualType) {
+        registeredConverterCacheMap.remove(actualType);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Converter<T> lookup(Class<T> actualType) {
+        return (Converter<T>) registeredConverterCacheMap.get(actualType);
     }
 
     /**
      * look up converter by class.
      */
-    public static Converter<?> lookup(Class<? extends Converter> clz) {
-        Converter converter = registeredConverterMap.get(clz);
+    public static Converter lookupOrDefault(Class<?> actualType, Class<? extends Converter> clzOfConverter) {
+        Converter converter = registeredConverterCacheMap.get(actualType);
         if (converter != null)
             return converter;
         try {
-            Converter impl = clz.getConstructor().newInstance();
-            register(impl);
+            Converter impl = clzOfConverter.getConstructor().newInstance();
+            register(actualType, impl);
             return impl;
         } catch (Exception e) {
-            throw new IllegalArgumentException("clz:" + clz.getName());
+            throw new IllegalArgumentException("clz:" + actualType.getName() + " no such found no args constructor.");
         }
     }
-
-
 }
