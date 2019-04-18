@@ -214,7 +214,7 @@ public class ExcelWorker<T> {
     public <C extends Collection<T>> C toList(TypeRefFactory<C> factory) throws Exception {
         resolveBeanFields(this.clzOfBean);
         C list = factory.newInstance();
-        onLoadExcelSheet(rootPath, clzOfBean, list::add);
+        onLoadExcelSheet(clzOfBean, list::add);
         return list;
     }
 
@@ -227,7 +227,7 @@ public class ExcelWorker<T> {
     public <G, C extends Collection<T>> Map<G, C> toListWithGroup(TypeRefFactory<C> factory, Function<T, G> groupFunc) throws Exception {
         resolveBeanFields(this.clzOfBean);
         Map<G, C> map = new HashMap<>();
-        onLoadExcelSheet(rootPath, clzOfBean, obj -> {
+        onLoadExcelSheet(clzOfBean, obj -> {
             try {
                 Collection<T> list = map.computeIfAbsent(groupFunc.apply(obj), objects -> factory.newInstance());
                 list.add(obj);
@@ -261,7 +261,7 @@ public class ExcelWorker<T> {
     public <K, M extends Map<K, T>> M toMap(TypeRefFactory<M> factory, Function<T, K> func) throws Exception {
         resolveBeanFields(this.clzOfBean);
         M map = factory.newInstance();
-        onLoadExcelSheet(rootPath, clzOfBean, obj -> map.put(func.apply(obj), obj));
+        onLoadExcelSheet(clzOfBean, obj -> map.put(func.apply(obj), obj));
         return map;
     }
 
@@ -278,7 +278,7 @@ public class ExcelWorker<T> {
     public <K, G, M extends Map<K, T>> Map<G, M> toMapWithGroup(TypeRefFactory<M> factory, Function<T, K> keyFunc, Function<T, G> groupFunc) throws Exception {
         resolveBeanFields(this.clzOfBean);
         Map<G, M> result = new HashMap<>();
-        onLoadExcelSheet(rootPath, clzOfBean, obj -> {
+        onLoadExcelSheet(clzOfBean, obj -> {
             try {
                 G groupBy = groupFunc.apply(obj);
                 M map = result.computeIfAbsent(groupBy, objects -> factory.newInstance());
@@ -318,7 +318,7 @@ public class ExcelWorker<T> {
 
     /// </editor-fold>
 
-    public void onLoadExcelSheet(String rootPath, Class<T> clzOfBean, Consumer<T> cellHandler) {
+    public void onLoadExcelSheet(Class<T> clzOfBean, Consumer<T> cellHandler) {
         ExcelSheet annotation = AnnotationUtils.findAnnotation(ExcelSheet.class, clzOfBean);
         if (null == annotation) {
             throw new IllegalArgumentException("class " + clzOfBean + " undefined @ExcelSheet annotation");
