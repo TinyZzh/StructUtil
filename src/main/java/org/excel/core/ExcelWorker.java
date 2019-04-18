@@ -33,6 +33,7 @@ import org.excel.annotation.ExcelSheet;
 import org.excel.util.AnnotationUtils;
 import org.excel.util.ConverterUtil;
 import org.excel.util.ExcelUtil;
+import org.excel.util.Reflects;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -196,7 +197,7 @@ public class ExcelWorker<T> {
         return annotation != null && Object.class != annotation.ref();
     }
 
-    private Optional<Converter<?>> hasCustomConverter(Field field) throws Exception {
+    private Optional<Converter<?>> hasCustomConverter(Field field) {
         Objects.requireNonNull(field);
         ExcelField annotation = field.getAnnotation(ExcelField.class);
         if (annotation == null
@@ -205,10 +206,10 @@ public class ExcelWorker<T> {
                 || Modifier.isAbstract(annotation.converter().getModifiers())
         )
             return Optional.empty();
-        return Optional.of(ConverterRegistry.lookup(annotation.converter()));
+        return Optional.of(ConverterRegistry.lookupOrDefault(field.getType(), annotation.converter()));
     }
 
-    /// Excel
+    /// <editor-fold desc=" Excel Convert Collection "  defaultstate="collapsed">
 
     public <C extends Collection<T>> C toList(TypeRefFactory<C> factory) throws Exception {
         resolveBeanFields(this.clzOfBean);
@@ -315,6 +316,8 @@ public class ExcelWorker<T> {
         }, uniqueKey, groupByKey);
     }
 
+    /// </editor-fold>
+
     public void onLoadExcelSheet(String rootPath, Class<T> clzOfBean, Consumer<T> cellHandler) {
         ExcelSheet annotation = AnnotationUtils.findAnnotation(ExcelSheet.class, clzOfBean);
         if (null == annotation) {
@@ -392,7 +395,7 @@ public class ExcelWorker<T> {
     private T setObjectFieldValue(Class<T> clzOfBean, Row row, Map<Integer, Field> columnFieldMap,
                                   List<Field> unresolvedField, FormulaEvaluator evaluator) {
         try {
-            T obj = clzOfBean.getConstructor().newInstance();
+            T obj = Reflects.newInstance(clzOfBean);
             IntStream.rangeClosed(row.getFirstCellNum(), row.getLastCellNum())
                     .mapToObj(row::getCell)
                     .filter(Objects::nonNull)
