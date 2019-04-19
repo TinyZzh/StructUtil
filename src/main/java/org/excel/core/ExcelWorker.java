@@ -134,11 +134,15 @@ public class ExcelWorker<T> {
         if (annotation.required() && map == null || map.isEmpty()) {
             throw new IllegalArgumentException("unresolved loop dependence. key:" + refFieldKey);
         }
-        ArrayKey keys = getFieldValueArray(obj, annotation.refUniqueKey());
+        String[] refKeys = annotation.refGroupBy().length > 0
+                ? annotation.refGroupBy()
+                : annotation.refUniqueKey();
+        ArrayKey keys = getFieldValueArray(obj, refKeys);
         Object val = map.get(keys);
         if (annotation.required() && val == null) {
-            throw new NoSuchFieldException("unknown dependent field. make sure field's type and name is right. " +
-                    "unique keys:" + Arrays.toString(annotation.refUniqueKey())
+            throw new NoSuchFieldException("unknown dependent field. make sure field's type and name is right. "
+                    + " ref clazz:" + annotation.ref().getName()
+                    + ". map key field's name:" + Arrays.toString(refKeys)
                     + ", actual:" + keys);
         }
         field.set(obj, val);
