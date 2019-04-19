@@ -74,7 +74,7 @@ public final class ConverterRegistry {
         if (converter != null)
             return converter;
         try {
-            Converter impl = clzOfConverter.getConstructor().newInstance();
+            Converter impl = Reflects.newInstance(clzOfConverter);
             register(actualType, impl);
             return impl;
         } catch (Exception e) {

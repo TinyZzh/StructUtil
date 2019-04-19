@@ -27,7 +27,8 @@ targetCompatibility = 1.8
 compileJava.options.setEncoding("UTF-8")
 compileTestJava.options.setEncoding("UTF-8")
 
-//  codecov
+//  <editor-fold desc="   codecov ">
+
 jacocoTestReport {
     additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
     reports {
@@ -41,3 +42,38 @@ jacocoTestReport {
 test {
     finalizedBy jacocoTestReport
 }
+
+/// </editor-fold>
+
+//  <editor-fold desc="   Maven Publish  Local ">
+//  https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:install
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    archiveClassifier = 'sources'
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    archiveClassifier = 'javadoc'
+}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = "excel-util"
+            from components.java
+            //  jar's base name
+//            afterEvaluate {
+//                println "jar.archiveBaseName:" + jar.archiveBaseName
+//                artifactId = jar.archiveBaseName
+//            }
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
+/// </editor-fold>

@@ -32,8 +32,10 @@ public final class Reflects {
      */
     public static <T> T newInstance(Class<T> clazz, Object... params) {
         Constructor<T> constructor = lookupConstructor(clazz, params);
+        //  Notice: the class is nested class or parameter not match
         if (null == constructor)
-            return null;
+            throw new IllegalArgumentException("Couldn't match any constructor. clz:" + clazz + ", params:" + Arrays.toString(params)
+                    + ". make sure not nested class and all params type not primitive type");
         try {
             if (params.length <= 0) {
                 return constructor.newInstance();
