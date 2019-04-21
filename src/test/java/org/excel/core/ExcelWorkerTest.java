@@ -38,10 +38,21 @@ public class ExcelWorkerTest {
 
         private int id;
 
+        /**
+         * if the field's name is equals column's name, the @ExcelField is not necessary.
+         */
+        @ExcelField(name = "name")
         private String name;
 
+        @ExcelField()
         private Double weight;
 
+        /**
+         * this field required's class is {@link Classification}.
+         * So the {@link Classification}'s excel data will be convert to a temp Map collection.
+         * this field's value will be injected from map.
+         * the key is {@link ArrayKey} include total refUniqueKey's value .
+         */
         @ExcelField(ref = Classification.class, refUniqueKey = {"id"})
         private Classification bean;
     }

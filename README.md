@@ -6,9 +6,9 @@
 [![release](https://img.shields.io/github/release/TinyZzh/ExcelUtil.svg)](https://github.com/TinyZzh/ExcelUtil/releases/latest)
 [![wiki](https://img.shields.io/badge/Docs-Wiki-green.svg)](https://github.com/TinyZzh/ExcelUtil/wiki)
 
-Excel转Java Bean工具. 方便策划童鞋配置模板表. 同时降低开发同事的代码开发.
+Excel Convert To Java Bean Utility. 
 
-## 环境要求
+## Requirements
 
     1. Java 8 above
     2. POI 3.x
@@ -19,59 +19,78 @@ dependencies {
 }
 ```         
 
-## 背景描述
-描述几种业务场景.
-供职过的几家公司采用excel的模板表数据转换成json, xml, csv或二进制等中间格式, 再交给程序使用. 主要的问题在以下几点: 
-
-    1. 策划每次需要手动执行转换工具. 转换完成在提交文件. 
-    2. 程序需要开发针对性的Excel转表工具. 增加了工作量. 
-    3. Excel没有很优雅的方式表示“数组Array”、“列表List”、“键值对Map”等程序常用的数据结构.
-    4. Excel表结构检查逻辑非常复杂. 表关联关系检查比较困难. 很容易造成数据漏填导致的问题.
-
-## Excel Util解决的问题
-    1. 策划、程序分离. 策划专注于Excel表单的填写. 程序不再关注模板表的解析
-    2. 使用Annotation的方式实现Excel解析. 在不侵入业务代码的同时, 实现Excel的解析和加载
-    3. 使用ExcelField的ref作为外键索引. 支持Excel跨表解析. 
-    4. 模板表数据加载时. 通过外键索引可以检验模板表数据是否异常, 索引关系是否正确、数据是否缺失.
-    5. 扩展支持更多的数据结构(当前实现的Array, List, Map, Vector，Set等JDK集合容器)
-    6. 自定义扩展点Converter. 支持用户将Excel格式转换为自定义的任意结构
+## Features
+    
+    1. Light. Only two annotation. implement load excel sheet direct convert to Java generic collection.
+    2. Support Java 8's lambda functional. 
+    3. Support Custom type converter. user can register custom converter to overwrite system default.
+    4. Automatically check direct association of Excel sheets. by @ExcelSheet#required
 
 ## Technical Implement Detail
 
-主要包含两个Java Annotation. @ExcelSheet和@ExcelField
+Just include two Java annotation: @ExcelSheet and @ExcelField
 
 ### 1. @ExcelSheet Annotation
-定义Excel模板表对应个Java Bean
+This's annotation use to define the Java mapping bean with your excel sheet.
 
-    1. fileName. 指定Bean对应的Excel文件文件名.
-    2. sheetName. 指定Bean对应的Sheet名称. Excel有多个Sheet, 所以需要指定Sheet Name. 缺省值为Sheet1
+    1. fileName. define the excel file's name will be loaded.
+    2. sheetName. define the excel sheet name will be loaded. 
+    3. startOrder. define the excel sheet first data row start to load. default: 1. (start the second row) 
+    3. endOrder. define the excel sheet last data row start to load.
 
 ### 1. @ExcelField Annotation
-定义Excel模板表对应个Java Bean中的 Field
+This's annotation use to define the Java mapping bean's Field. 
+Use it you can implement custom convert logic to resolve special logic.
 
-    1. name. 明确的指定bean中的字段对应的Excel的列名
-    2. ref. 字段映射的ExcelSheet. 类似于索引. 明确关联另外一个Excel表结构.
-    3. refGroupBy. 映射的目标根据此字段的值进行分组
-    4. refUniqueKey. Map对应根据uniqueKey字段的值作为键值对的key.
-    5. required. 字段是否为必须字段? TRUE时, 字段值必须存在, 字段为映射时, 映射必须存在.
-    6. converter. 自定义转换器转换Excel的值
+    1. name. define the excel column name. 
+    2. ref. this's field is reference object.
+    3. refGroupBy. reference object will be group by ArrayKey[field's value array].
+    4. refUniqueKey. excel data convert to map. the map's key is ArrayKey[field's value array].
+    5. required. if true check this field must exist in excel and the value not NULL.
+    6. converter. definne custom converter. convert special struct by self's converter。
 
 
 ## Examples
 
-### Step 1. Define A Java Bean With Annotation @ExcelSheet. 
+### Step 1. Import Excel-Util Jar into project (build.gradle)
+
+```groovy
+
+dependencies {
+    implementation 'org.excelutil:excel-util:2.0.0'
+}
+//  add the maven repository
+repositories {
+    maven {
+        url "https://raw.github.com/TinyZzh/maven_repository/master/release/"
+    }
+}
+```
+
+### Step 2. Define A Java Bean With Annotation @ExcelSheet. 
 Create class named Animal. every animal has biological classification and some other private attribute.
 Defined the biological classification info in another sheet to reusable use this elements.
 ```java
-@ExcelSheet(fileName = "Animal.xlsx", sheetName = "t_animal_info")
+@ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
 public static class Animal {
 
     private int id;
 
+    /**
+     * if the field's name is equals column's name, the @ExcelField is not necessary.
+     */
+    @ExcelField(name = "name")
     private String name;
 
+    @ExcelField()
     private Double weight;
 
+    /**
+     * this field required's class is {@link Classification}.
+     * So the {@link Classification}'s excel data will be convert to a temp Map collection.
+     * this field's value will be injected from map.
+     * the key is {@link ArrayKey} include total refUniqueKey's value .
+     */
     @ExcelField(ref = Classification.class, refUniqueKey = {"id"})
     private Classification bean;
 }
@@ -88,7 +107,7 @@ public static class Classification {
     private String species;
 }
 ```
-### Step 2. Load Excel Data With Custom Struct
+### Step 3. Load Excel Data With Custom Struct
 
 ```java
 ExcelWorker<Animal> worker = new ExcelWorker<>(rootPath, Animal.class);
