@@ -18,7 +18,7 @@
 
 package org.excel.annotation;
 
-import org.excel.core.ExcelWorker;
+import org.excel.core.ExcelExportStrategy;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -48,14 +48,21 @@ public @interface ExcelSheet {
     String sheetName() default "Sheet1";
 
     /**
-     * @return the first row's order of excel. {@link ExcelWorker} will load
+     * @return the first row's order of excel. {@link org.excel.core.ExcelWorker} will load
      * from startOrder to endOrder. default 1. it is means from the second row
      */
     int startOrder() default 1;
 
     /**
-     * @return the last row's order of excel. {@link ExcelWorker} will load
+     * @return the last row's order of excel. {@link org.excel.core.ExcelWorker} will load
      * from startOrder to endOrder. default -1. it is means ths real excel's last row.
      */
     int endOrder() default -1;
+
+    /**
+     * the excel sheet export strategy.
+     *
+     * @return the excel sheet's export strategy. default is auto.
+     */
+    ExcelExportStrategy exportStrategy() default ExcelExportStrategy.AUTO;
 }

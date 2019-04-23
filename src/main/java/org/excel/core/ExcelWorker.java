@@ -18,28 +18,15 @@
 
 package org.excel.core;
 
-import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.excel.annotation.ExcelField;
 import org.excel.annotation.ExcelSheet;
 import org.excel.util.AnnotationUtils;
 import org.excel.util.ConverterUtil;
 import org.excel.util.ExcelUtil;
-import org.excel.util.Reflects;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,31 +38,28 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
- * ExcelWorker
- *
  * @param <T>
  */
-public class ExcelWorker<T> {
+public abstract class ExcelWorker<T> {
 
     /**
      * the working space path.
      */
-    private String rootPath;
+    protected String rootPath;
     /**
      *
      */
-    private final Class<T> clzOfBean;
+    protected final Class<T> clzOfBean;
     /**
      * {@link #clzOfBean}'s all field.
      */
-    private Map<String, Field> beanFieldMap = new HashMap<>();
+    protected Map<String, Field> beanFieldMap = new HashMap<>();
     /**
      *
      */
-    private Map<String, Map<Object, Object>> refFieldValueMap;
+    protected Map<String, Map<Object, Object>> refFieldValueMap;
 
     public ExcelWorker(String rootPath, Class<T> clzOfBean) {
         this(rootPath, clzOfBean, new HashMap<>());
@@ -87,15 +71,9 @@ public class ExcelWorker<T> {
         this.refFieldValueMap = refFieldValueMap;
     }
 
-    public static <D> ExcelWorker<D> of(String rootPath, Class<D> clzOfBean) {
-        return new ExcelWorker<>(rootPath, clzOfBean);
-    }
+    /// <editor-fold desc="   Protected Methods    ">
 
-    public static <D> ExcelWorker<D> of(String rootPath, Class<D> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
-        return new ExcelWorker<>(rootPath, clzOfBean, refFieldValueMap);
-    }
-
-    private void tryResolveFieldRef(Field field) throws Exception {
+    protected void tryResolveFieldRef(Field field) throws Exception {
         ExcelField annotation = field.getAnnotation(ExcelField.class);
         if (annotation == null || Object.class == annotation.ref()) {
             return;
@@ -105,7 +83,7 @@ public class ExcelWorker<T> {
             throw new RuntimeException("loop dependent with key:" + key);
         }
         Class<?> targetType = field.getType();
-        ExcelWorker<?> subWorker = new ExcelWorker<>(this.rootPath, annotation.ref(), this.refFieldValueMap);
+        ExcelWorker<?> subWorker = ExcelUtil.newWorker(this.rootPath, annotation.ref(), this.refFieldValueMap);
         if (targetType.isArray()) {
             Map<Object, ?> map = subWorker.toListWithGroup(ArrayList::new, annotation.refGroupBy());
             Map<Object, Object> collect = map.entrySet().stream()
@@ -125,7 +103,7 @@ public class ExcelWorker<T> {
         }
     }
 
-    private void setRefFieldValue(Object obj, Field field) throws Exception {
+    protected void setRefFieldValue(Object obj, Field field) throws Exception {
         ExcelField annotation = field.getAnnotation(ExcelField.class);
         if (annotation == null)
             return;
@@ -148,15 +126,11 @@ public class ExcelWorker<T> {
         field.set(obj, val);
     }
 
-    private String getRefFieldKey(Field field, ExcelField annotation) {
+    protected String getRefFieldKey(Field field, ExcelField annotation) {
         return annotation.ref().getName() + ":" + resolveColumnName(field);
     }
 
-    public <C extends Collection<T>> C load(TypeRefFactory<C> factory) throws Exception {
-        return this.toList(factory);
-    }
-
-    private ArrayKey getFieldValueArray(Object src, String[] refKeys) throws Exception {
+    protected ArrayKey getFieldValueArray(Object src, String[] refKeys) throws Exception {
         Object[] ary = new Object[refKeys.length];
         for (int i = 0; i < refKeys.length; i++) {
             Field keyField = beanFieldMap.get(refKeys[i].toLowerCase());
@@ -170,7 +144,7 @@ public class ExcelWorker<T> {
         return new ArrayKey(ary);
     }
 
-    private Map<String, Field> resolveBeanFields(Class<?> clzBean) throws Exception {
+    protected Map<String, Field> resolveBeanFields(Class<?> clzBean) throws Exception {
         final Map<String, Field> map = new HashMap<>();
         Field[] fields = clzBean.getDeclaredFields();
         for (Field field : fields) {
@@ -185,7 +159,7 @@ public class ExcelWorker<T> {
         return map;
     }
 
-    private String resolveColumnName(Field field) {
+    protected String resolveColumnName(Field field) {
         ExcelField property = field.getAnnotation(ExcelField.class);
         if (property != null) {
             if (!property.name().isEmpty()) {
@@ -195,13 +169,13 @@ public class ExcelWorker<T> {
         return field.getName();
     }
 
-    private boolean isReferenceField(Field field) {
+    protected boolean isReferenceField(Field field) {
         Objects.requireNonNull(field);
         ExcelField annotation = field.getAnnotation(ExcelField.class);
         return annotation != null && Object.class != annotation.ref();
     }
 
-    private Optional<Converter<?>> hasCustomConverter(Field field) {
+    protected Optional<Converter<?>> hasCustomConverter(Field field) {
         Objects.requireNonNull(field);
         ExcelField annotation = field.getAnnotation(ExcelField.class);
         if (annotation == null
@@ -213,7 +187,46 @@ public class ExcelWorker<T> {
         return Optional.of(ConverterRegistry.lookupOrDefault(field.getType(), annotation.converter()));
     }
 
+    protected void setObjectFieldValue(Object instance, String fileName, int columnIndex, Object formattedValue) {
+        try {
+            Field field = beanFieldMap.get(fileName);
+            if (field != null) {
+                Optional<Converter<?>> optional = hasCustomConverter(field);
+                if (optional.isPresent()) {
+                    field.set(instance, optional.get().apply(formattedValue));
+                } else if (isReferenceField(field)) {
+                    setRefFieldValue(instance, field);
+                } else {
+                    field.set(instance, ConverterUtil.covert(formattedValue, field.getType()));
+                }
+            }
+        } catch (Exception e) {
+            String msg = "cell column index:" + columnIndex + ", msg:" + e.getMessage();
+            throw new RuntimeException(msg, e);
+        }
+    }
+
+    protected void afterObjectSetCompleted(Object instance) {
+        try {
+            // resolve reference field.
+            List<Field> unresolvedField = beanFieldMap.values().stream()
+                    .filter(this::isReferenceField)
+                    .collect(Collectors.toList());
+            for (Field field : unresolvedField) {
+                setRefFieldValue(instance, field);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /// </editor-fold>
+
     /// <editor-fold desc=" Excel Convert Collection "  defaultstate="collapsed">
+
+    public <C extends Collection<T>> C load(TypeRefFactory<C> factory) throws Exception {
+        return this.toList(factory);
+    }
 
     public <C extends Collection<T>> C toList(TypeRefFactory<C> factory) throws Exception {
         resolveBeanFields(this.clzOfBean);
@@ -322,122 +335,17 @@ public class ExcelWorker<T> {
 
     /// </editor-fold>
 
+    protected abstract void onLoadExcelSheetImpl(Consumer<T> cellHandler, ExcelSheet annotation, File file);
+
     public void onLoadExcelSheet(Class<T> clzOfBean, Consumer<T> cellHandler) {
         ExcelSheet annotation = AnnotationUtils.findAnnotation(ExcelSheet.class, clzOfBean);
-        if (null == annotation) {
-            throw new IllegalArgumentException("class " + clzOfBean + " undefined @ExcelSheet annotation");
-        }
-        String filePath = resolveFilePath(annotation);
+        ExcelUtil.checkMissingExcelSheetAnnotation(annotation, clzOfBean);
+        String filePath = ExcelUtil.resolveFilePath(this.rootPath, annotation);
         File file = new File(filePath);
         if (!file.exists()) {
             throw new IllegalArgumentException("file not exists. path: " + filePath);
         }
-        try (FileInputStream fis = new FileInputStream(filePath)) {
-            Workbook wb = WorkbookFactory.create(fis);
-            Sheet sheet = wb.getSheet(annotation.sheetName());
 
-            Row headRow = sheet.getRow(sheet.getFirstRowNum());
-            Map<Integer, Field> columnFieldMap = resolveExcelColumnToField(headRow);
-            // resolve reference field.
-            List<Field> unresolvedField = this.beanFieldMap.values().stream()
-                    .filter(this::isReferenceField)
-                    .collect(Collectors.toList());
-            FormulaEvaluator evaluator = getFormulaEvaluator(file, wb);
-            IntStream.rangeClosed(getFirstRowOrder(annotation, sheet), getLastRowOrder(annotation, sheet))
-                    .mapToObj(sheet::getRow)
-                    .filter(Objects::nonNull)
-                    .map(cells -> setObjectFieldValue(clzOfBean, cells, columnFieldMap, unresolvedField, evaluator))
-                    .forEach(cellHandler);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Resolve excel file's path.
-     * 1. classpath:   the path is class's path
-     */
-    private String resolveFilePath(ExcelSheet annotation) {
-        if (this.rootPath.startsWith("classpath:")) {
-            String path = this.rootPath.substring(this.rootPath.indexOf(":") + 1) + "/" + annotation.fileName();
-            URL resource = ExcelWorker.class.getResource(path);
-            return resource == null
-                    ? (this.rootPath + (this.rootPath.endsWith("/") ? "" : "/") + annotation.fileName())
-                    : resource.getPath();
-        } else if (this.rootPath.startsWith("file:")) {
-            return this.rootPath.substring(this.rootPath.indexOf(":") + 1) + "/" + annotation.fileName();
-        } else {
-            return this.rootPath + "/" + annotation.fileName();
-        }
-    }
-
-    /**
-     * @return return the excel sheet formula evaluator by file's name.
-     */
-    private FormulaEvaluator getFormulaEvaluator(File file, Workbook wb) {
-        if (file.getName().toLowerCase().endsWith("xlsx")) {
-            return new XSSFFormulaEvaluator((XSSFWorkbook) wb);
-        } else {
-            return new HSSFFormulaEvaluator((HSSFWorkbook) wb);
-        }
-    }
-
-    private int getFirstRowOrder(ExcelSheet annotation, Sheet sheet) {
-        if (annotation.startOrder() < 0) {
-            return sheet.getFirstRowNum();
-        }
-        return Math.max(annotation.startOrder(), sheet.getFirstRowNum());
-    }
-
-    private int getLastRowOrder(ExcelSheet annotation, Sheet sheet) {
-        if (annotation.endOrder() < 0) {
-            return sheet.getLastRowNum();
-        }
-        return Math.min(annotation.endOrder(), sheet.getLastRowNum());
-    }
-
-    private T setObjectFieldValue(Class<T> clzOfBean, Row row, Map<Integer, Field> columnFieldMap,
-                                  List<Field> unresolvedField, FormulaEvaluator evaluator) {
-        try {
-            T obj = Reflects.newInstance(clzOfBean);
-            IntStream.rangeClosed(row.getFirstCellNum(), row.getLastCellNum())
-                    .mapToObj(row::getCell)
-                    .filter(Objects::nonNull)
-                    .forEach(cell -> {
-                        try {
-                            Field field = columnFieldMap.get(cell.getColumnIndex());
-                            if (field != null) {
-                                Optional<Converter<?>> optional = hasCustomConverter(field);
-                                if (optional.isPresent()) {
-                                    field.set(obj, optional.get().apply(ExcelUtil.getExcelCellValue(cell.getCellTypeEnum(), cell, evaluator)));
-                                } else if (isReferenceField(field)) {
-                                    this.setRefFieldValue(obj, field);
-                                } else {
-                                    field.set(obj, ConverterUtil.covert(ExcelUtil.getExcelCellValue(cell.getCellTypeEnum(), cell, evaluator), field.getType()));
-                                }
-                            }
-                        } catch (Exception e) {
-                            String msg = "cell column index:" + cell.getColumnIndex() + ", msg:" + e.getMessage();
-                            throw new RuntimeException(msg, e);
-                        }
-                    });
-            for (Field field : unresolvedField) {
-                this.setRefFieldValue(obj, field);
-            }
-            return obj;
-        } catch (Exception e) {
-            throw new RuntimeException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
-        }
-    }
-
-    private Map<Integer, Field> resolveExcelColumnToField(Row headRow) {
-        final Map<Integer, Field> map = new HashMap<>();
-        for (Cell cell : headRow) {
-            Field field = this.beanFieldMap.get(cell.getStringCellValue().toLowerCase().trim());
-            if (null != field) {
-                map.put(cell.getColumnIndex(), field);
-            }
-        }
-        return map;
+        onLoadExcelSheetImpl(cellHandler, annotation, file);
     }
 }

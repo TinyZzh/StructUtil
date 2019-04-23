@@ -22,9 +22,15 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.excel.annotation.ExcelSheet;
+import org.excel.core.ExcelWorker;
+import org.excel.core.XlsxSaxWorker;
+import org.excel.core.ExcelUserModelWorker;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +46,57 @@ public final class ExcelUtil {
 
     private ExcelUtil() {
         //  no-op
+    }
+
+    public static <T> ExcelWorker<T> newWorker(String rootPath, Class<T> clzOfBean) {
+        return newWorker(rootPath, clzOfBean, new HashMap<>());
+    }
+
+    public static <T> ExcelWorker<T> newWorker(String rootPath, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
+        ExcelSheet annotation = AnnotationUtils.findAnnotation(ExcelSheet.class, clzOfBean);
+        checkMissingExcelSheetAnnotation(annotation, clzOfBean);
+        switch (annotation.exportStrategy()) {
+            case USER_MODEL:
+                return new ExcelUserModelWorker<>(rootPath, clzOfBean, refFieldValueMap);
+            case EVENT_MODEL:
+                return new XlsxSaxWorker<>(rootPath, clzOfBean, refFieldValueMap);
+            case AUTO:
+                File file = new File(resolveFilePath(rootPath, annotation));
+                if (file.exists() && file.canRead()) {
+                    //  file large than 1mb
+                    if (file.length() > 1048576) {
+                        return new XlsxSaxWorker<>(rootPath, clzOfBean, refFieldValueMap);
+                    } else {
+                        return new ExcelUserModelWorker<>(rootPath, clzOfBean, refFieldValueMap);
+                    }
+                }
+        }
+        //  default
+        return new XlsxSaxWorker<>(rootPath, clzOfBean, refFieldValueMap);
+    }
+
+    public static void checkMissingExcelSheetAnnotation(ExcelSheet annotation, Class<?> clz) {
+        if (null == annotation){
+            throw new IllegalArgumentException("class: " + clz + " undefined @ExcelSheet annotation");
+        }
+    }
+
+    /**
+     * Resolve excel file's path.
+     * 1. classpath:   the path is class's path
+     */
+    public static String resolveFilePath(String filepath, ExcelSheet annotation) {
+        if (filepath.startsWith("classpath:")) {
+            String path = filepath.substring(filepath.indexOf(":") + 1) + "/" + annotation.fileName();
+            URL resource = ExcelWorker.class.getResource(path);
+            return resource == null
+                    ? (filepath + (filepath.endsWith("/") ? "" : "/") + annotation.fileName())
+                    : resource.getPath();
+        } else if (filepath.startsWith("file:")) {
+            return filepath.substring(filepath.indexOf(":") + 1) + "/" + annotation.fileName();
+        } else {
+            return filepath + "/" + annotation.fileName();
+        }
     }
 
     private static <T, C extends Collection<T>> C newList(Class<C> clzOfList) throws Exception {
