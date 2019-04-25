@@ -40,7 +40,7 @@ jacocoTestReport {
 }
 
 test {
-    ignorefailures = true
+    ignoreFailures  = true
     finalizedBy jacocoTestReport
 }
 
