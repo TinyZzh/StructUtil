@@ -96,10 +96,9 @@ public class XlsxSaxWorker<T> extends ExcelWorker<T> {
                         }
                     }
                 } catch (EndOfExcelSheetException e) {
-                    // no-op
+                    // row num large than endOrder. stop to load excel sheet.
                 }
             }
-
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -158,7 +157,7 @@ public class XlsxSaxWorker<T> extends ExcelWorker<T> {
 
         @Override
         public void headerFooter(String text, boolean isHeader, String tagName) {
-//            System.out.println();
+            //  no-op
         }
 
         public void setFirstRow(int firstRow) {
