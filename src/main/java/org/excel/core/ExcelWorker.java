@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,10 +60,6 @@ public abstract class ExcelWorker<T> {
      */
     protected Map<String, Map<Object, Object>> refFieldValueMap;
 
-    public ExcelWorker(String rootPath, Class<T> clzOfBean) {
-        this(rootPath, clzOfBean, new HashMap<>());
-    }
-
     public ExcelWorker(String rootPath, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
         this.rootPath = rootPath;
         this.clzOfBean = clzOfBean;
@@ -87,7 +82,7 @@ public abstract class ExcelWorker<T> {
         if (targetType.isArray()) {
             Map<Object, ?> map = subWorker.toListWithGroup(ArrayList::new, annotation.refGroupBy());
             Map<Object, Object> collect = map.entrySet().stream()
-                    .filter(entry -> entry instanceof Collection)
+                    .filter(entry -> entry.getValue() instanceof Collection)
                     .map(entry -> new Object[]{entry.getKey(), ((Collection) entry.getValue()).toArray()})
                     .collect(Collectors.toMap(o -> o[0], o -> o[1]));
             refFieldValueMap.put(key, collect);
@@ -105,8 +100,6 @@ public abstract class ExcelWorker<T> {
 
     protected void setRefFieldValue(Object obj, Field field) throws Exception {
         ExcelField annotation = field.getAnnotation(ExcelField.class);
-        if (annotation == null)
-            return;
         String refFieldKey = getRefFieldKey(field, annotation);
         Map<Object, Object> map = refFieldValueMap.get(refFieldKey);
         if (annotation.required() && map == null || map.isEmpty()) {
@@ -122,6 +115,10 @@ public abstract class ExcelWorker<T> {
                     + " ref clazz:" + annotation.ref().getName()
                     + ". map key field's name:" + Arrays.toString(refKeys)
                     + ", actual:" + keys);
+        }
+        if (val != null
+                && val.getClass().isArray()) {
+            val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) field.getType());
         }
         field.set(obj, val);
     }
@@ -207,17 +204,16 @@ public abstract class ExcelWorker<T> {
     }
 
     protected void afterObjectSetCompleted(Object instance) {
-        try {
-            // resolve reference field.
-            List<Field> unresolvedField = beanFieldMap.values().stream()
-                    .filter(this::isReferenceField)
-                    .collect(Collectors.toList());
-            for (Field field : unresolvedField) {
-                setRefFieldValue(instance, field);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        // resolve reference field.
+        beanFieldMap.values().stream()
+                .filter(this::isReferenceField)
+                .forEach(field -> {
+                    try {
+                        setRefFieldValue(instance, field);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                });
     }
 
     /// </editor-fold>
