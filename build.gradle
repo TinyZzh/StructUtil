@@ -13,8 +13,8 @@ repositories {
 }
 
 dependencies {
-    compile 'org.apache.poi:poi:3.16'
-    compile 'org.apache.poi:poi-ooxml:3.16'
+    compile 'org.apache.poi:poi:3.17'
+    compile 'org.apache.poi:poi-ooxml:3.17'
 
     testCompile("org.mockito:mockito-core:2.25.0")
     testCompile("junit:junit:4.12")
