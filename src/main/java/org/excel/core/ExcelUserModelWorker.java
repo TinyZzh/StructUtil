@@ -66,15 +66,11 @@ public class ExcelUserModelWorker<T> extends ExcelWorker<T> {
 
             Row headRow = sheet.getRow(sheet.getFirstRowNum());
             Map<Integer, String> columnFieldMap = resolveExcelColumnToField(headRow);
-            // resolve reference field.
-            List<Field> unresolvedField = this.beanFieldMap.values().stream()
-                    .filter(super::isReferenceField)
-                    .collect(Collectors.toList());
             FormulaEvaluator evaluator = getFormulaEvaluator(file, wb);
             IntStream.rangeClosed(getFirstRowOrder(annotation, sheet), getLastRowOrder(annotation, sheet))
                     .mapToObj(sheet::getRow)
                     .filter(Objects::nonNull)
-                    .map(cells -> setObjectFieldValue(clzOfBean, cells, columnFieldMap, unresolvedField, evaluator))
+                    .map(cells -> setObjectFieldValue(clzOfBean, cells, columnFieldMap, evaluator))
                     .forEach(cellHandler);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -107,7 +103,7 @@ public class ExcelUserModelWorker<T> extends ExcelWorker<T> {
     }
 
     private T setObjectFieldValue(Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
-                                  List<Field> unresolvedField, FormulaEvaluator evaluator) {
+                                  FormulaEvaluator evaluator) {
         try {
             T obj = Reflects.newInstance(clzOfBean);
             IntStream.rangeClosed(row.getFirstCellNum(), row.getLastCellNum())
