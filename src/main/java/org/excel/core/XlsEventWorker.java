@@ -18,7 +18,6 @@
 
 package org.excel.core;
 
-import org.apache.poi.hssf.eventusermodel.EventWorkbookBuilder;
 import org.apache.poi.hssf.eventusermodel.FormatTrackingHSSFListener;
 import org.apache.poi.hssf.eventusermodel.HSSFEventFactory;
 import org.apache.poi.hssf.eventusermodel.HSSFListener;
@@ -26,7 +25,6 @@ import org.apache.poi.hssf.eventusermodel.HSSFRequest;
 import org.apache.poi.hssf.eventusermodel.MissingRecordAwareHSSFListener;
 import org.apache.poi.hssf.eventusermodel.dummyrecord.LastCellOfRowDummyRecord;
 import org.apache.poi.hssf.eventusermodel.dummyrecord.MissingCellDummyRecord;
-import org.apache.poi.hssf.model.HSSFFormulaParser;
 import org.apache.poi.hssf.record.BOFRecord;
 import org.apache.poi.hssf.record.BlankRecord;
 import org.apache.poi.hssf.record.BoolErrRecord;
@@ -40,16 +38,12 @@ import org.apache.poi.hssf.record.RKRecord;
 import org.apache.poi.hssf.record.Record;
 import org.apache.poi.hssf.record.SSTRecord;
 import org.apache.poi.hssf.record.StringRecord;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.excel.annotation.ExcelSheet;
+import org.excel.exception.EndOfExcelSheetException;
+import org.excel.util.Reflects;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,17 +65,18 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
 
     @Override
     protected void onLoadExcelSheetImpl(Consumer<T> cellHandler, ExcelSheet annotation, File file) {
-        try {
-            POIFSFileSystem poifs = new POIFSFileSystem(file);
-            // get the Workbook (excel part) stream in a InputStream
-            InputStream din = poifs.createDocumentInputStream("Workbook");
+        try (POIFSFileSystem fs = new POIFSFileSystem(file)) {
+            //
+            XlsListener<T> listener = new XlsListener<>(this, annotation.sheetName(), cellHandler);
 
-            HSSFRequest req = new HSSFRequest();
-
+            HSSFRequest request = new HSSFRequest();
+            request.addListenerForAllRecords(listener.getFormatListener());
             HSSFEventFactory factory = new HSSFEventFactory();
-            factory.processEvents(req, din);
-
-
+            try {
+                factory.processWorkbookEvents(request, fs);
+            } catch (EndOfExcelSheetException e) {
+                //  end of load.
+            }
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -90,36 +85,34 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
     /**
      * See <a href="http://svn.apache.org/repos/asf/poi/trunk/src/examples/src/org/apache/poi/hssf/eventusermodel/examples/XLS2CSVmra.java">XLS2CSVmra</a>
      */
-    public static class XlsListener implements HSSFListener {
+    public static class XlsListener<T> implements HSSFListener {
 
-        private int minColumns;
-        private POIFSFileSystem fs;
-        private PrintStream output;
+        private XlsEventWorker<T> worker;
+
+        private String targetSheetName;
+        /**
+         * current sheet data.
+         */
+        private BoundSheetRecord curSheet;
+        /**
+         * column - field name
+         */
+        private Map<Integer, String> headRowMap = new HashMap<>();
+
+        private boolean isFirstRow = true;
+        private int firstRow = 0;
+        private int lastRow = -1;
+
+        private T curInstance;
+
+        private Consumer<T> objHandler;
 
         private int lastRowNumber;
         private int lastColumnNumber;
 
-        /**
-         * Should we output the formula, or the value it has?
-         */
-        private boolean outputFormulaValues = true;
-
-        /**
-         * For parsing Formulas
-         */
-        private EventWorkbookBuilder.SheetRecordCollectingListener workbookBuildingListener;
-        private HSSFWorkbook stubWorkbook;
-
         // Records we pick up as we process
         private SSTRecord sstRecord;
         private FormatTrackingHSSFListener formatListener;
-
-        /**
-         * So we known which sheet we're on
-         */
-        private int sheetIndex = -1;
-        private BoundSheetRecord[] orderedBSRs;
-        private List<BoundSheetRecord> boundSheetRecords = new ArrayList<>();
 
         // For handling formulas with string results
         private int nextRow;
@@ -127,49 +120,25 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
         private boolean outputNextStringRecord;
 
         /**
-         * Creates a new XLS -> CSV converter
-         *
-         * @param fs         The POIFSFileSystem to process
-         * @param output     The PrintStream to output the CSV to
-         * @param minColumns The minimum number of columns to output, or -1 for no minimum
+         * Main HSSFListener method, processes events, and outputs the CSV as the file is processed.
          */
-        public XlsListener(POIFSFileSystem fs, PrintStream output, int minColumns) {
-            this.fs = fs;
-            this.output = output;
-            this.minColumns = minColumns;
-        }
+        private int sheetIndex;
+        private BoundSheetRecord[] orderedBSRs;
+        private List<BoundSheetRecord> boundSheetRecords = new ArrayList<BoundSheetRecord>();
 
         /**
-         * Creates a new XLS -> CSV converter
-         *
-         * @param filename   The file to process
-         * @param minColumns The minimum number of columns to output, or -1 for no minimum
+         * @param worker
+         * @param targetSheetName
+         * @param objHandler
          */
-        public XlsListener(String filename, int minColumns) throws IOException, FileNotFoundException {
-            this(
-                    new POIFSFileSystem(new FileInputStream(filename)),
-                    System.out, minColumns
-            );
-        }
+        public XlsListener(XlsEventWorker<T> worker, String targetSheetName, Consumer<T> objHandler) {
+            this.worker = worker;
+            this.targetSheetName = targetSheetName;
+            this.objHandler = objHandler;
 
-        /**
-         * Initiates the processing of the XLS file to CSV
-         */
-        public void process() throws IOException {
+            //
             MissingRecordAwareHSSFListener listener = new MissingRecordAwareHSSFListener(this);
             formatListener = new FormatTrackingHSSFListener(listener);
-
-            HSSFEventFactory factory = new HSSFEventFactory();
-            HSSFRequest request = new HSSFRequest();
-
-            if (outputFormulaValues) {
-                request.addListenerForAllRecords(formatListener);
-            } else {
-                workbookBuildingListener = new EventWorkbookBuilder.SheetRecordCollectingListener(formatListener);
-                request.addListenerForAllRecords(workbookBuildingListener);
-            }
-
-            factory.processWorkbookEvents(request, fs);
         }
 
         @Override
@@ -180,36 +149,27 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
 
             switch (record.getSid()) {
                 case BoundSheetRecord.sid:
-                    boundSheetRecords.add((BoundSheetRecord) record);
+                    boundSheetRecords.add((BoundSheetRecord)record);
                     break;
                 case BOFRecord.sid:
-                    BOFRecord br = (BOFRecord) record;
+                    BOFRecord br = (BOFRecord)record;
                     if (br.getType() == BOFRecord.TYPE_WORKSHEET) {
-                        // Create sub workbook if required
-                        if (workbookBuildingListener != null && stubWorkbook == null) {
-                            stubWorkbook = workbookBuildingListener.getStubHSSFWorkbook();
-                        }
-
-                        // Output the worksheet name
-                        // Works by ordering the BSRs by the location of
-                        //  their BOFRecords, and then knowing that we
-                        //  process BOFRecords in byte offset order
-                        sheetIndex++;
                         if (orderedBSRs == null) {
                             orderedBSRs = BoundSheetRecord.orderByBofPosition(boundSheetRecords);
                         }
-                        output.println();
-                        output.println(
-                                orderedBSRs[sheetIndex].getSheetname() +
-                                        " [" + (sheetIndex + 1) + "]:"
-                        );
+                        sheetIndex++;
+
+                        if (targetSheetName.equalsIgnoreCase(orderedBSRs[sheetIndex - 1].getSheetname())) {
+                            //  start to read sheet we wanted.
+                            this.curSheet = orderedBSRs[sheetIndex - 1];
+                        } else {
+                            this.curSheet = null;
+                        }
                     }
                     break;
-
                 case SSTRecord.sid:
                     sstRecord = (SSTRecord) record;
                     break;
-
                 case BlankRecord.sid:
                     BlankRecord brec = (BlankRecord) record;
 
@@ -224,26 +184,19 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
                     thisColumn = berec.getColumn();
                     thisStr = "";
                     break;
-
                 case FormulaRecord.sid:
                     FormulaRecord frec = (FormulaRecord) record;
 
                     thisRow = frec.getRow();
                     thisColumn = frec.getColumn();
-
-                    if (outputFormulaValues) {
-                        if (Double.isNaN(frec.getValue())) {
-                            // Formula result is a string
-                            // This is stored in the next record
-                            outputNextStringRecord = true;
-                            nextRow = frec.getRow();
-                            nextColumn = frec.getColumn();
-                        } else {
-                            thisStr = formatListener.formatNumberDateCell(frec);
-                        }
+                    if (Double.isNaN(frec.getValue())) {
+                        // Formula result is a string
+                        // This is stored in the next record
+                        outputNextStringRecord = true;
+                        nextRow = frec.getRow();
+                        nextColumn = frec.getColumn();
                     } else {
-                        thisStr = '"' +
-                                HSSFFormulaParser.toFormulaString(stubWorkbook, frec.getParsedExpression()) + '"';
+                        thisStr = formatListener.formatNumberDateCell(frec);
                     }
                     break;
                 case StringRecord.sid:
@@ -256,13 +209,12 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
                         outputNextStringRecord = false;
                     }
                     break;
-
                 case LabelRecord.sid:
                     LabelRecord lrec = (LabelRecord) record;
 
                     thisRow = lrec.getRow();
                     thisColumn = lrec.getColumn();
-                    thisStr = '"' + lrec.getValue() + '"';
+                    thisStr = lrec.getValue();
                     break;
                 case LabelSSTRecord.sid:
                     LabelSSTRecord lsrec = (LabelSSTRecord) record;
@@ -270,9 +222,9 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
                     thisRow = lsrec.getRow();
                     thisColumn = lsrec.getColumn();
                     if (sstRecord == null) {
-                        thisStr = '"' + "(No SST Record, can't identify string)" + '"';
+                        thisStr = "";
                     } else {
-                        thisStr = '"' + sstRecord.getString(lsrec.getSSTIndex()).toString() + '"';
+                        thisStr = sstRecord.getString(lsrec.getSSTIndex()).toString();
                     }
                     break;
                 case NoteRecord.sid:
@@ -297,7 +249,7 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
 
                     thisRow = rkrec.getRow();
                     thisColumn = rkrec.getColumn();
-                    thisStr = '"' + "(TODO)" + '"';
+                    thisStr = "";
                     break;
                 default:
                     break;
@@ -306,6 +258,10 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
             // Handle new row
             if (thisRow != -1 && thisRow != lastRowNumber) {
                 lastColumnNumber = -1;
+
+                if (thisRow >= this.firstRow) {
+                    curInstance = Reflects.newInstance(worker.clzOfBean);
+                }
             }
 
             // Handle missing column
@@ -318,10 +274,7 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
 
             // If we got something to print out, do so
             if (thisStr != null) {
-                if (thisColumn > 0) {
-                    output.print(',');
-                }
-                output.print(thisStr);
+                setObjectFieldValue(thisRow, thisColumn, thisStr);
             }
 
             // Update column and row count
@@ -332,23 +285,32 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
 
             // Handle end of row
             if (record instanceof LastCellOfRowDummyRecord) {
-                // Print out any missing commas if needed
-                if (minColumns > 0) {
-                    // Columns are 0 based
-                    if (lastColumnNumber == -1) {
-                        lastColumnNumber = 0;
-                    }
-                    for (int i = lastColumnNumber; i < (minColumns); i++) {
-                        output.print(',');
-                    }
-                }
-
                 // We're onto a new row
                 lastColumnNumber = -1;
 
                 // End the row
-                output.println();
+                if (!this.isFirstRow && curInstance != null) {
+                    worker.afterObjectSetCompleted(curInstance);
+                    this.objHandler.accept(curInstance);
+                    this.curInstance = null;
+                }
+                this.isFirstRow = false;
+
+                if (this.lastRow >= 0 && thisRow >= this.lastRow)
+                    throw new EndOfExcelSheetException();
             }
+        }
+
+        private void setObjectFieldValue(int curRow, int columnIndex, String value) {
+            if (isFirstRow) {
+                headRowMap.put(columnIndex, value.toLowerCase().trim());
+            } else if (curInstance != null) {
+                worker.setObjectFieldValue(curInstance, headRowMap.get(columnIndex), columnIndex, value);
+            }
+        }
+
+        public FormatTrackingHSSFListener getFormatListener() {
+            return formatListener;
         }
     }
 }

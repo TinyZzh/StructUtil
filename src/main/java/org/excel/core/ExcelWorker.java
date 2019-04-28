@@ -66,7 +66,7 @@ public abstract class ExcelWorker<T> {
         this.refFieldValueMap = refFieldValueMap;
     }
 
-    /// <editor-fold desc="   Protected Methods    ">
+    /// <editor-fold desc="   Protected Methods    "  defaultstate="collapsed">
 
     protected void tryResolveFieldRef(Field field) throws Exception {
         ExcelField annotation = field.getAnnotation(ExcelField.class);
