@@ -70,7 +70,7 @@ public class ConverterUtilTest {
                 new Object[] {Integer.MAX_VALUE + 1L, Integer.class},
                 new Object[] {Integer.MIN_VALUE - 1L, Integer.class},
                 new Object[] {BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), Long.class},
-                new Object[] {BigInteger.valueOf(Long.MAX_VALUE).subtract(BigInteger.ONE), Long.class}
+                new Object[] {BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), Long.class}
         )) {
             try {
                 Assert.assertEquals(1.0D, ConverterUtil.covert(objs[0], (Class) objs[1]));
