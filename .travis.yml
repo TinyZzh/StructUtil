@@ -3,8 +3,8 @@ env:
   global:
     - CODECOV_TOKEN=28627f9d-cc37-4651-a0c7-731a3370d5c1
 jdk:
-  - openjdk11
   - openjdk8
+  - openjdk11
 
 branches:
   only:
