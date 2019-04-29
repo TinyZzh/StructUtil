@@ -151,12 +151,21 @@ public final class ExcelUtil {
             case BLANK:
                 return "";
             case NUMERIC:
+                Double numeric;
                 if (cell instanceof Cell)
-                    return ((Cell) cell).getNumericCellValue();
+                    numeric = ((Cell) cell).getNumericCellValue();
                 else if (cell instanceof CellValue)
-                    return ((CellValue) cell).getNumberValue();
+                    numeric = ((CellValue) cell).getNumberValue();
                 else
-                    return 0.0D;
+                    numeric = 0.0D;
+                if (numeric == numeric.longValue()) {
+                    if (numeric.longValue() > Integer.MAX_VALUE) {
+                        return numeric.longValue();
+                    } else
+                        return numeric.intValue();
+                } else {
+                    return numeric;
+                }
             case STRING:
                 if (cell instanceof Cell) {
                     return ((Cell) cell).getStringCellValue();

@@ -55,10 +55,10 @@ public class ExcelUtilTest {
         Assert.assertEquals("", ExcelUtil.getExcelCellValue(CellType.BLANK, cell, formula));
        //   numeric
         Mockito.doReturn(1.00D).when(cell).getNumericCellValue();
-        Assert.assertEquals(1.00D, ExcelUtil.getExcelCellValue(CellType.NUMERIC, cell, formula));
+        Assert.assertEquals(1, ExcelUtil.getExcelCellValue(CellType.NUMERIC, cell, formula));
         CellValue cellValue = new CellValue(1.00D);
-        Assert.assertEquals(1.00D, ExcelUtil.getExcelCellValue(CellType.NUMERIC, cellValue, formula));
-        Assert.assertEquals(0.00D, ExcelUtil.getExcelCellValue(CellType.NUMERIC, new Object(), formula));
+        Assert.assertEquals(1, ExcelUtil.getExcelCellValue(CellType.NUMERIC, cellValue, formula));
+        Assert.assertEquals(0, ExcelUtil.getExcelCellValue(CellType.NUMERIC, new Object(), formula));
         //
         Mockito.reset(cell);
         Mockito.doReturn("1").when(cell).getStringCellValue();

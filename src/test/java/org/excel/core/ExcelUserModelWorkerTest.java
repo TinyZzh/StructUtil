@@ -7,8 +7,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
-
 public class ExcelUserModelWorkerTest {
 
     @Test
@@ -18,8 +16,7 @@ public class ExcelUserModelWorkerTest {
         Assert.assertTrue(!list.isEmpty());
     }
 
-
-    @ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet2")
+    @ExcelSheet(fileName = "bean.xls", sheetName = "Sheet2")
     public static class Classification {
         private int id;
         private String domain;
@@ -31,7 +28,7 @@ public class ExcelUserModelWorkerTest {
         private String species;
     }
 
-    @ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
+    @ExcelSheet(fileName = "bean.xls", sheetName = "Sheet1")
     public static class Animal {
 
         private int id;

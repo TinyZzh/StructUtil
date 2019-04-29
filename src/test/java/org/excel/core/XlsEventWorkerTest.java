@@ -38,14 +38,15 @@ public class XlsEventWorkerTest {
         XlsEventWorker<Animal> worker = new XlsEventWorker<>("classpath:/org/excel/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
+        Assert.assertEquals(10, list.size());
     }
 
     @Test
     public void testWithEndOrder() throws Exception {
-        XlsEventWorker<AnimalWithEnd> worker2 = new XlsEventWorker<>("classpath:/org/excel/core/", AnimalWithEnd.class);
-        ArrayList<AnimalWithEnd> list2 = worker2.load(ArrayList::new);
-        Assert.assertTrue(!list2.isEmpty());
-        Assert.assertEquals(1, list2.size());
+        XlsEventWorker<AnimalWithEnd> worker = new XlsEventWorker<>("classpath:/org/excel/core/", AnimalWithEnd.class);
+        ArrayList<AnimalWithEnd> list = worker.load(ArrayList::new);
+        Assert.assertTrue(!list.isEmpty());
+        Assert.assertEquals(1, list.size());
     }
 
 
@@ -85,7 +86,7 @@ public class XlsEventWorkerTest {
         private ExcelWorkerTest.Classification bean;
     }
 
-    @ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet1", endOrder = 2)
+    @ExcelSheet(fileName = "bean.xls", sheetName = "Sheet1", endOrder = 2)
     public static class AnimalWithEnd {
         private int id;
 
