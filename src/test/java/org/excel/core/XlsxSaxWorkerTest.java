@@ -14,6 +14,7 @@ public class XlsxSaxWorkerTest {
         ExcelWorker<Animal> worker = new XlsxSaxWorker<>("classpath:/org/excel/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
+        Assert.assertEquals(10, list.size());
     }
 
     @Test

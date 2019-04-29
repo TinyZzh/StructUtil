@@ -20,7 +20,7 @@ public class ExcelWorkerTest {
 //        ExcelWorker<Animal> worker = ExcelWorker.of("./out/test/resources/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
-        System.out.println();
+        Assert.assertEquals(10, list.size());
     }
 
     @Test

@@ -36,6 +36,7 @@ import org.apache.poi.hssf.record.NoteRecord;
 import org.apache.poi.hssf.record.NumberRecord;
 import org.apache.poi.hssf.record.RKRecord;
 import org.apache.poi.hssf.record.Record;
+import org.apache.poi.hssf.record.RowRecord;
 import org.apache.poi.hssf.record.SSTRecord;
 import org.apache.poi.hssf.record.StringRecord;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -67,7 +68,7 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
     protected void onLoadExcelSheetImpl(Consumer<T> cellHandler, ExcelSheet annotation, File file) {
         try (POIFSFileSystem fs = new POIFSFileSystem(file)) {
             //
-            XlsListener<T> listener = new XlsListener<>(this, annotation.sheetName(), cellHandler);
+            XlsListener<T> listener = new XlsListener<>(this, annotation, cellHandler);
 
             HSSFRequest request = new HSSFRequest();
             request.addListenerForAllRecords(listener.getFormatListener());
@@ -88,25 +89,27 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
     public static class XlsListener<T> implements HSSFListener {
 
         private XlsEventWorker<T> worker;
-
-        private String targetSheetName;
         /**
-         * current sheet data.
+         * The excel bean's annotation.
          */
-        private BoundSheetRecord curSheet;
+        private ExcelSheet annotation;
+
+        private Consumer<T> objHandler;
         /**
          * column - field name
          */
         private Map<Integer, String> headRowMap = new HashMap<>();
-
+        /**
+         * current sheet data.
+         */
+        private boolean isCurSheet = false;
         private boolean isFirstRow = true;
-        private int firstRow = 0;
-        private int lastRow = -1;
+        private int startRow = -1;
+        private int endRow = -1;
 
         private T curInstance;
 
-        private Consumer<T> objHandler;
-
+        //
         private int lastRowNumber;
         private int lastColumnNumber;
 
@@ -127,16 +130,13 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
         private List<BoundSheetRecord> boundSheetRecords = new ArrayList<BoundSheetRecord>();
 
         /**
-         * @param worker
-         * @param targetSheetName
-         * @param objHandler
+         *
          */
-        public XlsListener(XlsEventWorker<T> worker, String targetSheetName, Consumer<T> objHandler) {
+        public XlsListener(XlsEventWorker<T> worker, ExcelSheet annotation, Consumer<T> objHandler) {
             this.worker = worker;
-            this.targetSheetName = targetSheetName;
+            this.annotation = annotation;
             this.objHandler = objHandler;
 
-            //
             MissingRecordAwareHSSFListener listener = new MissingRecordAwareHSSFListener(this);
             formatListener = new FormatTrackingHSSFListener(listener);
         }
@@ -149,21 +149,29 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
 
             switch (record.getSid()) {
                 case BoundSheetRecord.sid:
-                    boundSheetRecords.add((BoundSheetRecord)record);
+                    boundSheetRecords.add((BoundSheetRecord) record);
                     break;
                 case BOFRecord.sid:
-                    BOFRecord br = (BOFRecord)record;
+                    BOFRecord br = (BOFRecord) record;
                     if (br.getType() == BOFRecord.TYPE_WORKSHEET) {
                         if (orderedBSRs == null) {
                             orderedBSRs = BoundSheetRecord.orderByBofPosition(boundSheetRecords);
                         }
                         sheetIndex++;
 
-                        if (targetSheetName.equalsIgnoreCase(orderedBSRs[sheetIndex - 1].getSheetname())) {
-                            //  start to read sheet we wanted.
-                            this.curSheet = orderedBSRs[sheetIndex - 1];
+                        this.isCurSheet = annotation.sheetName().equalsIgnoreCase(orderedBSRs[sheetIndex - 1].getSheetname());
+                    }
+                    break;
+                case RowRecord.sid:
+                    RowRecord rr = (RowRecord) record;
+                    if (this.isCurSheet) {
+                        if (this.startRow < 0) {
+                            this.startRow = Math.max(annotation.startOrder(), rr.getRowNumber());
+                        }
+                        if (annotation.endOrder() > 0) {
+                            this.endRow = Math.min(annotation.endOrder(), rr.getRowNumber());
                         } else {
-                            this.curSheet = null;
+                            this.endRow = rr.getRowNumber() + 1;
                         }
                     }
                     break;
@@ -259,7 +267,7 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
             if (thisRow != -1 && thisRow != lastRowNumber) {
                 lastColumnNumber = -1;
 
-                if (thisRow >= this.firstRow) {
+                if (!isFirstRow && this.isCurSheet && thisRow >= this.startRow) {
                     curInstance = Reflects.newInstance(worker.clzOfBean);
                 }
             }
@@ -288,6 +296,7 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
                 // We're onto a new row
                 lastColumnNumber = -1;
 
+
                 // End the row
                 if (!this.isFirstRow && curInstance != null) {
                     worker.afterObjectSetCompleted(curInstance);
@@ -296,7 +305,7 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
                 }
                 this.isFirstRow = false;
 
-                if (this.lastRow >= 0 && thisRow >= this.lastRow)
+                if (this.endRow >= 0 && lastRowNumber + 1 >= this.endRow)
                     throw new EndOfExcelSheetException();
             }
         }
