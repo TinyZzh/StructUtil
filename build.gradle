@@ -21,7 +21,7 @@ dependencies {
 }
 
 group = 'org.excelutil'
-version = '2.0.0'
+version = '2.0.1'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 compileJava.options.setEncoding("UTF-8")
@@ -55,7 +55,9 @@ task sourcesJar(type: Jar) {
 }
 
 task javadocJar(type: Jar) {
-    from javadoc
+    from javadoc {
+        failOnError = false
+    }
     archiveClassifier = 'javadoc'
 }
 publishing {

@@ -39,7 +39,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * @param <T>
+ * @param <T> the target java bean class.
  */
 public abstract class ExcelWorker<T> {
 

@@ -53,6 +53,7 @@ import java.util.function.Consumer;
 
 /**
  *
+ * @param <T> the target java bean class.
  */
 public class XlsEventWorker<T> extends ExcelWorker<T> {
 

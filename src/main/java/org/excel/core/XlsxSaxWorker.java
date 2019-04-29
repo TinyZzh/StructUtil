@@ -40,21 +40,17 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * SAX ExcelWorker. use event model to load .xlsx file.<br/>
- * <p>
- * <p> <a href='http://poi.apache.org/components/spreadsheet/index.html'>POI DOCUMENT</a></p>
- * <p> Limitations: </p>
- * <docs>
- * Due to the streaming nature of the implementation, there are the following limitations when compared to XSSF:<br/>
- * 1. Only a limited number of rows are accessible at a point in time.<br/>
- * 2. Sheet.clone() is not supported.<br/>
- * 3. Formula evaluation is not supported<br/>
- * <p>
- * See more details at SXSSF <a href='http://poi.apache.org/components/spreadsheet/how-to.html#sxssf'>How-To</a><br/>
- * <img src='http://poi.apache.org/components/spreadsheet/images/ss-features.png'/>
- * </docs>
+ * SAX ExcelWorker. use event model to load .xlsx file.<p>
+ * <p><a href='http://poi.apache.org/components/spreadsheet/index.html'>POI DOCUMENT</a>
+ * <p>Limitations: 
+ * <p>Due to the streaming nature of the implementation, there are the following limitations when compared to XSSF:
+ * <p>1. Only a limited number of rows are accessible at a point in time.
+ * <p>2. Sheet.clone() is not supported.
+ * <p>3. Formula evaluation is not supported
+ * <p>See more details at SXSSF <a href='http://poi.apache.org/components/spreadsheet/how-to.html#sxssf'>How-To</a>
+ * <p><img alt="image" src='http://poi.apache.org/components/spreadsheet/images/ss-features.png'/>
  *
- * @param <T>
+ * @param <T> the target java bean class.
  */
 public class XlsxSaxWorker<T> extends ExcelWorker<T> {
 
