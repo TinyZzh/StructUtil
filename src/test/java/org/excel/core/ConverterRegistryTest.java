@@ -31,6 +31,18 @@ public class ConverterRegistryTest {
             Assert.assertEquals(e.getClass(), IllegalArgumentException.class);
         }
         //  anonymous class
+        try {
+            ConverterRegistry.register(A.class, new Converter<A>() {
+                @Override
+                public A apply(Object o) {
+                    return null;
+                }
+            }.getClass());
+        } catch (IllegalArgumentException e) {
+            //  no-op
+        } catch (Exception e) {
+            Assert.fail();
+        }
         ConverterRegistry.register(A.class, BeanAConverter.class);
         Assert.assertNull(ConverterRegistry.lookup(A.class).apply(null));
         //  Constructor throw exception
