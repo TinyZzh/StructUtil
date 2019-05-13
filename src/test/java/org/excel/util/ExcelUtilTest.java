@@ -90,5 +90,8 @@ public class ExcelUtilTest {
         Assert.fail();
     }
 
-
+    @Test
+    public void testX() {
+        ExcelUtil.test();
+    }
 }
