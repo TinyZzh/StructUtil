@@ -27,6 +27,7 @@ import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.excel.annotation.ExcelSheet;
 import org.excel.exception.EndOfExcelSheetException;
+import org.excel.exception.ExcelTransformException;
 import org.excel.util.Reflects;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
@@ -42,7 +43,7 @@ import java.util.function.Consumer;
 /**
  * SAX ExcelWorker. use event model to load .xlsx file.<p>
  * <p><a href='http://poi.apache.org/components/spreadsheet/index.html'>POI DOCUMENT</a>
- * <p>Limitations: 
+ * <p>Limitations:
  * <p>Due to the streaming nature of the implementation, there are the following limitations when compared to XSSF:
  * <p>1. Only a limited number of rows are accessible at a point in time.
  * <p>2. Sheet.clone() is not supported.
@@ -93,7 +94,7 @@ public class XlsxSaxWorker<T> extends ExcelWorker<T> {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new ExcelTransformException(e.getMessage(), e);
         }
     }
 

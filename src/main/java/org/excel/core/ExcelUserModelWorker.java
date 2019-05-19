@@ -29,18 +29,16 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.excel.annotation.ExcelSheet;
+import org.excel.exception.ExcelTransformException;
 import org.excel.util.ExcelUtil;
 import org.excel.util.Reflects;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -73,7 +71,7 @@ public class ExcelUserModelWorker<T> extends ExcelWorker<T> {
                     .map(cells -> setObjectFieldValue(clzOfBean, cells, columnFieldMap, evaluator))
                     .forEach(cellHandler);
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new ExcelTransformException(e.getMessage(), e);
         }
     }
 
@@ -121,7 +119,7 @@ public class ExcelUserModelWorker<T> extends ExcelWorker<T> {
             this.afterObjectSetCompleted(obj);
             return obj;
         } catch (Exception e) {
-            throw new RuntimeException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
+            throw new ExcelTransformException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
         }
     }
 

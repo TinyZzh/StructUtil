@@ -20,6 +20,8 @@ package org.excel.core;
 
 import org.excel.annotation.ExcelField;
 import org.excel.annotation.ExcelSheet;
+import org.excel.exception.ExcelTransformException;
+import org.excel.exception.IllegalAccessPropertyException;
 import org.excel.util.AnnotationUtils;
 import org.excel.util.ConverterUtil;
 import org.excel.util.ExcelUtil;
@@ -68,7 +70,7 @@ public abstract class ExcelWorker<T> {
 
     /// <editor-fold desc="   Protected Methods    "  defaultstate="collapsed">
 
-    protected void tryResolveFieldRef(Field field) throws Exception {
+    protected void tryResolveFieldRef(Field field) throws RuntimeException {
         ExcelField annotation = field.getAnnotation(ExcelField.class);
         if (annotation == null || Object.class == annotation.ref()) {
             return;
@@ -127,21 +129,24 @@ public abstract class ExcelWorker<T> {
         return annotation.ref().getName() + ":" + resolveColumnName(field);
     }
 
-    protected ArrayKey getFieldValueArray(Object src, String[] refKeys) throws Exception {
+    protected ArrayKey getFieldValueArray(Object src, String[] refKeys) throws RuntimeException {
         Object[] ary = new Object[refKeys.length];
         for (int i = 0; i < refKeys.length; i++) {
             Field keyField = beanFieldMap.get(refKeys[i].toLowerCase());
-            if (keyField != null) {
-                ary[i] = keyField.get(src);
-            } else {
-                throw new NoSuchFieldException("field: [" + refKeys[i] + "]. source obj:"
+            if (keyField == null) {
+                throw new RuntimeException("No such field: [" + refKeys[i] + "] in source obj:"
                         + src.getClass());
+            }
+            try {
+                ary[i] = keyField.get(src);
+            } catch (IllegalAccessException e) {
+                throw new IllegalAccessPropertyException(e.getMessage(), e);
             }
         }
         return new ArrayKey(ary);
     }
 
-    protected Map<String, Field> resolveBeanFields(Class<?> clzBean) throws Exception {
+    protected Map<String, Field> resolveBeanFields(Class<?> clzBean) throws RuntimeException {
         final Map<String, Field> map = new HashMap<>();
         Field[] fields = clzBean.getDeclaredFields();
         for (Field field : fields) {
@@ -199,7 +204,7 @@ public abstract class ExcelWorker<T> {
             }
         } catch (Exception e) {
             String msg = "cell column index:" + columnIndex + ", msg:" + e.getMessage();
-            throw new RuntimeException(msg, e);
+            throw new ExcelTransformException(msg, e);
         }
     }
 
@@ -211,7 +216,7 @@ public abstract class ExcelWorker<T> {
                     try {
                         setRefFieldValue(instance, field);
                     } catch (Exception e) {
-                        throw new RuntimeException(e.getMessage(), e);
+                        throw new ExcelTransformException(e.getMessage(), e);
                     }
                 });
     }
@@ -220,11 +225,11 @@ public abstract class ExcelWorker<T> {
 
     /// <editor-fold desc=" Excel Convert Collection "  defaultstate="collapsed">
 
-    public <C extends Collection<T>> C load(TypeRefFactory<C> factory) throws Exception {
+    public <C extends Collection<T>> C load(TypeRefFactory<C> factory) throws RuntimeException {
         return this.toList(factory);
     }
 
-    public <C extends Collection<T>> C toList(TypeRefFactory<C> factory) throws Exception {
+    public <C extends Collection<T>> C toList(TypeRefFactory<C> factory) throws RuntimeException {
         resolveBeanFields(this.clzOfBean);
         C list = factory.newInstance();
         onLoadExcelSheet(clzOfBean, list::add);
@@ -237,31 +242,21 @@ public abstract class ExcelWorker<T> {
      * @param <C>       the collection class
      * @return return a map. the map's key generate by #groupFunc
      */
-    public <G, C extends Collection<T>> Map<G, C> toListWithGroup(TypeRefFactory<C> factory, Function<T, G> groupFunc) throws Exception {
+    public <G, C extends Collection<T>> Map<G, C> toListWithGroup(TypeRefFactory<C> factory, Function<T, G> groupFunc) throws RuntimeException {
         resolveBeanFields(this.clzOfBean);
         Map<G, C> map = new HashMap<>();
         onLoadExcelSheet(clzOfBean, obj -> {
-            try {
-                Collection<T> list = map.computeIfAbsent(groupFunc.apply(obj), objects -> factory.newInstance());
-                list.add(obj);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
+            Collection<T> list = map.computeIfAbsent(groupFunc.apply(obj), objects -> factory.newInstance());
+            list.add(obj);
         });
         return map;
     }
 
-    public <C extends Collection<T>> Map<Object, C> toListWithGroup(TypeRefFactory<C> factory, String[] groupByKey) throws Exception {
-        return this.toListWithGroup(factory, obj -> {
-            try {
-                return getFieldValueArray(obj, groupByKey);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        });
+    public <C extends Collection<T>> Map<Object, C> toListWithGroup(TypeRefFactory<C> factory, String[] groupByKey) throws RuntimeException {
+        return this.toListWithGroup(factory, obj -> getFieldValueArray(obj, groupByKey));
     }
 
-    public Map<Object, Collection<T>> toListWithGroup(Class<?> clzOfCollection, String[] groupByKey) throws Exception {
+    public Map<Object, Collection<T>> toListWithGroup(Class<?> clzOfCollection, String[] groupByKey) throws RuntimeException {
         return toListWithGroup(() -> {
             try {
                 return ExcelUtil.newListOnly(clzOfCollection);
@@ -271,55 +266,33 @@ public abstract class ExcelWorker<T> {
         }, groupByKey);
     }
 
-    public <K, M extends Map<K, T>> M toMap(TypeRefFactory<M> factory, Function<T, K> func) throws Exception {
+    public <K, M extends Map<K, T>> M toMap(TypeRefFactory<M> factory, Function<T, K> func) throws RuntimeException {
         resolveBeanFields(this.clzOfBean);
         M map = factory.newInstance();
         onLoadExcelSheet(clzOfBean, obj -> map.put(func.apply(obj), obj));
         return map;
     }
 
-    public <M extends Map<Object, T>> M toMap(TypeRefFactory<M> factory, String[] uniqueKey) throws Exception {
-        return this.toMap(factory, obj -> {
-            try {
-                return getFieldValueArray(obj, uniqueKey);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        });
+    public <M extends Map<Object, T>> M toMap(TypeRefFactory<M> factory, String[] uniqueKey) throws RuntimeException {
+        return this.toMap(factory, obj -> getFieldValueArray(obj, uniqueKey));
     }
 
-    public <K, G, M extends Map<K, T>> Map<G, M> toMapWithGroup(TypeRefFactory<M> factory, Function<T, K> keyFunc, Function<T, G> groupFunc) throws Exception {
+    public <K, G, M extends Map<K, T>> Map<G, M> toMapWithGroup(TypeRefFactory<M> factory, Function<T, K> keyFunc, Function<T, G> groupFunc) throws RuntimeException {
         resolveBeanFields(this.clzOfBean);
         Map<G, M> result = new HashMap<>();
         onLoadExcelSheet(clzOfBean, obj -> {
-            try {
-                G groupBy = groupFunc.apply(obj);
-                M map = result.computeIfAbsent(groupBy, objects -> factory.newInstance());
-                map.put(keyFunc.apply(obj), obj);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
+            G groupBy = groupFunc.apply(obj);
+            M map = result.computeIfAbsent(groupBy, objects -> factory.newInstance());
+            map.put(keyFunc.apply(obj), obj);
         });
         return result;
     }
 
-    public <M extends Map<Object, T>> Map<Object, M> toMapWithGroup(final TypeRefFactory<M> factory, final String[] uniqueKey, final String[] groupByKey) throws Exception {
-        return this.toMapWithGroup(factory, obj -> {
-            try {
-                return getFieldValueArray(obj, groupByKey);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        }, obj -> {
-            try {
-                return getFieldValueArray(obj, uniqueKey);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage(), e);
-            }
-        });
+    public <M extends Map<Object, T>> Map<Object, M> toMapWithGroup(final TypeRefFactory<M> factory, final String[] uniqueKey, final String[] groupByKey) throws RuntimeException {
+        return this.toMapWithGroup(factory, obj -> getFieldValueArray(obj, groupByKey), obj -> getFieldValueArray(obj, uniqueKey));
     }
 
-    public Map<Object, Map<Object, T>> toMapWithGroup(Class<?> clzOfCollection, String[] uniqueKey, String[] groupByKey) throws Exception {
+    public Map<Object, Map<Object, T>> toMapWithGroup(Class<?> clzOfCollection, String[] uniqueKey, String[] groupByKey) throws RuntimeException {
         return toMapWithGroup(() -> {
             try {
                 return ExcelUtil.newMap(clzOfCollection);

@@ -42,6 +42,7 @@ import org.apache.poi.hssf.record.StringRecord;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.excel.annotation.ExcelSheet;
 import org.excel.exception.EndOfExcelSheetException;
+import org.excel.exception.ExcelTransformException;
 import org.excel.util.Reflects;
 
 import java.io.File;
@@ -52,7 +53,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- *
  * @param <T> the target java bean class.
  */
 public class XlsEventWorker<T> extends ExcelWorker<T> {
@@ -80,7 +80,7 @@ public class XlsEventWorker<T> extends ExcelWorker<T> {
                 //  end of load.
             }
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new ExcelTransformException(e.getMessage(), e);
         }
     }
 
