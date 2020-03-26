@@ -1,4 +1,4 @@
-# Excel Util
+# Struct Util
 
 [![Build Status](https://travis-ci.org/TinyZzh/ExcelUtil.svg?branch=master)](https://travis-ci.org/TinyZzh/ExcelUtil)
 [![codecov](https://codecov.io/gh/TinyZzh/ExcelUtil/branch/master/graph/badge.svg)](https://codecov.io/gh/TinyZzh/ExcelUtil)
@@ -6,7 +6,7 @@
 [![release](https://img.shields.io/github/release/TinyZzh/ExcelUtil.svg)](https://github.com/TinyZzh/ExcelUtil/releases/latest)
 [![wiki](https://img.shields.io/badge/Docs-Wiki-green.svg)](https://github.com/TinyZzh/ExcelUtil/wiki)
 
-Excel Convert To Java Bean Utility. 
+Excel Or Other Configuration Data File Convert To Java Bean Utility. 
 
 ## Requirements
 
@@ -24,13 +24,13 @@ dependencies {
     1. Light. Only two annotation. implement load excel sheet direct convert to Java generic collection.
     2. Support Java 8's lambda functional. 
     3. Support Custom type converter. user can register custom converter to overwrite system default.
-    4. Automatically check direct association of Excel sheets. by @ExcelSheet#required
+    4. Automatically check direct association of Excel sheets. by @StructSheet#required
 
 ## Technical Implement Detail
 
-Just include two Java annotation: @ExcelSheet and @ExcelField
+Just include two Java annotation: @StructSheet and @StructField
 
-### 1. @ExcelSheet Annotation
+### 1. @StructSheet Annotation
 This's annotation use to define the Java mapping bean with your excel sheet.
 
     1. fileName. define the excel file's name will be loaded.
@@ -38,7 +38,7 @@ This's annotation use to define the Java mapping bean with your excel sheet.
     3. startOrder. define the excel sheet first data row start to load. default: 1. (start the second row) 
     3. endOrder. define the excel sheet last data row start to load.
 
-### 1. @ExcelField Annotation
+### 1. @StructField Annotation
 This's annotation use to define the Java mapping bean's Field. 
 Use it you can implement custom convert logic to resolve special logic.
 
@@ -67,22 +67,22 @@ repositories {
 }
 ```
 
-### Step 2. Define A Java Bean With Annotation @ExcelSheet. 
+### Step 2. Define A Java Bean With Annotation @StructSheet. 
 Create class named Animal. every animal has biological classification and some other private attribute.
 Defined the biological classification info in another sheet to reusable use this elements.
 ```java
-@ExcelSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
+@StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
 public static class Animal {
 
     private int id;
 
     /**
-     * if the field's name is equals column's name, the @ExcelField is not necessary.
+     * if the field's name is equals column's name, the @StructField is not necessary.
      */
-    @ExcelField(name = "name")
+    @StructField(name = "name")
     private String name;
 
-    @ExcelField()
+    @StructField()
     private Double weight;
 
     /**
@@ -91,11 +91,11 @@ public static class Animal {
      * this field's value will be injected from map.
      * the key is {@link ArrayKey} include total refUniqueKey's value .
      */
-    @ExcelField(ref = Classification.class, refUniqueKey = {"id"})
+    @StructField(ref = Classification.class, refUniqueKey = {"id"})
     private Classification bean;
 }
 
-@ExcelSheet(fileName = "Animal.xlsx", sheetName = "t_animal_classification")
+@StructSheet(fileName = "Animal.xlsx", sheetName = "t_animal_classification")
 public static class Classification {
     private int id;
     private String domain;
