@@ -6,7 +6,9 @@ plugins {
 
 repositories {
     mavenLocal()
-    mavenCentral()
+    maven { url "http://192.168.0.2:8081/nexus/content/repositories/snapshots" }
+    maven { url "http://192.168.0.2:8081/nexus/content/groups/public/" }
+    maven { url "http://192.168.0.2:8081/nexus/content/repositories/share" }
     maven { url "http://repo.maven.apache.org/maven2" }
     maven { url "http://repo.typesafe.com/typesafe/repo" }
     maven { url "https://plugins.gradle.org/m2/" }
@@ -15,6 +17,7 @@ repositories {
 dependencies {
     compile 'org.apache.poi:poi:3.17'
     compile 'org.apache.poi:poi-ooxml:3.17'
+    compile 'org.dom4j:dom4j:2.1.1'
 
     //    gson
     compile group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
@@ -35,9 +38,10 @@ compileTestJava.options.setEncoding("UTF-8")
 jacocoTestReport {
     additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
     reports {
-        xml.enabled true
+        xml.enabled false
         xml.destination file("${buildDir}/report.xml")
         html.enabled false
+        html.destination file("${buildDir}/jacoco/html/")
     }
     executionData = files('build/jacoco/test.exec')
 }

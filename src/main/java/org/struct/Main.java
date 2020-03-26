@@ -1,7 +1,7 @@
 /*
  *
  *
- *          Copyright (c) 2019. - TinyZ.
+ *          Copyright (c) 2020. - TinyZ.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,22 +16,16 @@
  *  limitations under the License.
  */
 
-package org.struct.core;
-
-import java.lang.reflect.Field;
+package org.excel;
 
 /**
- * The instance type converter.
+ * @author TinyZ.
+ * @version 2020.03.06
  */
-public interface Converter {
+public class Main {
 
-    /**
-     * Covert origin value to target field's type.
-     *
-     * @param originValue the origin value.
-     * @param targetField the convert to field.
-     * @return return the converted value
-     */
-    Object convert(Object originValue, Field targetField);
+    public static void main(String[] args) {
+        String mode = System.getProperty("mode");
 
+    }
 }
