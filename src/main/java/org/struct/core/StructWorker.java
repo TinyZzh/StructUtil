@@ -23,6 +23,7 @@ import org.struct.annotation.StructSheet;
 import org.struct.core.bean.FieldDescriptor;
 import org.struct.exception.ExcelTransformException;
 import org.struct.exception.IllegalAccessPropertyException;
+import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.util.AnnotationUtils;
 import org.struct.util.ConverterUtil;
 import org.struct.util.WorkerUtil;
@@ -180,7 +181,7 @@ public abstract class StructWorker<T> {
         ArrayKey keys = getFieldValueArray(obj, refKeys);
         Object val = map.get(keys);
         if (descriptor.isRequired() && val == null) {
-            throw new NoSuchFieldException("unknown dependent field. make sure field's type and name is right. "
+            throw new NoSuchFieldReferenceException("unknown dependent field. make sure field's type and name is right. "
                     + " ref clazz:" + descriptor.getReference().getName()
                     + ". map key field's name:" + Arrays.toString(refKeys)
                     + ", actual:" + keys);
