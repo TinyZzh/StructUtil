@@ -16,9 +16,10 @@
  *  limitations under the License.
  */
 
-package org.excel.util;
+package org.struct.util;
 
 import org.junit.Test;
+import org.struct.util.SupportUtil;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;

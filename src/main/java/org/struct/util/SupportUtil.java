@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.excel.util;
+package org.struct.util;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
