@@ -73,8 +73,8 @@ public final class ConverterUtil {
     }
 
     public static boolean isBooleanTrue(String str) {
-        return "true".equalsIgnoreCase(str.toLowerCase())
-                || "1".equalsIgnoreCase(str.toLowerCase());
+        return "true".equalsIgnoreCase(str)
+                || "1".equalsIgnoreCase(str);
     }
 
     /// Spring Framework's NumberUtils

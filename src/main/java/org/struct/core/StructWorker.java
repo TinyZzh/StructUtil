@@ -142,7 +142,7 @@ public abstract class StructWorker<T> {
             if (descriptor != null) {
                 Converter converter = descriptor.getConverter();
                 if (null != converter) {
-                    descriptor.getField().set(instance, converter.convert(formattedValue, descriptor.getField()));
+                    descriptor.getField().set(instance, converter.convert(formattedValue, descriptor.getField().getType()));
                 } else if (descriptor.isReferenceField()) {
                     this.setRefFieldValue(instance, descriptor);
                 } else {

@@ -18,6 +18,7 @@
 
 package org.struct.core;
 
+import org.struct.core.converter.StringToArrayConverter;
 import org.struct.util.Reflects;
 
 import java.lang.reflect.Modifier;
@@ -31,7 +32,24 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class ConverterRegistry {
 
-    private static final Map<Class, Converter<?>> registeredConverterCacheMap = new ConcurrentHashMap<>();
+    private static final Map<Class, Converter> registeredConverterCacheMap = new ConcurrentHashMap<>();
+
+    static {
+        Class<?>[] str2ArrayConverters = new Class[]{
+                String[].class,
+                byte[].class, Byte[].class,
+                boolean[].class, Boolean[].class,
+                short[].class, Short[].class,
+                int[].class, Integer[].class,
+                long[].class, Long[].class,
+                float[].class, Float[].class,
+                double[].class, Double[].class
+        };
+        StringToArrayConverter converter = new StringToArrayConverter();
+        for (Class<?> targetType : str2ArrayConverters) {
+            register(targetType, converter);
+        }
+    }
 
     private ConverterRegistry() {
         //  no-op
@@ -40,11 +58,11 @@ public final class ConverterRegistry {
     /**
      * register custom converter implement.
      */
-    public static <T> void register(Class<T> actualType, Converter<T> converter) {
+    public static void register(Class<?> actualType, Converter converter) {
         registeredConverterCacheMap.putIfAbsent(actualType, converter);
     }
 
-    public static <T> void register(Class<T> actualType, Class<? extends Converter<T>> clzOfConverter, Object... params) {
+    public static void register(Class<?> actualType, Class<? extends Converter> clzOfConverter, Object... params) {
         if (Modifier.isAbstract(clzOfConverter.getModifiers())
                 || Modifier.isInterface(clzOfConverter.getModifiers())
                 || clzOfConverter.isAnonymousClass()) {
@@ -61,9 +79,8 @@ public final class ConverterRegistry {
         registeredConverterCacheMap.remove(actualType);
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> Converter<T> lookup(Class<T> actualType) {
-        return (Converter<T>) registeredConverterCacheMap.get(actualType);
+    public static Converter lookup(Class<?> actualType) {
+        return registeredConverterCacheMap.get(actualType);
     }
 
     /**

@@ -18,8 +18,6 @@
 
 package org.struct.core;
 
-import java.lang.reflect.Field;
-
 /**
  * The instance type converter.
  */
@@ -29,9 +27,9 @@ public interface Converter {
      * Covert origin value to target field's type.
      *
      * @param originValue the origin value.
-     * @param targetField the convert to field.
+     * @param targetType  the convert to field type.
      * @return return the converted value
      */
-    Object convert(Object originValue, Field targetField);
+    Object convert(Object originValue, Class<?> targetType);
 
 }
