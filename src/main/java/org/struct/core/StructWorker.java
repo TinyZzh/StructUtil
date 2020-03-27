@@ -18,9 +18,12 @@
 
 package org.struct.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 import org.struct.core.bean.FieldDescriptor;
+import org.struct.core.handler.StructHandler;
 import org.struct.exception.ExcelTransformException;
 import org.struct.exception.IllegalAccessPropertyException;
 import org.struct.exception.NoSuchFieldReferenceException;
@@ -35,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -44,8 +48,9 @@ import java.util.stream.Collectors;
 /**
  * @param <T> the target java bean class.
  */
-public abstract class StructWorker<T> {
+public class StructWorker<T> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StructWorker.class);
     /**
      * the working space path.
      */
@@ -53,9 +58,9 @@ public abstract class StructWorker<T> {
     /**
      *
      */
-    protected final Class<T> clzOfBean;
+    protected final Class<T> clzOfStruct;
     /**
-     * {@link #clzOfBean}'s all field.
+     * {@link #clzOfStruct}'s all field.
      */
     protected Map<String, FieldDescriptor> beanFieldMap = new ConcurrentHashMap<>();
     /**
@@ -63,9 +68,13 @@ public abstract class StructWorker<T> {
      */
     protected final Map<String, Map<Object, Object>> tempRefFieldValueMap;
 
-    public StructWorker(String workspace, Class<T> clzOfBean, Map<String, Map<Object, Object>> tempRefFieldValueMap) {
+    public StructWorker(String workspace, Class<T> clzOfStruct) {
+        this(workspace, clzOfStruct, new ConcurrentHashMap<>());
+    }
+
+    public StructWorker(String workspace, Class<T> clzOfStruct, Map<String, Map<Object, Object>> tempRefFieldValueMap) {
         this.workspace = workspace;
-        this.clzOfBean = clzOfBean;
+        this.clzOfStruct = clzOfStruct;
         this.tempRefFieldValueMap = tempRefFieldValueMap;
     }
 
@@ -137,7 +146,7 @@ public abstract class StructWorker<T> {
         }
     }
 
-    protected void setObjectFieldValue(Object instance, String fileName, int columnIndex, Object formattedValue) {
+    public void setObjectFieldValue(Object instance, String fileName, int columnIndex, Object formattedValue) {
         try {
             FieldDescriptor descriptor = beanFieldMap.get(fileName);
             if (descriptor != null) {
@@ -156,7 +165,7 @@ public abstract class StructWorker<T> {
         }
     }
 
-    protected void afterObjectSetCompleted(Object instance) {
+    public void afterObjectSetCompleted(Object instance) {
         // resolve reference field.
         beanFieldMap.values().stream()
                 .filter(FieldDescriptor::isReferenceField)
@@ -219,9 +228,9 @@ public abstract class StructWorker<T> {
     }
 
     public <C extends Collection<T>> C toList(TypeRefFactory<C> factory) throws RuntimeException {
-        resolveBeanFields(this.clzOfBean);
+        resolveBeanFields(this.clzOfStruct);
         C list = factory.newInstance();
-        onLoadStructSheet(clzOfBean, list::add);
+        handleDataFile(list::add);
         return list;
     }
 
@@ -232,9 +241,9 @@ public abstract class StructWorker<T> {
      * @return return a map. the map's key generate by #groupFunc
      */
     public <G, C extends Collection<T>> Map<G, C> toListWithGroup(TypeRefFactory<C> factory, Function<T, G> groupFunc) throws RuntimeException {
-        resolveBeanFields(this.clzOfBean);
+        resolveBeanFields(this.clzOfStruct);
         Map<G, C> map = new HashMap<>();
-        onLoadStructSheet(clzOfBean, obj -> {
+        handleDataFile(obj -> {
             Collection<T> list = map.computeIfAbsent(groupFunc.apply(obj), objects -> factory.newInstance());
             list.add(obj);
         });
@@ -256,9 +265,9 @@ public abstract class StructWorker<T> {
     }
 
     public <K, M extends Map<K, T>> M toMap(TypeRefFactory<M> factory, Function<T, K> func) throws RuntimeException {
-        resolveBeanFields(this.clzOfBean);
+        resolveBeanFields(this.clzOfStruct);
         M map = factory.newInstance();
-        onLoadStructSheet(clzOfBean, obj -> map.put(func.apply(obj), obj));
+        handleDataFile(obj -> map.put(func.apply(obj), obj));
         return map;
     }
 
@@ -267,9 +276,9 @@ public abstract class StructWorker<T> {
     }
 
     public <K, G, M extends Map<K, T>> Map<G, M> toMapWithGroup(TypeRefFactory<M> factory, Function<T, K> keyFunc, Function<T, G> groupFunc) throws RuntimeException {
-        resolveBeanFields(this.clzOfBean);
+        resolveBeanFields(this.clzOfStruct);
         Map<G, M> result = new HashMap<>();
-        onLoadStructSheet(clzOfBean, obj -> {
+        handleDataFile(obj -> {
             G groupBy = groupFunc.apply(obj);
             M map = result.computeIfAbsent(groupBy, objects -> factory.newInstance());
             map.put(keyFunc.apply(obj), obj);
@@ -293,17 +302,25 @@ public abstract class StructWorker<T> {
 
     /// </editor-fold>
 
-    protected abstract void onLoadStructSheetImpl(Consumer<T> cellHandler, StructSheet annotation, File file);
-
-    public void onLoadStructSheet(Class<T> clzOfBean, Consumer<T> cellHandler) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfBean);
-        WorkerUtil.checkMissingExcelSheetAnnotation(annotation, clzOfBean);
+    public void handleDataFile(Consumer<T> cellHandler) {
+        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
+        WorkerUtil.checkMissingExcelSheetAnnotation(annotation, clzOfStruct);
         String filePath = WorkerUtil.resolveFilePath(this.workspace, annotation);
         File file = new File(filePath);
         if (!file.exists()) {
             throw new IllegalArgumentException("file not exists. path: " + filePath);
         }
-
-        onLoadStructSheetImpl(cellHandler, annotation, file);
+        List<StructHandler> collected = WorkerUtil.lookupStructHandler(annotation, file);
+        for (StructHandler handler : collected) {
+            try {
+                handler.handle(this, this.clzOfStruct, cellHandler, file);
+                return;
+            } catch (Exception e) {
+                //  try next handler.
+                LOGGER.info("{} handle data file failure. please check the class of struct file and the matcher rules. file:{}",
+                        handler.getClass().getName(), file.getName(), e);
+            }
+        }
+        throw new IllegalArgumentException("unknown data file extension. file name:" + file.getName());
     }
 }

@@ -20,7 +20,6 @@ package org.struct.core;
 
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
-import org.struct.core.worker.XlsEventWorker;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +33,7 @@ public class XlsEventWorkerTest {
 
     @Test
     public void test() throws Exception {
-        XlsEventWorker<Animal> worker = new XlsEventWorker<>("classpath:/org/struct/core/", Animal.class);
+        StructWorker<Animal> worker = new StructWorker<>("classpath:/org/struct/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
         Assert.assertEquals(10, list.size());
@@ -42,7 +41,7 @@ public class XlsEventWorkerTest {
 
     @Test
     public void testWithEndOrder() throws Exception {
-        XlsEventWorker<AnimalWithEnd> worker = new XlsEventWorker<>("classpath:/org/struct/core/", AnimalWithEnd.class);
+        StructWorker<AnimalWithEnd> worker = new StructWorker<>("classpath:/org/struct/core/", AnimalWithEnd.class);
         ArrayList<AnimalWithEnd> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
         Assert.assertEquals(1, list.size());

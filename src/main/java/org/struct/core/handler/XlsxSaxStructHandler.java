@@ -1,22 +1,4 @@
-/*
- *
- *
- *          Copyright (c) 2019. - TinyZ.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
-package org.struct.core.worker;
+package org.struct.core.handler;
 
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.util.SAXHelper;
@@ -27,8 +9,12 @@ import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
+import org.struct.core.bean.FileExtensionMatcher;
+import org.struct.core.bean.WorkerMatcher;
 import org.struct.exception.EndOfExcelSheetException;
 import org.struct.exception.ExcelTransformException;
+import org.struct.spi.SPI;
+import org.struct.util.AnnotationUtils;
 import org.struct.util.Reflects;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
@@ -54,23 +40,25 @@ import java.util.function.Consumer;
  *
  * @param <T> the target java bean class.
  */
-public class XlsxSaxWorker<T> extends StructWorker<T> {
+@SPI(name = "xlsx")
+public class XlsxSaxStructHandler implements StructHandler {
 
-    public XlsxSaxWorker(String rootPath, Class<T> clzOfBean) {
-        this(rootPath, clzOfBean, new HashMap<>());
-    }
+    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(FileExtensionMatcher.FILE_XLSX);
 
-    public XlsxSaxWorker(String rootPath, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
-        super(rootPath, clzOfBean, refFieldValueMap);
+    @Override
+    public WorkerMatcher matcher() {
+        return MATCHER;
     }
 
     @Override
-    protected void onLoadStructSheetImpl(Consumer<T> cellHandler, StructSheet annotation, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         XlsxBeanSheetContentHandler<T> contentHandler = new XlsxBeanSheetContentHandler<>();
-        contentHandler.setWorker(this);
+        contentHandler.setWorker(worker);
+        contentHandler.setClzOfStruct(clzOfStruct);
         contentHandler.setFirstRow(annotation.startOrder());
         contentHandler.setLastRow(annotation.endOrder());
-        contentHandler.setObjectConsumer(cellHandler);
+        contentHandler.setObjectConsumer(structHandler);
 
         try (OPCPackage pkg = OPCPackage.open(file)) {
             XSSFReader reader = new XSSFReader(pkg);
@@ -101,7 +89,8 @@ public class XlsxSaxWorker<T> extends StructWorker<T> {
 
     public static class XlsxBeanSheetContentHandler<T> implements XSSFSheetXMLHandler.SheetContentsHandler {
 
-        private XlsxSaxWorker<T> worker;
+        private Class<T> clzOfStruct;
+        private StructWorker<T> worker;
         private int firstRow = 0;
         private int lastRow = -1;
         private Consumer<T> objHandler;
@@ -122,7 +111,7 @@ public class XlsxSaxWorker<T> extends StructWorker<T> {
             if (this.lastRow >= 0 && rowNum >= this.lastRow)
                 throw new EndOfExcelSheetException();
             if (rowNum >= this.firstRow) {
-                curInstance = Reflects.newInstance(worker.clzOfBean);
+                curInstance = Reflects.newInstance(clzOfStruct);
             }
         }
 
@@ -167,7 +156,11 @@ public class XlsxSaxWorker<T> extends StructWorker<T> {
             this.objHandler = consumer;
         }
 
-        public void setWorker(XlsxSaxWorker<T> worker) {
+        public void setClzOfStruct(Class<T> clzOfStruct) {
+            this.clzOfStruct = clzOfStruct;
+        }
+
+        public void setWorker(StructWorker<T> worker) {
             this.worker = worker;
         }
     }

@@ -2,7 +2,6 @@ package org.struct.core;
 
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
-import org.struct.core.worker.XlsxSaxWorker;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,7 +11,7 @@ public class XlsxSaxWorkerTest {
 
     @Test
     public void test() throws Exception {
-        StructWorker<Animal> worker = new XlsxSaxWorker<>("classpath:/org/struct/core/", Animal.class);
+        StructWorker<Animal> worker = new StructWorker<>("classpath:/org/struct/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
         Assert.assertEquals(10, list.size());
@@ -20,7 +19,7 @@ public class XlsxSaxWorkerTest {
 
     @Test
     public void testWithEndOrder() throws Exception {
-        StructWorker<AnimalWithEnd> worker2 = new XlsxSaxWorker<>("classpath:/org/struct/core/", AnimalWithEnd.class);
+        StructWorker<AnimalWithEnd> worker2 = new StructWorker<>("classpath:/org/struct/core/", AnimalWithEnd.class);
         ArrayList<AnimalWithEnd> list2 = worker2.load(ArrayList::new);
         Assert.assertTrue(!list2.isEmpty());
         Assert.assertEquals(1, list2.size());
@@ -28,7 +27,7 @@ public class XlsxSaxWorkerTest {
 
     @Test
     public void testWrongExcelFile() {
-        StructWorker<WrongExcelFile> worker = new XlsxSaxWorker<>("classpath:/org/struct/core/", WrongExcelFile.class);
+        StructWorker<WrongExcelFile> worker = new StructWorker<>("classpath:/org/struct/core/", WrongExcelFile.class);
         try {
             worker.load(ArrayList::new);
         } catch (Exception e) {

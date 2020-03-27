@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class FileExtensionMatcher extends WorkerMatcher {
+public class FileExtensionMatcher implements WorkerMatcher {
     private static final long serialVersionUID = 4620761370006132284L;
 
     public static final String FILE_XLSX = ".xlsx";
@@ -21,15 +21,25 @@ public class FileExtensionMatcher extends WorkerMatcher {
      * 可匹配的文件扩展名列表
      */
     private final String[] fileExtensionAry;
-
+    /**
+     * The matcher's order.
+     */
     private final int order;
 
-    public FileExtensionMatcher(Class<?> clzOfWorker, int order, String... fileExtensionAry) {
-        this(clzOfWorker, -1, order, fileExtensionAry);
+    public FileExtensionMatcher(String... fileExtensionAry) {
+        this(-1, LOWEST, fileExtensionAry);
     }
 
-    public FileExtensionMatcher(Class<?> clzOfWorker, long fileLengthThreshold, int order, String... fileExtensionAry) {
-        super(clzOfWorker);
+    public FileExtensionMatcher(long fileLengthThreshold, String... fileExtensionAry) {
+        this(fileLengthThreshold, LOWEST, fileExtensionAry);
+    }
+
+    public FileExtensionMatcher(int order, String... fileExtensionAry) {
+        this(-1, order, fileExtensionAry);
+    }
+
+    public FileExtensionMatcher(long fileLengthThreshold, int order, String... fileExtensionAry) {
+        super();
         this.fileLengthThreshold = fileLengthThreshold;
         this.order = order;
         if (fileExtensionAry == null || fileExtensionAry.length < 1)

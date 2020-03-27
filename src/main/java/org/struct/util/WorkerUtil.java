@@ -24,13 +24,9 @@ import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
-import org.struct.core.bean.FileExtensionMatcher;
 import org.struct.core.bean.WorkerMatcher;
-import org.struct.core.worker.ExcelUserModelWorker;
-import org.struct.core.worker.JsonFileWorker;
-import org.struct.core.worker.XlsEventWorker;
-import org.struct.core.worker.XlsxSaxWorker;
-import org.struct.core.worker.XmlFileWorker;
+import org.struct.core.handler.StructHandler;
+import org.struct.spi.ServiceLoader;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -52,34 +48,8 @@ import java.util.stream.Stream;
  */
 public final class WorkerUtil {
 
-    /**
-     * the worker's matcher set. register all embedded worker implements.
-     */
-    private static final Map<String, WorkerMatcher> WORKER_MATCHERS = new ConcurrentHashMap<>();
-
-    static {
-        WorkerMatcher[] matchers = new WorkerMatcher[]{
-                new FileExtensionMatcher(ExcelUserModelWorker.class, 524288L, WorkerMatcher.HIGHEST, FileExtensionMatcher.FILE_XLSX, FileExtensionMatcher.FILE_XLS),
-                new FileExtensionMatcher(XlsxSaxWorker.class, WorkerMatcher.LOWEST, FileExtensionMatcher.FILE_XLSX),
-                new FileExtensionMatcher(XlsEventWorker.class, WorkerMatcher.LOWEST, FileExtensionMatcher.FILE_XLS),
-                new FileExtensionMatcher(JsonFileWorker.class, WorkerMatcher.LOWEST, FileExtensionMatcher.FILE_JSON),
-                new FileExtensionMatcher(XmlFileWorker.class, WorkerMatcher.LOWEST, FileExtensionMatcher.FILE_XML)
-        };
-        for (WorkerMatcher matcher : matchers) {
-            WORKER_MATCHERS.putIfAbsent(matcher.worker().getName(), matcher);
-        }
-    }
-
     private WorkerUtil() {
         //  no-op
-    }
-
-    public static void registerMatcher(WorkerMatcher matcher) {
-        WORKER_MATCHERS.putIfAbsent(matcher.worker().getName(), matcher);
-    }
-
-    public static void deregisterMatcher(Class<?> clzOfWorker) {
-        WORKER_MATCHERS.remove(clzOfWorker.getName());
     }
 
     public static <T> StructWorker<T> newWorker(String rootPath, Class<T> clzOfBean) {
@@ -90,17 +60,10 @@ public final class WorkerUtil {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfBean);
         checkMissingExcelSheetAnnotation(annotation, clzOfBean);
         File file = new File(resolveFilePath(rootPath, annotation));
-        Stream<WorkerMatcher> stream = WORKER_MATCHERS.values().stream();
-        if (WorkerMatcher.class != annotation.matcher()) {
-            stream = stream.filter(matcher -> matcher.getClass().isAssignableFrom(annotation.matcher()));
-        } else {
-            stream = stream.filter(matcher -> matcher.matchFile(file));
-        }
-        List<WorkerMatcher> collected = stream.sorted(Comparator.comparingInt(WorkerMatcher::order)).collect(Collectors.toList());
-        for (WorkerMatcher matcher : collected) {
+        List<StructHandler> collected = lookupStructHandler(annotation, file);
+        for (StructHandler handler : collected) {
             try {
-                Constructor<?> constructor = matcher.worker().getConstructor(String.class, Class.class, Map.class);
-                return (StructWorker<T>) constructor.newInstance(rootPath, clzOfBean, refFieldValueMap);
+                return new StructWorker<>(rootPath, clzOfBean, refFieldValueMap);
             } catch (Exception e) {
                 e.printStackTrace();
                 //  "instance worker failure. clz:" + matcher.worker().getName(), e
@@ -108,6 +71,17 @@ public final class WorkerUtil {
             }
         }
         throw new IllegalArgumentException("unknown data file extension. file name:" + file.getName());
+    }
+
+    public static List<StructHandler> lookupStructHandler(StructSheet annotation, File file) {
+        List<StructHandler> handlers = ServiceLoader.loadAll(StructHandler.class);
+        Stream<StructHandler> stream = handlers.stream();
+        if (WorkerMatcher.class != annotation.matcher()) {
+            stream = stream.filter(handler -> handler.matcher().getClass().isAssignableFrom(annotation.matcher()));
+        } else {
+            stream = stream.filter(handler -> handler.matcher().matchFile(file));
+        }
+        return stream.sorted(Comparator.comparingInt(o -> o.matcher().order())).collect(Collectors.toList());
     }
 
     public static void checkMissingExcelSheetAnnotation(StructSheet annotation, Class<?> clz) {

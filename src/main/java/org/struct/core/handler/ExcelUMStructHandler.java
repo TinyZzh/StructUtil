@@ -1,22 +1,4 @@
-/*
- *
- *
- *          Copyright (c) 2019. - TinyZ.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
-package org.struct.core.worker;
+package org.struct.core.handler;
 
 import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -30,7 +12,11 @@ import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
+import org.struct.core.bean.FileExtensionMatcher;
+import org.struct.core.bean.WorkerMatcher;
 import org.struct.exception.ExcelTransformException;
+import org.struct.spi.SPI;
+import org.struct.util.AnnotationUtils;
 import org.struct.util.Reflects;
 import org.struct.util.WorkerUtil;
 
@@ -43,22 +29,24 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 /**
- * StructWorker.
- *
- * @param <T>
+ * 使用POI的用户模式解析excel.
+ * 优点：支持丰富excel特性
+ * 缺点: 当excel文件比较大时，性能很差，会导致oom.
  */
-public class ExcelUserModelWorker<T> extends StructWorker<T> {
+@SPI(name = "excel-user", order = SPI.HIGHEST)
+public class ExcelUMStructHandler implements StructHandler {
 
-    public ExcelUserModelWorker(String workspace, Class<T> clzOfBean) {
-        this(workspace, clzOfBean, new HashMap<>());
-    }
+    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(524288L, WorkerMatcher.HIGHEST,
+            FileExtensionMatcher.FILE_XLSX, FileExtensionMatcher.FILE_XLS);
 
-    public ExcelUserModelWorker(String workspace, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
-        super(workspace, clzOfBean, refFieldValueMap);
+    @Override
+    public WorkerMatcher matcher() {
+        return MATCHER;
     }
 
     @Override
-    protected void onLoadStructSheetImpl(Consumer<T> cellHandler, StructSheet annotation, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         try (FileInputStream fis = new FileInputStream(file)) {
             Workbook wb = WorkbookFactory.create(fis);
             Sheet sheet = wb.getSheet(annotation.sheetName());
@@ -69,8 +57,8 @@ public class ExcelUserModelWorker<T> extends StructWorker<T> {
             IntStream.rangeClosed(getFirstRowOrder(annotation, sheet), getLastRowOrder(annotation, sheet))
                     .mapToObj(sheet::getRow)
                     .filter(Objects::nonNull)
-                    .map(cells -> setObjectFieldValue(clzOfBean, cells, columnFieldMap, evaluator))
-                    .forEach(cellHandler);
+                    .map(cells -> setObjectFieldValue(worker, clzOfStruct, cells, columnFieldMap, evaluator))
+                    .forEach(structHandler);
         } catch (Exception e) {
             throw new ExcelTransformException(e.getMessage(), e);
         }
@@ -101,8 +89,8 @@ public class ExcelUserModelWorker<T> extends StructWorker<T> {
         return Math.min(annotation.endOrder(), sheet.getLastRowNum());
     }
 
-    private T setObjectFieldValue(Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
-                                  FormulaEvaluator evaluator) {
+    private <T> T setObjectFieldValue(StructWorker<T> worker, Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
+                                      FormulaEvaluator evaluator) {
         try {
             T obj = Reflects.newInstance(clzOfBean);
             IntStream.rangeClosed(row.getFirstCellNum(), row.getLastCellNum())
@@ -115,9 +103,9 @@ public class ExcelUserModelWorker<T> extends StructWorker<T> {
                         } catch (Exception e) {
                             //  no-op
                         }
-                        setObjectFieldValue(obj, columnFieldMap.get(cell.getColumnIndex()), cell.getColumnIndex(), value);
+                        worker.setObjectFieldValue(obj, columnFieldMap.get(cell.getColumnIndex()), cell.getColumnIndex(), value);
                     });
-            this.afterObjectSetCompleted(obj);
+            worker.afterObjectSetCompleted(obj);
             return obj;
         } catch (Exception e) {
             throw new ExcelTransformException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);

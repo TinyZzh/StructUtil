@@ -1,0 +1,5 @@
+org.struct.core.handler.ExcelUMStructHandler
+org.struct.core.handler.JsonStructHandler
+org.struct.core.handler.XlsEventStructHandler
+org.struct.core.handler.XlsxSaxStructHandler
+org.struct.core.handler.XmlStructHandler

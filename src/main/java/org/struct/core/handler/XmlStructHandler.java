@@ -1,7 +1,9 @@
-package org.struct.core.worker;
+package org.struct.core.handler;
 
-import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
+import org.struct.core.bean.FileExtensionMatcher;
+import org.struct.core.bean.WorkerMatcher;
+import org.struct.spi.SPI;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -9,31 +11,32 @@ import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.util.Collection;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
  * Use JAXB handle xml file.
- *
- * @param <T>
  */
-public class XmlFileWorker<T> extends StructWorker<T> {
+@SPI(name = "xml")
+public class XmlStructHandler implements StructHandler {
 
-    public XmlFileWorker(String rootPath, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
-        super(rootPath, clzOfBean, refFieldValueMap);
+    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(FileExtensionMatcher.FILE_XML);
+
+    @Override
+    public WorkerMatcher matcher() {
+        return MATCHER;
     }
 
     @Override
-    protected void onLoadStructSheetImpl(Consumer<T> cellHandler, StructSheet annotation, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
         try {
-            JAXBContext context = JAXBContext.newInstance(JaxbCollectionWrapper.class, this.clzOfBean);
+            JAXBContext context = JAXBContext.newInstance(JaxbCollectionWrapper.class, clzOfStruct);
             Unmarshaller unmarshaller = context.createUnmarshaller();
             StreamSource source = new StreamSource(file);
             JaxbCollectionWrapper<T> wrapper = (JaxbCollectionWrapper<T>) unmarshaller.unmarshal(source, JaxbCollectionWrapper.class).getValue();
             if (wrapper != null) {
                 for (T objInstance : wrapper.getRoot()) {
-                    this.afterObjectSetCompleted(objInstance);
-                    cellHandler.accept(objInstance);
+                    worker.afterObjectSetCompleted(objInstance);
+                    structHandler.accept(objInstance);
                 }
             }
         } catch (Exception e) {

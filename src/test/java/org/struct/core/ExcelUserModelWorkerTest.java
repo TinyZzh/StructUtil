@@ -2,7 +2,6 @@ package org.struct.core;
 
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
-import org.struct.core.worker.ExcelUserModelWorker;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,7 +11,7 @@ public class ExcelUserModelWorkerTest {
 
     @Test
     public void test() throws Exception {
-        ExcelUserModelWorker<Animal> worker = new ExcelUserModelWorker<>("classpath:/org/struct/core/", Animal.class);
+        StructWorker<Animal> worker = new StructWorker<>("classpath:/org/struct/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
     }

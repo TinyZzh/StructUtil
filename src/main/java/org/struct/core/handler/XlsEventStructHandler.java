@@ -1,22 +1,4 @@
-/*
- *
- *
- *          Copyright (c) 2019. - TinyZ.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
-package org.struct.core.worker;
+package org.struct.core.handler;
 
 import org.apache.poi.hssf.eventusermodel.FormatTrackingHSSFListener;
 import org.apache.poi.hssf.eventusermodel.HSSFEventFactory;
@@ -42,8 +24,12 @@ import org.apache.poi.hssf.record.StringRecord;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
+import org.struct.core.bean.FileExtensionMatcher;
+import org.struct.core.bean.WorkerMatcher;
 import org.struct.exception.EndOfExcelSheetException;
 import org.struct.exception.ExcelTransformException;
+import org.struct.spi.SPI;
+import org.struct.util.AnnotationUtils;
 import org.struct.util.Reflects;
 
 import java.io.File;
@@ -54,23 +40,24 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * @param <T> the target java bean class.
+ *
  */
-public class XlsEventWorker<T> extends StructWorker<T> {
+@SPI(name = "xls")
+public class XlsEventStructHandler implements StructHandler {
 
-    public XlsEventWorker(String rootPath, Class<T> clzOfBean) {
-        this(rootPath, clzOfBean, new HashMap<>());
-    }
+    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(FileExtensionMatcher.FILE_XLS);
 
-    public XlsEventWorker(String rootPath, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
-        super(rootPath, clzOfBean, refFieldValueMap);
+    @Override
+    public WorkerMatcher matcher() {
+        return MATCHER;
     }
 
     @Override
-    protected void onLoadStructSheetImpl(Consumer<T> cellHandler, StructSheet annotation, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         try (POIFSFileSystem fs = new POIFSFileSystem(file)) {
             //
-            XlsListener<T> listener = new XlsListener<>(this, annotation, cellHandler);
+            XlsListener<T> listener = new XlsListener<>(worker, clzOfStruct, annotation, structHandler);
 
             HSSFRequest request = new HSSFRequest();
             request.addListenerForAllRecords(listener.getFormatListener());
@@ -90,7 +77,8 @@ public class XlsEventWorker<T> extends StructWorker<T> {
      */
     public static class XlsListener<T> implements HSSFListener {
 
-        private XlsEventWorker<T> worker;
+        private StructWorker<T> worker;
+        private Class<T> clzOfStruct;
         /**
          * The struct bean's annotation.
          */
@@ -134,8 +122,9 @@ public class XlsEventWorker<T> extends StructWorker<T> {
         /**
          *
          */
-        public XlsListener(XlsEventWorker<T> worker, StructSheet annotation, Consumer<T> objHandler) {
+        public XlsListener(StructWorker<T> worker, Class<T> clzOfStruct, StructSheet annotation, Consumer<T> objHandler) {
             this.worker = worker;
+            this.clzOfStruct = clzOfStruct;
             this.annotation = annotation;
             this.objHandler = objHandler;
 
@@ -270,7 +259,7 @@ public class XlsEventWorker<T> extends StructWorker<T> {
                 lastColumnNumber = -1;
 
                 if (!isFirstRow && this.isCurSheet && thisRow >= this.startRow) {
-                    curInstance = Reflects.newInstance(worker.clzOfBean);
+                    curInstance = Reflects.newInstance(this.clzOfStruct);
                 }
             }
 
