@@ -1,8 +1,11 @@
 package org.struct.core.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.struct.core.StructWorker;
 import org.struct.core.bean.FileExtensionMatcher;
 import org.struct.core.bean.WorkerMatcher;
+import org.struct.exception.ExcelTransformException;
 import org.struct.spi.SPI;
 
 import javax.xml.bind.JAXBContext;
@@ -19,6 +22,7 @@ import java.util.function.Consumer;
 @SPI(name = "xml")
 public class XmlStructHandler implements StructHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(XmlStructHandler.class);
     private static final WorkerMatcher MATCHER = new FileExtensionMatcher(FileExtensionMatcher.FILE_XML);
 
     @Override
@@ -28,6 +32,7 @@ public class XmlStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+        int i = 0;
         try {
             JAXBContext context = JAXBContext.newInstance(JaxbCollectionWrapper.class, clzOfStruct);
             Unmarshaller unmarshaller = context.createUnmarshaller();
@@ -35,12 +40,14 @@ public class XmlStructHandler implements StructHandler {
             JaxbCollectionWrapper<T> wrapper = (JaxbCollectionWrapper<T>) unmarshaller.unmarshal(source, JaxbCollectionWrapper.class).getValue();
             if (wrapper != null) {
                 for (T objInstance : wrapper.getRoot()) {
+                    i++;
                     worker.afterObjectSetCompleted(objInstance);
                     structHandler.accept(objInstance);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.warn("xml deserialize failure. struct:{}, file:{} line:{}", clzOfStruct, file.getName(), i, e);
+            throw new ExcelTransformException(e.getMessage(), e);
         }
     }
 
