@@ -59,18 +59,7 @@ public final class WorkerUtil {
     public static <T> StructWorker<T> newWorker(String rootPath, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfBean);
         checkMissingExcelSheetAnnotation(annotation, clzOfBean);
-        File file = new File(resolveFilePath(rootPath, annotation));
-        List<StructHandler> collected = lookupStructHandler(annotation, file);
-        for (StructHandler handler : collected) {
-            try {
-                return new StructWorker<>(rootPath, clzOfBean, refFieldValueMap);
-            } catch (Exception e) {
-                e.printStackTrace();
-                //  "instance worker failure. clz:" + matcher.worker().getName(), e
-//                throw new IllegalArgumentException("instance worker failure. clz:" + matcher.worker().getName(), e);
-            }
-        }
-        throw new IllegalArgumentException("unknown data file extension. file name:" + file.getName());
+        return new StructWorker<>(rootPath, clzOfBean, refFieldValueMap);
     }
 
     public static List<StructHandler> lookupStructHandler(StructSheet annotation, File file) {
