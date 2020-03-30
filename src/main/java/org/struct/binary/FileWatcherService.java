@@ -220,7 +220,10 @@ public class FileWatcherService implements Runnable {
                     throw e;
                 }
             }
-            key.reset();
+            boolean valid = key.reset();
+            if (!valid) {
+                this.keys.remove(key);
+            }
         } catch (Throwable e) {
             LOGGER.error("file watcher service throw an unknown exception.", e);
         }
