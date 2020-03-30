@@ -2,11 +2,13 @@ package org.struct.core.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.core.bean.FileExtensionMatcher;
 import org.struct.core.bean.WorkerMatcher;
 import org.struct.exception.ExcelTransformException;
 import org.struct.spi.SPI;
+import org.struct.util.AnnotationUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -32,6 +34,7 @@ public class XmlStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         int i = 0;
         try {
             JAXBContext context = JAXBContext.newInstance(JaxbCollectionWrapper.class, clzOfStruct);
@@ -40,9 +43,16 @@ public class XmlStructHandler implements StructHandler {
             JaxbCollectionWrapper<T> wrapper = (JaxbCollectionWrapper<T>) unmarshaller.unmarshal(source, JaxbCollectionWrapper.class).getValue();
             if (wrapper != null) {
                 for (T objInstance : wrapper.getRoot()) {
-                    i++;
-                    worker.afterObjectSetCompleted(objInstance);
-                    structHandler.accept(objInstance);
+                    int line = ++i;
+                    if (annotation.startOrder() > 0 && line < annotation.startOrder()) {
+                        //  do nothing
+                    } else if (annotation.endOrder() > 0 && line > annotation.endOrder()) {
+                        //  end
+                        break;
+                    } else {
+                        worker.afterObjectSetCompleted(objInstance);
+                        structHandler.accept(objInstance);
+                    }
                 }
             }
         } catch (Exception e) {

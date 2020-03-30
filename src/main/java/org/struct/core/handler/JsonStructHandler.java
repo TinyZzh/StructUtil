@@ -4,11 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.core.bean.FileExtensionMatcher;
 import org.struct.core.bean.WorkerMatcher;
 import org.struct.exception.ExcelTransformException;
 import org.struct.spi.SPI;
+import org.struct.util.AnnotationUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,14 +38,22 @@ public class JsonStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         int i = 0;
         try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             reader.beginArray();
             while (reader.hasNext()) {
-                i++;
-                T objInstance = (T) gson.fromJson(reader, clzOfStruct);
-                worker.afterObjectSetCompleted(objInstance);
-                structHandler.accept(objInstance);
+                int line = ++i;
+                if (annotation.startOrder() > 0 && line < annotation.startOrder()) {
+                    reader.skipValue();
+                } else if (annotation.endOrder() > 0 && line > annotation.endOrder()) {
+                    //  end
+                    return;
+                } else {
+                    T objInstance = (T) gson.fromJson(reader, clzOfStruct);
+                    worker.afterObjectSetCompleted(objInstance);
+                    structHandler.accept(objInstance);
+                }
             }
             reader.endArray();
         } catch (Exception e) {

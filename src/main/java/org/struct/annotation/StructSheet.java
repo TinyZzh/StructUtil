@@ -20,7 +20,6 @@ package org.struct.annotation;
 
 import org.struct.core.StructWorker;
 import org.struct.core.bean.WorkerMatcher;
-import org.struct.util.WorkerUtil;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -51,20 +50,23 @@ public @interface StructSheet {
 
     /**
      * @return the first row's order of struct. {@link StructWorker} will load
-     * from startOrder to endOrder. default 1. it is means from the second row
+     * from startOrder to endOrder. default 1.
+     * it is means from the second row in excel(0-based) or first line in other data file.
      */
     int startOrder() default 1;
 
     /**
-     * @return the last row's order of struct. {@link StructWorker} will load
-     * from startOrder to endOrder. default -1. it is means ths real struct's last row.
+     * @return last last row or line order of struct. {@link StructWorker} will load
+     * from startOrder to endOrder. default -1. it's means load data until the EOF.
+     * if user set the other large than zero's numeric means the data file's last row or last line.
      */
     int endOrder() default -1;
 
     /**
      * the sheet worker matcher.
+     * try auto choice the worker to convert the data file.
      *
-     * @return the sheet's worker matcher. default is auto. {@link WorkerUtil#WORKER_MATCHERS}
+     * @return the sheet's worker matcher. default is auto. {@link WorkerMatcher}
      */
     Class<? extends WorkerMatcher> matcher() default WorkerMatcher.class;
 }

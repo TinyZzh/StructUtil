@@ -19,7 +19,7 @@ public class XmlStructHandlerTest {
     }
 
     @XmlRootElement(name = "child")
-    @StructSheet(fileName = "tpl_vip.xml")
+    @StructSheet(fileName = "tpl_vip.xml", startOrder = 2)
     public static class VipConfigSyncBean {
         public int gold;
         public int lv;
