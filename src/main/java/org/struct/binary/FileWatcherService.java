@@ -16,12 +16,19 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Simple file watcher service implement.
+ * <p>
+ * Monitor registered dir or file change event and invoke custom hook to handle it.
+ * <strong>Only {@link StandardWatchEventKinds#ENTRY_MODIFY} event<strong/>
+ */
 public class FileWatcherService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcherService.class);
@@ -34,11 +41,25 @@ public class FileWatcherService implements Runnable {
      */
     private WatchService ws;
     /**
+     * {@link WatchKey} - {@link Path} map.
+     */
+    private final Map<WatchKey, Path> keys = new ConcurrentHashMap<>();
+    /**
      * the file change event hook map.
      */
-    private final ConcurrentHashMap<String, Runnable> hookMap;
-
-    private final Map<WatchKey,Path> keys = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Path, Runnable> hookMap;
+    /**
+     * Set the scheduled job's initial delay.
+     */
+    private long scheduleInitialDelay = 10L;
+    /**
+     * Set the scheduled job's delay.
+     */
+    private long scheduleDelay = 5L;
+    /**
+     * Set schedule job's {@link TimeUnit}
+     */
+    private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
 
     private volatile boolean isInitialized = false;
 
@@ -51,57 +72,55 @@ public class FileWatcherService implements Runnable {
     }
 
     public FileWatcherService() throws IOException {
-        this(null);
-    }
-
-    public FileWatcherService(ScheduledExecutorService executor) throws IOException {
         this.ws = FileSystems.getDefault().newWatchService();
         this.hookMap = new ConcurrentHashMap<>();
-        if (executor != null) {
-            this.executor = executor;
-            this.future = executor.scheduleWithFixedDelay(this::process, 10, 5, TimeUnit.SECONDS);
-        }
     }
 
-    public void withWorkspace(String dir) {
-        this.withWorkspace(dir, null);
-    }
-
-    public void withWorkspace(String dir, ScheduledExecutorService scheduledExecutorService) {
-        try {
-            Path path = Paths.get(dir == null || dir.isEmpty() ? DEFAULT_WORKSPACE_DIR : dir);
-            WatchKey key = path.register(this.ws, StandardWatchEventKinds.ENTRY_MODIFY);
-            keys.putIfAbsent(key, path);
-
-            //  try initialize  schedule to monitor file change event.
-            if (this.executor == null || this.future == null) {
-                synchronized (this) {
-                    if (this.executor == null) {
-                        this.executor = scheduledExecutorService == null
-                                ? Executors.newScheduledThreadPool(1, r -> new Thread(this, "FileWatcherThread"))
-                                : scheduledExecutorService;
-                    }
-                    if (this.future == null) {
-                        this.future = this.executor.scheduleWithFixedDelay(this, 1, 1, TimeUnit.SECONDS);
-                    }
-                }
+    /**
+     * Bootstrap service.
+     */
+    public void bootstrap() {
+        synchronized (this) {
+            if (!isInitialized) {
+                this.startScheduledThread();
             }
-            this.isInitialized = true;
-        } catch (Exception e) {
-            LOGGER.error("watch path failure. path:{}", dir, e);
         }
     }
 
-    private void register(Path dir) throws IOException {
+    public FileWatcherService startScheduledThread() {
+        return this.startScheduledThread(Executors.newScheduledThreadPool(1, r -> new Thread(r, "FileWatcherThread")));
+    }
+
+    public FileWatcherService startScheduledThread(ScheduledExecutorService scheduledExecutorService) {
+        assert null != scheduledExecutorService;
+        synchronized (this) {
+            if (this.executor == null) {
+                this.executor = scheduledExecutorService;
+                this.future = this.executor.scheduleWithFixedDelay(this, this.scheduleInitialDelay, this.scheduleDelay, this.scheduleTimeUnit);
+                this.isInitialized = true;
+            }
+        }
+        return this;
+    }
+
+    public FileWatcherService register(String dir) throws IOException {
+        Objects.requireNonNull(dir, "dir");
+        return this.register(Paths.get(dir.isEmpty() ? DEFAULT_WORKSPACE_DIR : dir));
+    }
+
+    public FileWatcherService register(Path dir) throws IOException {
+        Objects.requireNonNull(dir, "dir");
         WatchKey key = dir.register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
-        keys.put(key, dir);
+        keys.putIfAbsent(key, dir);
+        return this;
     }
 
     /**
      * Register the given directory, and all its sub-directories, with the
      * WatchService.
      */
-    private void registerAll(final Path start) throws IOException {
+    private FileWatcherService registerAll(final Path start) throws IOException {
+        Objects.requireNonNull(start, "start");
         // register directory and sub-directories
         Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
             @Override
@@ -110,49 +129,83 @@ public class FileWatcherService implements Runnable {
                 return FileVisitResult.CONTINUE;
             }
         });
+        return this;
     }
 
-    private void checkService() {
-        if (!isInitialized) {
-            synchronized (this) {
-                withWorkspace(null);
-                this.isInitialized = true;
-            }
-        }
+    public FileWatcherService registerHook(String fileName, Runnable hook) {
+        return this.registerHook(Paths.get(fileName), hook);
     }
 
-    public void registerHook(String fileName, Runnable hook) {
-        this.checkService();
-        this.hookMap.putIfAbsent(fileName, hook);
+    public FileWatcherService registerHook(Path path, Runnable hook) {
+        this.hookMap.putIfAbsent(path, hook);
+        return this;
     }
 
-    public void deregisterHook(String fileName) {
-        this.checkService();
-        this.hookMap.remove(fileName);
+    public FileWatcherService deregisterHook(String fileName) {
+        return this.deregisterHook(Paths.get(fileName));
+    }
+
+    public FileWatcherService deregisterHook(Path path) {
+        this.hookMap.remove(path);
+        return this;
+    }
+
+    public FileWatcherService setScheduleInitialDelay(long scheduleInitialDelay) {
+        if (scheduleInitialDelay <= 0)
+            throw new IllegalArgumentException("the scheduleInitialDelay must be large than zero.");
+        this.scheduleInitialDelay = scheduleInitialDelay;
+        return this;
+    }
+
+    public FileWatcherService setScheduleDelay(long scheduleDelay) {
+        if (scheduleDelay <= 0)
+            throw new IllegalArgumentException("the scheduleDelay must be large than zero.");
+        this.scheduleDelay = scheduleDelay;
+        return this;
+    }
+
+    public FileWatcherService setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
+        Objects.requireNonNull(scheduleTimeUnit, "scheduleTimeUnit");
+        this.scheduleTimeUnit = scheduleTimeUnit;
+        return this;
     }
 
     /**
      * Schedule process the file watch events.
      */
-    public void process() {
-        WatchKey key = ws.poll();
-        if (key == null) {
-            return;
-        }
-        for (WatchEvent<?> event : key.pollEvents()) {
-            WatchEvent.Kind kind = event.kind();
-            if (kind == StandardWatchEventKinds.OVERFLOW) {
-                continue;
+    private void process() {
+        try {
+            WatchKey key = ws.poll();
+            if (key == null) {
+                return;
             }
-            WatchEvent<Path> ev = (WatchEvent<Path>) event;
-            String fileName = ev.context().toString();
-
-            Runnable runnable = hookMap.get(fileName);
-            if (runnable != null) {
-                runnable.run();
+            Path dir = keys.get(key);
+            if (dir == null) {
+                LOGGER.info("watch key not registered. key:{}", key);
+                return;
             }
+            for (WatchEvent<?> event : key.pollEvents()) {
+                WatchEvent.Kind kind = event.kind();
+                if (kind == StandardWatchEventKinds.OVERFLOW) {
+                    continue;
+                }
+                WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                Path name = ev.context();
+                Path child = dir.resolve(name);
+                try {
+                    Runnable runnable = hookMap.get(child);
+                    if (runnable != null) {
+                        runnable.run();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("process data file failure. file:{}", child.toAbsolutePath(), e);
+                    throw e;
+                }
+            }
+            key.reset();
+        } catch (Throwable e) {
+            LOGGER.error("file watcher service throw an unknown exception.", e);
         }
-        key.reset();
     }
 
     @Override

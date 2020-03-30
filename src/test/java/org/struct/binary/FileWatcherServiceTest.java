@@ -15,14 +15,14 @@ public class FileWatcherServiceTest {
     @Test
     public void test() throws IOException, InterruptedException {
         FileWatcherService fws = new FileWatcherService();
-        fws.withWorkspace("./examples/");
         Runnable runnable = () -> {
             StructWorker<XmlStructHandlerTest.VipConfigSyncBean> worker = WorkerUtil.newWorker("./examples/", XmlStructHandlerTest.VipConfigSyncBean.class);
             ArrayList<XmlStructHandlerTest.VipConfigSyncBean> beans = worker.toList(ArrayList::new);
             assertFalse(beans.isEmpty());
         };
-        fws.registerHook("tpl_vip.xml", runnable);
-        runnable.run();
+        fws.register("./examples/")
+                .registerHook("./examples/tpl_vip.xml", runnable)
+                .bootstrap();
 //        while (true) {
 //            Thread.sleep(10000);
 //        }
