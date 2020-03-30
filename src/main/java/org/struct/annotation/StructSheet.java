@@ -1,7 +1,7 @@
 /*
  *
  *
- *          Copyright (c) 2019. - TinyZ.
+ *          Copyright (c) 2020. - TinyZ.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.function.Predicate;
 
 /**
  * @author TinyZ.
@@ -69,4 +70,10 @@ public @interface StructSheet {
      * @return the sheet's worker matcher. default is auto. {@link WorkerMatcher}
      */
     Class<? extends WorkerMatcher> matcher() default WorkerMatcher.class;
+
+    /**
+     * the data predicate to filter the invalid data line.
+     */
+    Class<? extends Predicate> filter() default Predicate.class;
+
 }
