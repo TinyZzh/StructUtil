@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
  * 优点：支持丰富excel特性
  * 缺点: 当excel文件比较大时，性能很差，会导致oom.
  */
-@SPI(name = "excel-user", order = SPI.HIGHEST)
+@SPI(name = "excel-user", order = 0)
 public class ExcelUMStructHandler implements StructHandler {
 
     private static final WorkerMatcher MATCHER = new FileExtensionMatcher(524288L, WorkerMatcher.HIGHEST,
