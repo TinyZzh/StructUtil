@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.struct.binary;
+package org.struct.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package org.struct.binary;
+package org.struct.support;
 
 import org.junit.Test;
 import org.struct.core.StructWorker;
