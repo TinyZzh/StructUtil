@@ -28,5 +28,5 @@ public interface StructHandler {
 
     WorkerMatcher matcher();
 
-    <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file);
+    <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file);
 }

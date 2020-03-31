@@ -71,11 +71,11 @@ public class XlsEventStructHandler implements StructHandler {
     }
 
     @Override
-    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         try (POIFSFileSystem fs = new POIFSFileSystem(file)) {
             //
-            XlsListener<T> listener = new XlsListener<>(worker, clzOfStruct, annotation, structHandler);
+            XlsListener<T> listener = new XlsListener<>(worker, clzOfStruct, annotation, cellHandler);
 
             HSSFRequest request = new HSSFRequest();
             request.addListenerForAllRecords(listener.getFormatListener());

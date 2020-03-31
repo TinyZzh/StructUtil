@@ -63,7 +63,7 @@ public class ExcelUMStructHandler implements StructHandler {
     }
 
     @Override
-    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         try (FileInputStream fis = new FileInputStream(file)) {
             Workbook wb = WorkbookFactory.create(fis);
@@ -76,7 +76,7 @@ public class ExcelUMStructHandler implements StructHandler {
                     .mapToObj(sheet::getRow)
                     .filter(Objects::nonNull)
                     .map(cells -> setObjectFieldValue(worker, clzOfStruct, cells, columnFieldMap, evaluator))
-                    .forEach(structHandler);
+                    .forEach(cellHandler);
         } catch (Exception e) {
             throw new ExcelTransformException(e.getMessage(), e);
         }

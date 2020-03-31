@@ -69,14 +69,14 @@ public class XlsxSaxStructHandler implements StructHandler {
     }
 
     @Override
-    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         XlsxBeanSheetContentHandler<T> contentHandler = new XlsxBeanSheetContentHandler<>();
         contentHandler.setWorker(worker);
         contentHandler.setClzOfStruct(clzOfStruct);
         contentHandler.setFirstRow(annotation.startOrder());
         contentHandler.setLastRow(annotation.endOrder());
-        contentHandler.setObjectConsumer(structHandler);
+        contentHandler.setObjectConsumer(cellHandler);
 
         try (OPCPackage pkg = OPCPackage.open(file)) {
             XSSFReader reader = new XSSFReader(pkg);

@@ -55,7 +55,7 @@ public class JsonStructHandler implements StructHandler {
     }
 
     @Override
-    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         int i = 0;
         try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
@@ -70,7 +70,7 @@ public class JsonStructHandler implements StructHandler {
                 } else {
                     T objInstance = (T) gson.fromJson(reader, clzOfStruct);
                     worker.afterObjectSetCompleted(objInstance);
-                    structHandler.accept(objInstance);
+                    cellHandler.accept(objInstance);
                 }
             }
             reader.endArray();

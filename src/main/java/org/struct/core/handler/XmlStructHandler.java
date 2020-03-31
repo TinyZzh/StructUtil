@@ -51,7 +51,7 @@ public class XmlStructHandler implements StructHandler {
     }
 
     @Override
-    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> structHandler, File file) {
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         int i = 0;
         try {
@@ -69,7 +69,7 @@ public class XmlStructHandler implements StructHandler {
                         break;
                     } else {
                         worker.afterObjectSetCompleted(objInstance);
-                        structHandler.accept(objInstance);
+                        cellHandler.accept(objInstance);
                     }
                 }
             }
