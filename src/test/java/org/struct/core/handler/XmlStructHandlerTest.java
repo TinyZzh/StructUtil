@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
-import org.struct.core.collector.StructBeanFilter;
+import org.struct.core.filter.StructBeanFilter;
 import org.struct.util.WorkerUtil;
 
 import javax.xml.bind.annotation.XmlRootElement;

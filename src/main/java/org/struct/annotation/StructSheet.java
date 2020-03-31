@@ -19,7 +19,7 @@
 package org.struct.annotation;
 
 import org.struct.core.StructWorker;
-import org.struct.core.collector.StructBeanFilter;
+import org.struct.core.filter.StructBeanFilter;
 import org.struct.core.matcher.WorkerMatcher;
 
 import java.lang.annotation.Documented;

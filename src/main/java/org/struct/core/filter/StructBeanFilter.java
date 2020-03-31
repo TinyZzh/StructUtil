@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.struct.core.collector;
+package org.struct.core.filter;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
