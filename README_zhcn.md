@@ -1,46 +1,54 @@
 # Struct Util
 
-Excel等常见的数据文件转换Java Bean工具. 方便策划童鞋配置模板表. 同时降低开发同事的代码开发.
+结构化数据处理工具。
+将格式化的数据文件映射转换为Java Bean工具。可以快速、简单的将配置表的结构化数据转换为Java Bean。减轻开发人员对于配置表的工作量。
 
 ## 环境要求
 
-    1. Java 8 above
-    2. POI 3.x
+    1. Java 8+. 
+    2. POI 3.8+
+
+notice
+
+    1. 针对XML文件的解析使用的JAXB。Java 9+及以上版本需要额外增加依赖
+    
 ```groovy
 dependencies {
-    compile 'org.apache.poi:poi:3.16'
-    compile 'org.apache.poi:poi-ooxml:3.16'
+    //  Excel. *.xls or *.xlsx
+    compile 'org.apache.poi:poi:3.17'
+    compile 'org.apache.poi:poi-ooxml:3.17'
+    //  json
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
+
+    compile 'org.slf4j:slf4j-api:1.7.30'
 }
 ```         
 
-## 背景描述
-描述几种业务场景.
-供职过的几家公司采用excel的模板表数据转换成json, xml, csv或二进制等中间格式, 再交给程序使用. 主要的问题在以下几点: 
+## 特性
+    1. 低侵入。对已有的代码仅需使用 **StructField** 和 **StructSheet** 两个注解
+    2. 高性能、低内存占用。使用增量或Stream API的方式避免大文件读取带来的低性能、高内存占用的问题
+    3. 扩展性。提供WorkerMatcher、StructHandler、Converter等扩展点供用户实现自定义扩展功能
+    4. 结构化数据自动校验和检查。自动检查校验结构化数据及依赖之间的关系。避免出现循环依赖等问题
+    5. 丰富的内置解析器。内置提供 **.xls**、**.xlsx**、**.json**、**.xml** 四种常见结构化数据的解析器（扩展中）
+    6. 丰富的JDK原生类的类型转换支持
+    7. 自定义类型转换器{Converter}
+    8. 灵活的结构化数据整理机制。输出的结果支持Array、List、Map、Vector、Set等JDK内置或自定义的集合容器
+    9. 灵活的文件变更监听和结构化数据文件动态加载能力
 
-    1. 策划每次需要手动执行转换工具. 转换完成在提交文件. 
-    2. 程序需要开发针对性的Excel转表工具. 增加了工作量. 
-    3. Excel没有很优雅的方式表示“数组Array”、“列表List”、“键值对Map”等程序常用的数据结构.
-    4. Excel表结构检查逻辑非常复杂. 表关联关系检查比较困难. 很容易造成数据漏填导致的问题.
+## 快速入门
 
-## Excel Util解决的问题
-    1. 策划、程序分离. 策划专注于Excel表单的填写. 程序不再关注模板表的解析
-    2. 使用Annotation的方式实现Excel解析. 在不侵入业务代码的同时, 实现Excel的解析和加载
-    3. 使用StructField的ref作为外键索引. 支持Excel跨表解析. 
-    4. 模板表数据加载时. 通过外键索引可以检验模板表数据是否异常, 索引关系是否正确、数据是否缺失.
-    5. 扩展支持更多的数据结构(当前实现的Array, List, Map, Vector，Set等JDK集合容器)
-    6. 自定义扩展点Converter. 支持用户将Excel格式转换为自定义的任意结构
-
-## Technical Implement Detail
-
-主要包含两个Java Annotation. @StructSheet和@StructField
+主要包含两个Java注解. @StructSheet和@StructField
 
 ### 1. @StructSheet Annotation
 定义Excel模板表对应个Java Bean
 
-    1. fileName. 指定Bean对应的Excel文件文件名.
-    2. sheetName. 指定Bean对应的Sheet名称. Excel有多个Sheet, 所以需要指定Sheet Name. 缺省值为Sheet1
+    1. fileName. 指定Bean对应的结构化数据文件的文件路径.
+    2. sheetName. 表单名称. 针对Excel文件
+    3. startOrder.  控制文件读取的开始. 缺省为: 1   从excel的1行(第一行为0)或文件的第一行开始
+    4. endOrder.  控制文件读取的结束. 缺省为:-1
+    5. matcher.  文件匹配器. 用于筛选可用的{StructHandler}.
 
-### 1. @StructField Annotation
+### 2. @StructField Annotation
 定义Excel模板表对应个Java Bean中的 Field
 
     1. name. 明确的指定bean中的字段对应的Excel的列名
@@ -48,7 +56,7 @@ dependencies {
     3. refGroupBy. 映射的目标根据此字段的值进行分组
     4. refUniqueKey. Map对应根据uniqueKey字段的值作为键值对的key.
     5. required. 字段是否为必须字段? TRUE时, 字段值必须存在, 字段为映射时, 映射必须存在.
-    6. converter. 自定义转换器转换Excel的值
+    6. converter. 字段类型转换器
 
 
 ## Examples
@@ -85,6 +93,6 @@ public static class Classification {
 ### Step 2. Load Excel Data With Custom Struct
 
 ```java
-ExcelWorker<Animal> worker = new ExcelWorker<>(rootPath, Animal.class);
-List<Animal> list = worker.load(ArrayList::new);
+StructWorker<Animal> worker = WorkerUtil.newWorker(rootpath, Animal.class);
+List<Animal> list = worker.toList(ArrayList::new);
 ```
