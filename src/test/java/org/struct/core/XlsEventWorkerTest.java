@@ -18,10 +18,10 @@
 
 package org.struct.core;
 
-import org.struct.annotation.StructField;
-import org.struct.annotation.StructSheet;
 import org.junit.Assert;
 import org.junit.Test;
+import org.struct.annotation.StructField;
+import org.struct.annotation.StructSheet;
 
 import java.util.ArrayList;
 

@@ -19,7 +19,6 @@
 package org.struct.util;
 
 import org.junit.Test;
-import org.struct.util.SupportUtil;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -27,7 +26,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.security.SecureRandom;
 
@@ -50,7 +48,7 @@ public class SupportUtilTest {
     }
 
     public void decrypt(String filePath, String key) {
-        try ( FileInputStream fis = new FileInputStream(new File(filePath))) {
+        try (FileInputStream fis = new FileInputStream(new File(filePath))) {
             int available = fis.available();
 //            fis.skip(4);
             byte[] data = new byte[available - 8];

@@ -19,7 +19,7 @@
 package org.struct.core.handler;
 
 import org.struct.core.StructWorker;
-import org.struct.core.bean.WorkerMatcher;
+import org.struct.core.matcher.WorkerMatcher;
 
 import java.io.File;
 import java.util.function.Consumer;

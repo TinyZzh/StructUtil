@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.struct.core.bean;
+package org.struct.core.matcher;
 
 import java.io.File;
 import java.util.Arrays;

@@ -18,7 +18,6 @@
 
 package org.struct.core.converter;
 
-import org.struct.core.Converter;
 import org.struct.util.ConverterUtil;
 
 import java.lang.reflect.Array;

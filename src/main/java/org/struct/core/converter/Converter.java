@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.struct.core;
+package org.struct.core.converter;
 
 /**
  * The instance type converter.

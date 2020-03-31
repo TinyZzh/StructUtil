@@ -7,8 +7,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import static org.junit.Assert.*;
-
 public class ConverterUtilTest {
 
     @Test
@@ -63,18 +61,18 @@ public class ConverterUtilTest {
     public void testOutOfRangeConvertNumberToTargetClass() {
 
         for (Object[] objs : Arrays.asList(
-                new Object[] {Byte.MAX_VALUE + 1, Byte.class},
-                new Object[] {Byte.MIN_VALUE - 1, Byte.class},
-                new Object[] {Short.MAX_VALUE + 1, Short.class},
-                new Object[] {Short.MIN_VALUE - 1, Short.class},
-                new Object[] {Integer.MAX_VALUE + 1L, Integer.class},
-                new Object[] {Integer.MIN_VALUE - 1L, Integer.class},
-                new Object[] {BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), Long.class},
-                new Object[] {BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), Long.class}
+                new Object[]{Byte.MAX_VALUE + 1, Byte.class},
+                new Object[]{Byte.MIN_VALUE - 1, Byte.class},
+                new Object[]{Short.MAX_VALUE + 1, Short.class},
+                new Object[]{Short.MIN_VALUE - 1, Short.class},
+                new Object[]{Integer.MAX_VALUE + 1L, Integer.class},
+                new Object[]{Integer.MIN_VALUE - 1L, Integer.class},
+                new Object[]{BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), Long.class},
+                new Object[]{BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), Long.class}
         )) {
             try {
                 Assert.assertEquals(1.0D, ConverterUtil.covert(objs[0], (Class) objs[1]));
-            } catch (Exception e){
+            } catch (Exception e) {
                 continue;
             }
             Assert.fail();

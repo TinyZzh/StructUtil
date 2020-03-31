@@ -1,10 +1,10 @@
 package org.struct.core;
 
+import org.junit.Assert;
+import org.junit.Test;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 import org.struct.util.WorkerUtil;
-import org.junit.Assert;
-import org.junit.Test;
 
 import java.net.URL;
 import java.util.ArrayList;

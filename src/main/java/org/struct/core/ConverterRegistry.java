@@ -18,6 +18,7 @@
 
 package org.struct.core;
 
+import org.struct.core.converter.Converter;
 import org.struct.core.converter.StringToArrayConverter;
 import org.struct.util.Reflects;
 

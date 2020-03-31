@@ -18,7 +18,7 @@
 
 package org.struct.annotation;
 
-import org.struct.core.Converter;
+import org.struct.core.converter.Converter;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

@@ -22,7 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
-import org.struct.core.bean.FieldDescriptor;
+import org.struct.core.collector.StructBeanFilter;
+import org.struct.core.converter.Converter;
 import org.struct.core.handler.StructHandler;
 import org.struct.exception.ExcelTransformException;
 import org.struct.exception.IllegalAccessPropertyException;
@@ -32,6 +33,7 @@ import org.struct.util.ConverterUtil;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -313,7 +315,7 @@ public class StructWorker<T> {
         List<StructHandler> collected = WorkerUtil.lookupStructHandler(annotation, file);
         for (StructHandler handler : collected) {
             try {
-                handler.handle(this, this.clzOfStruct, cellHandler, file);
+                handler.handle(this, this.clzOfStruct, wrapCellHandler(annotation, cellHandler), file);
                 return;
             } catch (Exception e) {
                 //  try next handler.
@@ -322,5 +324,25 @@ public class StructWorker<T> {
             }
         }
         throw new IllegalArgumentException("unknown data file extension. file name:" + file.getName());
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Consumer<T> wrapCellHandler(StructSheet annotation, Consumer<T> cellHandler) {
+        Consumer<T> handler = cellHandler;
+        Class<? extends StructBeanFilter> clzOfFilter = annotation.filter();
+        if (StructBeanFilter.class != clzOfFilter
+                && !Modifier.isInterface(clzOfFilter.getModifiers())
+                && !Modifier.isAbstract(clzOfFilter.getModifiers())
+        ) {
+            try {
+                Constructor<? extends StructBeanFilter> constructor = clzOfFilter.getConstructor(Consumer.class);
+                handler = constructor.newInstance(cellHandler);
+            } catch (Exception e) {
+                String msg = "wrap cell handler failure. struct:" + annotation.fileName() + ", sheet:" + annotation.sheetName();
+                LOGGER.error(msg, e);
+                throw new RuntimeException(msg, e);
+            }
+        }
+        return handler;
     }
 }

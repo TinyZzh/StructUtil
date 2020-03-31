@@ -7,6 +7,7 @@ import org.struct.util.WorkerUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 
@@ -17,7 +18,7 @@ public class FileWatcherServiceTest {
         FileWatcherService fws = new FileWatcherService();
         Runnable runnable = () -> {
             StructWorker<XmlStructHandlerTest.VipConfigSyncBean> worker = WorkerUtil.newWorker("./examples/", XmlStructHandlerTest.VipConfigSyncBean.class);
-            ArrayList<XmlStructHandlerTest.VipConfigSyncBean> beans = worker.toList(ArrayList::new);
+            List<XmlStructHandlerTest.VipConfigSyncBean> beans = worker.toList(ArrayList::new);
             assertFalse(beans.isEmpty());
         };
         fws.register("./examples/")

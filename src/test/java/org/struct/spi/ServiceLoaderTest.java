@@ -6,8 +6,6 @@ import org.struct.core.handler.StructHandler;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
-
 public class ServiceLoaderTest {
 
     @Test

@@ -19,7 +19,8 @@
 package org.struct.annotation;
 
 import org.struct.core.StructWorker;
-import org.struct.core.bean.WorkerMatcher;
+import org.struct.core.collector.StructBeanFilter;
+import org.struct.core.matcher.WorkerMatcher;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -27,7 +28,6 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.function.Predicate;
 
 /**
  * @author TinyZ.
@@ -72,8 +72,8 @@ public @interface StructSheet {
     Class<? extends WorkerMatcher> matcher() default WorkerMatcher.class;
 
     /**
-     * the data predicate to filter the invalid data line.
+     * the bean instance filter after struct data convert completed.
      */
-    Class<? extends Predicate> filter() default Predicate.class;
+    Class<? extends StructBeanFilter> filter() default StructBeanFilter.class;
 
 }

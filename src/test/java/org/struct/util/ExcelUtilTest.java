@@ -53,7 +53,7 @@ public class ExcelUtilTest {
         FormulaEvaluator formula = Mockito.mock(FormulaEvaluator.class);
         Assert.assertNull(WorkerUtil.getExcelCellValue(CellType._NONE, cell, formula));
         Assert.assertEquals("", WorkerUtil.getExcelCellValue(CellType.BLANK, cell, formula));
-       //   numeric
+        //   numeric
         Mockito.doReturn(1.00D).when(cell).getNumericCellValue();
         Assert.assertEquals(1, WorkerUtil.getExcelCellValue(CellType.NUMERIC, cell, formula));
         CellValue cellValue = new CellValue(1.00D);

@@ -16,9 +16,9 @@
  *  limitations under the License.
  */
 
-package org.struct.core.bean;
+package org.struct.core;
 
-import org.struct.core.Converter;
+import org.struct.core.converter.Converter;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;

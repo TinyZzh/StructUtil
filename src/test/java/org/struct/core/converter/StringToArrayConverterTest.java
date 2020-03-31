@@ -29,10 +29,10 @@ public class StringToArrayConverterTest {
     public void convert2IntegerArray() {
         StringToArrayConverter converter = new StringToArrayConverter();
         Integer[] data = (Integer[]) converter.convert("|11|22|333|4444", Integer[].class);
-        Assert.assertEquals((Integer)11, data[0]);
-        Assert.assertEquals((Integer)22, data[1]);
-        Assert.assertEquals((Integer)333, data[2]);
-        Assert.assertEquals((Integer)4444, data[3]);
+        Assert.assertEquals((Integer) 11, data[0]);
+        Assert.assertEquals((Integer) 22, data[1]);
+        Assert.assertEquals((Integer) 333, data[2]);
+        Assert.assertEquals((Integer) 4444, data[3]);
     }
 
 }

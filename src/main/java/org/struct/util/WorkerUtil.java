@@ -24,8 +24,8 @@ import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
-import org.struct.core.bean.WorkerMatcher;
 import org.struct.core.handler.StructHandler;
+import org.struct.core.matcher.WorkerMatcher;
 import org.struct.spi.ServiceLoader;
 
 import java.io.File;
