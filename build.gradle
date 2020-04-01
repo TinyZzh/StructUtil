@@ -43,6 +43,10 @@ subprojects {
         testCompile("org.mockito:mockito-core:2.25.0")
         testCompile("junit:junit:4.12")
     }
+
+    test {
+        ignoreFailures = true
+    }
 }
 
 //  <editor-fold desc="   Maven Publish  Local ">
