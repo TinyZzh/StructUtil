@@ -19,9 +19,7 @@ subprojects {
 
     repositories {
         mavenLocal()
-        maven { url "http://192.168.0.2:8081/nexus/content/repositories/snapshots" }
-        maven { url "http://192.168.0.2:8081/nexus/content/groups/public/" }
-        maven { url "http://192.168.0.2:8081/nexus/content/repositories/share" }
+        mavenCentral()
         maven { url "http://repo.maven.apache.org/maven2" }
         maven { url "http://repo.typesafe.com/typesafe/repo" }
         maven { url "https://plugins.gradle.org/m2/" }
