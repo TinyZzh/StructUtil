@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+{@url http://logging.apache.org/log4j/2.x/manual/layouts.html} 输出格式
+{@url http://logging.apache.org/log4j/2.x/manual/async.html} 异步日志记录器
+-->
+<Configuration status="ERROR">
+    <Appenders>
+        <RollingRandomAccessFile name="DailyFileAppender" fileName="logs/server.log"
+                                 filePattern="logs/server-%d{yyyy-MM-dd}-%i.log">
+            <!--<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}- %c{1}: %m%n"/>-->
+            <!--<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %level [%thread][%file:%line] - %msg%n" />-->
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}][%p][%c{1}:%line]: %m%n" />
+            <Policies>
+                <!--<TimeBasedTriggeringPolicy interval="5"/>-->
+                <!--<SizeBasedTriggeringPolicy size="10 KB"/>-->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingRandomAccessFile>
+        <Console name="ConsoleAppender">
+            <!--<PatternLayout pattern="%d [%p] %c %m%n"/>-->
+            <PatternLayout pattern="[%date{yyyy-MM-dd HH:mm:ss.SSS}][%level][%thread][%file:%line]: %msg%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="WARN" includeLocation="true">
+            <AppenderRef ref="DailyFileAppender"/>
+        </Root>
+        <Logger name="org.struct" level="DEBUG" includeLocation="true" additivity="false">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="DailyFileAppender"/>
+        </Logger>
+        <Logger name="org.springframework" level="INFO">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="DailyFileAppender"/>
+        </Logger>
+        <!--
+        根据包路径
+        <Logger name="com.tinyz" level="ERROR" > &lt;!&ndash;additivity="false"&ndash;&gt;
+            <appender-ref ref="DailyFileAppender"/>
+        </Logger>-->
+    </Loggers>
+</Configuration>
+

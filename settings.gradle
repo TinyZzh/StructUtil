@@ -3,3 +3,6 @@
  */
 
 rootProject.name = 'excel-util'
+include 'struct-core'
+include 'struct-examples'
+
