@@ -87,12 +87,12 @@ public final class ConverterRegistry {
     /**
      * look up converter by class.
      */
-    public static Converter lookupOrDefault(Class<?> actualType, Class<? extends Converter> clzOfConverter) {
+    public static Converter lookupOrDefault(Class<?> actualType, Class<? extends Converter> clzOfConverter, Object... params) {
         Converter converter = registeredConverterCacheMap.get(actualType);
         if (converter != null)
             return converter;
         try {
-            Converter impl = Reflects.newInstance(clzOfConverter);
+            Converter impl = Reflects.newInstance(clzOfConverter, params);
             register(actualType, impl);
             return impl;
         } catch (Exception e) {

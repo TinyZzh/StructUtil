@@ -44,7 +44,7 @@ public class XlsEventWorkerTest {
         StructWorker<AnimalWithEnd> worker = new StructWorker<>("classpath:/org/struct/core/", AnimalWithEnd.class);
         ArrayList<AnimalWithEnd> list = worker.load(ArrayList::new);
         Assert.assertTrue(!list.isEmpty());
-        Assert.assertEquals(1, list.size());
+        Assert.assertEquals(2, list.size());
     }
 
 

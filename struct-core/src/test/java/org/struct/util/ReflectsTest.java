@@ -44,7 +44,7 @@ public class ReflectsTest {
         try {
             Reflects.newInstance(OnlyPriParamException.class, "xx");
         } catch (Exception e) {
-            Assert.assertEquals(e.getClass(), Exception.class);
+            Assert.assertEquals(e.getClass(), IllegalArgumentException.class);
         }
     }
 

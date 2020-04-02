@@ -18,6 +18,8 @@
 
 package org.struct.util;
 
+import org.apache.commons.lang3.ClassUtils;
+
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 
@@ -61,14 +63,33 @@ public final class Reflects {
                 }
             }
         } else {
-            Class[] classes = Arrays.stream(params).map(Object::getClass).toArray(Class[]::new);
+            final Class<?>[] paramTypes = ClassUtils.toClass(params);
             try {
-                constructor = clazz.getConstructor(classes);
+                constructor = clazz.getConstructor(paramTypes);
             } catch (NoSuchMethodException e) {
                 try {
-                    constructor = clazz.getDeclaredConstructor(classes);
+                    constructor = clazz.getDeclaredConstructor(paramTypes);
                 } catch (NoSuchMethodException e1) {
                     //  no-op
+                }
+            }
+        }
+        if (constructor == null) {
+            //  lookup the constructor
+            for (Constructor<?> ctor : clazz.getConstructors()) {
+                Class<?>[] ctorParameterTypes = ctor.getParameterTypes();
+                if (params.length == ctorParameterTypes.length) {
+                    boolean matched = true;
+                    for (int i = 0; i < params.length; i++) {
+                        if (!ClassUtils.isAssignable(params[i].getClass(), ctorParameterTypes[i], true)) {
+                            matched = false;
+                            break;
+                        }
+                    }
+                    if (matched) {
+                        constructor = (Constructor<T>) ctor;
+                        break;
+                    }
                 }
             }
         }
