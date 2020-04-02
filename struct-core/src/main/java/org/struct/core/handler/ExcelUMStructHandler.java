@@ -32,7 +32,7 @@ import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
-import org.struct.exception.ExcelTransformException;
+import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
 import org.struct.util.AnnotationUtils;
 import org.struct.util.Reflects;
@@ -78,7 +78,7 @@ public class ExcelUMStructHandler implements StructHandler {
                     .map(cells -> setObjectFieldValue(worker, clzOfStruct, cells, columnFieldMap, evaluator))
                     .forEach(cellHandler);
         } catch (Exception e) {
-            throw new ExcelTransformException(e.getMessage(), e);
+            throw new StructTransformException(e.getMessage(), e);
         }
     }
 
@@ -126,7 +126,7 @@ public class ExcelUMStructHandler implements StructHandler {
             worker.afterObjectSetCompleted(obj);
             return obj;
         } catch (Exception e) {
-            throw new ExcelTransformException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
+            throw new StructTransformException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
         }
     }
 

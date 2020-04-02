@@ -23,17 +23,17 @@
         </Console>
     </Appenders>
     <Loggers>
-        <AsyncRoot level="WARN" includeLocation="true">
+        <Root level="WARN" includeLocation="true">
             <AppenderRef ref="DailyFileAppender"/>
-        </AsyncRoot>
-        <AsyncLogger name="org.struct" level="DEBUG" includeLocation="true" additivity="false">
+        </Root>
+        <Logger name="org.struct" level="DEBUG" includeLocation="true" additivity="false">
             <AppenderRef ref="ConsoleAppender"/>
             <AppenderRef ref="DailyFileAppender"/>
-        </AsyncLogger>
-        <AsyncLogger name="org.springframework" level="INFO">
+        </Logger>
+        <Logger name="org.springframework" level="INFO">
             <AppenderRef ref="ConsoleAppender"/>
             <AppenderRef ref="DailyFileAppender"/>
-        </AsyncLogger>
+        </Logger>
         <!--
         根据包路径
         <Logger name="com.tinyz" level="ERROR" > &lt;!&ndash;additivity="false"&ndash;&gt;

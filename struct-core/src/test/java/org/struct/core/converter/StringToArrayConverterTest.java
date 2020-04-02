@@ -3,7 +3,23 @@ package org.struct.core.converter;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+
 public class StringToArrayConverterTest {
+
+    @Test
+    public void convertParamNotString() {
+        StringToArrayConverter converter = new StringToArrayConverter();
+        Object result = converter.convert(11, List.class);
+        Assert.assertNull(result);
+    }
+
+    @Test
+    public void convertNotArray() {
+        StringToArrayConverter converter = new StringToArrayConverter();
+        Object result = converter.convert("|11|22|333|4444", List.class);
+        Assert.assertNull(result);
+    }
 
     @Test
     public void convert2StringArray() {
@@ -29,6 +45,16 @@ public class StringToArrayConverterTest {
     public void convert2IntegerArray() {
         StringToArrayConverter converter = new StringToArrayConverter();
         Integer[] data = (Integer[]) converter.convert("|11|22|333|4444", Integer[].class);
+        Assert.assertEquals((Integer) 11, data[0]);
+        Assert.assertEquals((Integer) 22, data[1]);
+        Assert.assertEquals((Integer) 333, data[2]);
+        Assert.assertEquals((Integer) 4444, data[3]);
+    }
+
+    @Test
+    public void convert2IntegerArrayWithBlank() {
+        StringToArrayConverter converter = new StringToArrayConverter("\\|", false);
+        Integer[] data = (Integer[]) converter.convert("11 |22|333 |4444", Integer[].class);
         Assert.assertEquals((Integer) 11, data[0]);
         Assert.assertEquals((Integer) 22, data[1]);
         Assert.assertEquals((Integer) 333, data[2]);

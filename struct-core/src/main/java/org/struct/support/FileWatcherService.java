@@ -133,11 +133,15 @@ public class FileWatcherService implements Runnable {
         return this;
     }
 
+    public FileWatcherService registerAll(String path) throws IOException {
+        return this.registerAll(Paths.get(path));
+    }
+
     /**
      * Register the given directory, and all its sub-directories, with the
      * WatchService.
      */
-    private FileWatcherService registerAll(final Path start) throws IOException {
+    public FileWatcherService registerAll(final Path start) throws IOException {
         Objects.requireNonNull(start, "start");
         // register directory and sub-directories
         Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
@@ -193,12 +197,10 @@ public class FileWatcherService implements Runnable {
      */
     private void process() {
         try {
-            WatchKey key = ws.poll();
-            if (key == null) {
-                return;
-            }
-            Path dir = keys.get(key);
-            if (dir == null) {
+            WatchKey key;
+            Path dir;
+            if ((key = ws.poll()) == null
+                    || (dir = keys.get(key)) == null) {
                 LOGGER.info("watch key not registered. key:{}", key);
                 return;
             }

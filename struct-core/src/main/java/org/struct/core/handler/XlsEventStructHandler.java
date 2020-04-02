@@ -45,7 +45,7 @@ import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.EndOfExcelSheetException;
-import org.struct.exception.ExcelTransformException;
+import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
 import org.struct.util.AnnotationUtils;
 import org.struct.util.Reflects;
@@ -86,7 +86,7 @@ public class XlsEventStructHandler implements StructHandler {
                 //  end of load.
             }
         } catch (Exception e) {
-            throw new ExcelTransformException(e.getMessage(), e);
+            throw new StructTransformException(e.getMessage(), e);
         }
     }
 

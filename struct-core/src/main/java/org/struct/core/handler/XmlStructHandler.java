@@ -24,7 +24,7 @@ import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
-import org.struct.exception.ExcelTransformException;
+import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
 import org.struct.util.AnnotationUtils;
 
@@ -75,7 +75,7 @@ public class XmlStructHandler implements StructHandler {
             }
         } catch (Exception e) {
             LOGGER.warn("xml deserialize failure. struct:{}, file:{} line:{}", clzOfStruct, file.getName(), i, e);
-            throw new ExcelTransformException(e.getMessage(), e);
+            throw new StructTransformException(e.getMessage(), e);
         }
     }
 

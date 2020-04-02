@@ -25,7 +25,7 @@ import org.struct.annotation.StructSheet;
 import org.struct.core.converter.Converter;
 import org.struct.core.filter.StructBeanFilter;
 import org.struct.core.handler.StructHandler;
-import org.struct.exception.ExcelTransformException;
+import org.struct.exception.StructTransformException;
 import org.struct.exception.IllegalAccessPropertyException;
 import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.util.AnnotationUtils;
@@ -163,7 +163,7 @@ public class StructWorker<T> {
             }
         } catch (Exception e) {
             String msg = "cell column index:" + columnIndex + ", msg:" + e.getMessage();
-            throw new ExcelTransformException(msg, e);
+            throw new StructTransformException(msg, e);
         }
     }
 
@@ -175,7 +175,7 @@ public class StructWorker<T> {
                     try {
                         setRefFieldValue(instance, descriptor);
                     } catch (Exception e) {
-                        throw new ExcelTransformException(e.getMessage(), e);
+                        throw new StructTransformException(e.getMessage(), e);
                     }
                 });
     }

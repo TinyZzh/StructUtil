@@ -22,26 +22,26 @@ package org.struct.exception;
  * @author TinyZ.
  * @version 2019.05.20
  */
-public class ExcelTransformException extends RuntimeException {
+public class StructTransformException extends RuntimeException {
     private static final long serialVersionUID = 8846222282251755758L;
 
-    public ExcelTransformException() {
+    public StructTransformException() {
         super();
     }
 
-    public ExcelTransformException(String message) {
+    public StructTransformException(String message) {
         super(message);
     }
 
-    public ExcelTransformException(String message, Throwable cause) {
+    public StructTransformException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ExcelTransformException(Throwable cause) {
+    public StructTransformException(Throwable cause) {
         super(cause);
     }
 
-    public ExcelTransformException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public StructTransformException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }
