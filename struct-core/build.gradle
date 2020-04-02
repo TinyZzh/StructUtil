@@ -1,0 +1,10 @@
+
+dependencies {
+    compile 'org.apache.poi:poi:3.17'
+    compile 'org.apache.poi:poi-ooxml:3.17'
+    compile 'org.dom4j:dom4j:2.1.1'
+    //    gson
+    compile 'com.google.code.gson:gson:2.8.6'
+
+    compile 'org.xerial.snappy:snappy-java:1.1.7.3'
+}

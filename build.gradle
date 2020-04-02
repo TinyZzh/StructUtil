@@ -5,9 +5,9 @@ plugins {
 }
 
 group = 'org.structutil'
-version = '3.0.1'
+version = '3.0.1-SNAPSHOT'
 
-subprojects {
+allprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'jacoco'
@@ -26,20 +26,13 @@ subprojects {
     }
 
     dependencies {
-        compile 'org.apache.poi:poi:3.17'
-        compile 'org.apache.poi:poi-ooxml:3.17'
-        compile 'org.dom4j:dom4j:2.1.1'
-        //    gson
-        compile 'com.google.code.gson:gson:2.8.6'
         //  log4j 2.x
         compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.9.1'
         compile 'org.apache.logging.log4j:log4j-api:2.9.1'
         compile 'org.apache.logging.log4j:log4j-core:2.9.1'
         compile 'org.slf4j:slf4j-api:1.7.30'
         compile 'org.slf4j:jcl-over-slf4j:1.7.30'
-
-        compile 'org.xerial.snappy:snappy-java:1.1.7.3'
-
+        //  junit 4.x and mockito
         testCompile("org.mockito:mockito-core:2.25.0")
         testCompile("junit:junit:4.12")
     }
