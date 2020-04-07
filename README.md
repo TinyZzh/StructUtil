@@ -1,10 +1,10 @@
 # Struct Util
 
-[![Build Status](https://travis-ci.org/TinyZzh/ExcelUtil.svg?branch=master)](https://travis-ci.org/TinyZzh/ExcelUtil)
-[![codecov](https://codecov.io/gh/TinyZzh/ExcelUtil/branch/master/graph/badge.svg)](https://codecov.io/gh/TinyZzh/ExcelUtil)
-[![license](https://img.shields.io/github/license/TinyZzh/ExcelUtil.svg)](https://github.com/TinyZzh/ExcelUtil)
-[![release](https://img.shields.io/github/release/TinyZzh/ExcelUtil.svg)](https://github.com/TinyZzh/ExcelUtil/releases/latest)
-[![wiki](https://img.shields.io/badge/Docs-Wiki-green.svg)](https://github.com/TinyZzh/ExcelUtil/wiki)
+[![Build Status](https://travis-ci.org/TinyZzh/StructUtil.svg?branch=master)](https://travis-ci.org/TinyZzh/StructUtil)
+[![codecov](https://codecov.io/gh/TinyZzh/StructUtil/branch/master/graph/badge.svg)](https://codecov.io/gh/TinyZzh/StructUtil)
+[![license](https://img.shields.io/github/license/TinyZzh/StructUtil.svg)](https://github.com/TinyZzh/StructUtil)
+[![release](https://img.shields.io/github/release/TinyZzh/StructUtil.svg)](https://github.com/TinyZzh/StructUtil/releases/latest)
+[![wiki](https://img.shields.io/badge/Docs-Wiki-green.svg)](https://github.com/TinyZzh/StructUtil/wiki)
 
 Excel Or Other Configuration Data File Convert To Java Bean Utility. 
 
