@@ -1,3 +1,9 @@
+plugins {
+    id 'maven-publish'
+}
+
+group = 'org.structutil'
+version = '3.0.1-SNAPSHOT'
 
 dependencies {
     implementation 'org.apache.poi:poi:3.17'
@@ -10,3 +16,42 @@ dependencies {
 
     implementation 'org.apache.commons:commons-lang3:3.9'
 }
+
+
+//  <editor-fold desc="   Maven Publish  Local ">
+//  https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:install
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    archiveClassifier = 'sources'
+}
+task javadocJar(type: Jar) {
+    from javadoc {
+        failOnError = false
+    }
+    archiveClassifier = 'javadoc'
+}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = "struct-util"
+            from components.java
+            //  jar's base name
+//            afterEvaluate {
+//                println "jar.archiveBaseName:" + jar.archiveBaseName
+//                artifactId = jar.archiveBaseName
+//            }
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+    repositories {
+        mavenLocal()
+
+        maven { url "http://repo.maven.apache.org/maven2" }
+        maven { url "http://repo.typesafe.com/typesafe/repo" }
+        maven { url "http://repo1.maven.org/maven2/" }
+    }
+}
+
+/// </editor-fold>
