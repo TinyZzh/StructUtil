@@ -60,7 +60,7 @@ public final class ConverterRegistry {
      * register custom converter implement.
      */
     public static void register(Class<?> actualType, Converter converter) {
-        registeredConverterCacheMap.putIfAbsent(actualType, converter);
+        registeredConverterCacheMap.put(actualType, converter);
     }
 
     public static void register(Class<?> actualType, Class<? extends Converter> clzOfConverter, Object... params) {
@@ -73,7 +73,7 @@ public final class ConverterRegistry {
         if (null == converter) {
             throw new IllegalArgumentException("clazz :" + clzOfConverter.getName() + " could't new instance.");
         }
-        registeredConverterCacheMap.putIfAbsent(actualType, converter);
+        register(actualType, converter);
     }
 
     public static void unregister(Class<?> actualType) {
