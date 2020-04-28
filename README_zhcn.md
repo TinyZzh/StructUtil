@@ -96,3 +96,107 @@ public static class Classification {
 StructWorker<Animal> worker = WorkerUtil.newWorker(rootpath, Animal.class);
 List<Animal> list = worker.toList(ArrayList::new);
 ```
+
+### [Feature] Custom Type Converter
+
+实现接口`Converter`来实现自定义的类型转换器. 参考`org.struct.core.converter.StringToArrayConverter`
+
+示例:
+```java
+public class StringToArrayConverter implements Converter {
+    
+    @Override
+    public Object convert(Object originValue, Class<?> targetType) {
+        if (!targetType.isArray() || String.class != originValue.getClass()) {
+            return null;
+        }
+        String content = (String) originValue;
+        Class<?> componentType = targetType.getComponentType();
+        String[] data = content.split(separator);
+        if (exceptBlank) {
+            data = Arrays.stream(data)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toArray(String[]::new);
+        }
+        Object array = Array.newInstance(componentType, data.length);
+        for (int i = 0; i < data.length; i++) {
+            Array.set(array, i, ConverterUtil.covert(data[i], componentType));
+        }
+        return array;
+    }
+}
+```
+
+### [Feature] Custom Struct Handler
+
+使用OGSI技术实现动态加载服务. 
+用户通过实现接口`StructHandler`实现自定义的`StructHandler`. 并定义自定义的`StructHandler`
+在`StructHandler`定义一个`WorkerMatcher`实例. 最常见的做法是文件的特征匹配. 例如通过文件独有的后缀名来区别. 参考`FileExtensionMatcher`.
+另外可以通过实现接口`WorkerMatcher`实现自定义的WorkerMatcher. 
+
+
+在META-INF中新增`org.struct.core.handler.StructHandler`文件. 文件内容为用户定义的`StructHandler`的类名. 
+已内嵌的`ExcelUMStructHandler`为例：
+```text
+org.struct.core.handler.ExcelUMStructHandler
+```
+
+定义`WorkerMatcher`：
+```java
+public class ExcelUMStructHandler implements StructHandler {
+
+    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(524288L, WorkerMatcher.HIGHEST,
+            FileExtensionMatcher.FILE_XLSX, FileExtensionMatcher.FILE_XLS);
+
+    @Override
+    public WorkerMatcher matcher() {
+        return MATCHER;
+    }
+
+    @Override
+    public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
+        //  do something
+    }
+}
+```
+
+
+### [Feature] Custom Data Filter
+
+继承抽象类`StructBeanFilter`实现自定义的Filter. 
+通过自定义Filter和自定义约定的配置表数据标签来筛选和过滤有效的配置表数据. 
+配合模板表热更新可以实现包含但不限于`热屏蔽开发是的测试数据`、`热下线玩家刷BUG或异常的线上配置数据`等功能
+
+示例:
+
+```java
+
+@StructSheet(fileName = "tpl_vip.xml", filter = MyFilter.class)
+
+...
+
+public static class MyFilter extends StructBeanFilter<VipConfigSyncBeanWithFilter> {
+    @Override
+    public boolean test(VipConfigSyncBeanWithFilter vipConfigSyncBean) {
+        //  收集lv大于2的数据, 筛选掉lv小于或等于2的数据.        
+        return vipConfigSyncBean.lv > 2;
+    }
+}
+```
+
+
+### [Support] Hot Update Configuration
+
+工具类`FileWatcherService`实现了简单的文件变更监控Hook. 通过监听文件变更事件，当文件发生变更时，触发Hook来实现热加载.
+
+```java
+FileWatcherService fws = new FileWatcherService();
+fws.register("./examples/")
+        .registerHook("./examples/tpl_vip.xml", runnable)
+        .registerHook("./examples/tpl_vip2.xml", runnable)
+        .setScheduleInitialDelay(10L)
+        .setScheduleDelay(1L)
+        .setScheduleTimeUnit(TimeUnit.MILLISECONDS)
+        .bootstrap();
+```
