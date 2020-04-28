@@ -25,7 +25,6 @@ import org.struct.annotation.StructSheet;
 import org.struct.core.converter.Converter;
 import org.struct.core.filter.StructBeanFilter;
 import org.struct.core.handler.StructHandler;
-import org.struct.exception.IllegalAccessPropertyException;
 import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.exception.StructTransformException;
 import org.struct.util.AnnotationUtils;
@@ -43,6 +42,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -149,10 +149,18 @@ public class StructWorker<T> {
         }
     }
 
-    public T createInstance(StructImpl struct) {
+    /**
+     * Create a new {@link #clzOfStruct} instance.
+     *
+     * @param struct the struct data.
+     * @return new instance.
+     */
+    public Optional<T> createInstance(StructImpl struct) {
+        if (struct.isEmpty())
+            return Optional.empty();
         T instance = Reflects.newInstance(clzOfStruct);
         beanFieldMap.forEach((k, descriptor) -> setObjFieldValue(instance, descriptor, struct.get(descriptor)));
-        return instance;
+        return Optional.ofNullable(instance);
     }
 
     protected void setObjFieldValue(Object instance, FieldDescriptor descriptor, Object value) {

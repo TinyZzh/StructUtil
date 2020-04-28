@@ -75,8 +75,7 @@ public class ExcelUMStructHandler implements StructHandler {
             IntStream.rangeClosed(getFirstRowOrder(annotation, sheet), getLastRowOrder(annotation, sheet))
                     .mapToObj(sheet::getRow)
                     .filter(Objects::nonNull)
-                    .map(cells -> genRealInstance(worker, clzOfStruct, cells, columnFieldMap, evaluator))
-                    .forEach(cellHandler);
+                    .forEach(cells -> handleObjField(worker, clzOfStruct, cells, columnFieldMap, evaluator, cellHandler));
         } catch (Exception e) {
             throw new StructTransformException(e.getMessage(), e);
         }
@@ -107,10 +106,10 @@ public class ExcelUMStructHandler implements StructHandler {
         return Math.min(annotation.endOrder(), sheet.getLastRowNum());
     }
 
-    private <T> T genRealInstance(StructWorker<T> worker, Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
-                                  FormulaEvaluator evaluator) {
+    private <T> void handleObjField(StructWorker<T> worker, Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
+                                    FormulaEvaluator evaluator, Consumer<T> cellHandler) {
         try {
-            StructImpl struct = new StructImpl();
+            StructImpl rowStruct = new StructImpl();
             IntStream.rangeClosed(row.getFirstCellNum(), row.getLastCellNum())
                     .mapToObj(row::getCell)
                     .filter(Objects::nonNull)
@@ -121,9 +120,9 @@ public class ExcelUMStructHandler implements StructHandler {
                         } catch (Exception e) {
                             //  no-op
                         }
-                        struct.add(columnFieldMap.get(cell.getColumnIndex()), value);
+                        rowStruct.add(columnFieldMap.get(cell.getColumnIndex()), value);
                     });
-            return worker.createInstance(struct);
+            worker.createInstance(rowStruct).ifPresent(cellHandler);
         } catch (Exception e) {
             throw new StructTransformException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
         }

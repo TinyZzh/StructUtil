@@ -306,7 +306,7 @@ public class XlsEventStructHandler implements StructHandler {
 
                 // End the row
                 if (!this.isFirstRow && rowStruct != null) {
-                    this.objHandler.accept(worker.createInstance(rowStruct));
+                    worker.createInstance(rowStruct).ifPresent(this.objHandler);
                     this.rowStruct = null;
                 }
                 this.isFirstRow = false;

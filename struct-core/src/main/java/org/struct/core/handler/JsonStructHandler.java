@@ -84,8 +84,8 @@ public class JsonStructHandler implements StructHandler {
                     //  end
                     return;
                 } else {
-                    StructImpl struct = gson.fromJson(reader, StructImpl.class);
-                    cellHandler.accept(worker.createInstance(struct));
+                    StructImpl rowStruct = gson.fromJson(reader, StructImpl.class);
+                    worker.createInstance(rowStruct).ifPresent(cellHandler);
                 }
             }
             reader.endArray();
