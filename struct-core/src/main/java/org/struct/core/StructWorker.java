@@ -128,7 +128,7 @@ public class StructWorker<T> {
         if (tempRefFieldValueMap.containsKey(clzFieldUrl)) {
             throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
         }
-        Class<?> targetType = descriptor.getField().getType();
+        Class<?> targetType = descriptor.getFieldType();
         StructWorker<?> subWorker = WorkerUtil.newWorker(this.workspace, descriptor.getReference(), this.tempRefFieldValueMap);
         if (targetType.isArray()) {
             Map<Object, ?> map = subWorker.toListWithGroup(ArrayList::new, descriptor.getRefGroupBy());
@@ -167,11 +167,11 @@ public class StructWorker<T> {
             }
             Converter converter = descriptor.getConverter();
             if (null != converter) {
-                descriptor.getField().set(instance, converter.convert(value, descriptor.getField().getType()));
+                descriptor.setFieldValue(instance, converter.convert(value, descriptor.getFieldType()));
             } else if (descriptor.isReferenceField()) {
                 this.setObjReferenceFieldValue(instance, descriptor);
             } else {
-                descriptor.getField().set(instance, ConverterUtil.covert(value, descriptor.getField().getType()));
+                descriptor.setFieldValue(instance, ConverterUtil.covert(value, descriptor.getFieldType()));
             }
         } catch (Exception e) {
             String msg = "set instance field's value failure. clz:" + instance.getClass()
@@ -200,9 +200,9 @@ public class StructWorker<T> {
             }
             if (val != null
                     && val.getClass().isArray()) {
-                val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) descriptor.getField().getType());
+                val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) descriptor.getFieldType());
             }
-            descriptor.getField().set(obj, val);
+            descriptor.setFieldValue(obj, val);
         } catch (Exception e) {
             throw new StructTransformException(e.getMessage(), e);
         }
@@ -229,11 +229,7 @@ public class StructWorker<T> {
                 throw new RuntimeException("No such field: [" + refKeys[i] + "] in source obj:"
                         + src.getClass());
             }
-            try {
-                ary[i] = descriptor.getField().get(src);
-            } catch (IllegalAccessException e) {
-                throw new IllegalAccessPropertyException(e.getMessage(), e);
-            }
+            ary[i] = descriptor.getFieldValue(src);
         }
         return new ArrayKey(ary);
     }

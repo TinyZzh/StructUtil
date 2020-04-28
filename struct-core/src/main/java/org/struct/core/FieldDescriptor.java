@@ -19,6 +19,7 @@
 package org.struct.core;
 
 import org.struct.core.converter.Converter;
+import org.struct.exception.IllegalAccessPropertyException;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -30,6 +31,7 @@ public class FieldDescriptor implements Serializable {
 
     private String name;
     private Field field;
+    private Class<?> fieldType;
     private Class<?> reference;
     private String[] refGroupBy;
     private String[] refUniqueKey;
@@ -119,6 +121,51 @@ public class FieldDescriptor implements Serializable {
      */
     public String getRefFieldUrl() {
         return getReference().getName() + ":" + getName();
+    }
+
+    public Class<?> getFieldType() {
+        Field field = getField();
+        if (field != null) {
+            return field.getType();
+        } else if (this.fieldType != null) {
+            return this.fieldType;
+        }
+        return Object.class;
+    }
+
+    /**
+     * Get field's value.
+     *
+     * @param instance the instance object
+     * @return field's value.
+     */
+    public Object getFieldValue(Object instance) {
+        Field field = getField();
+        if (field != null) {
+            try {
+                return field.get(instance);
+            } catch (IllegalAccessException e) {
+                throw new IllegalAccessPropertyException("get field value failure. field:" + field.getName(), e);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Set field's value.
+     *
+     * @param instance the instance object
+     * @param value    the field's value.
+     */
+    public void setFieldValue(Object instance, Object value) {
+        Field field = getField();
+        if (field != null) {
+            try {
+                field.set(instance, value);
+            } catch (IllegalAccessException e) {
+                throw new IllegalAccessPropertyException("set field value failure. field:" + field.getName() + ", val:" + value, e);
+            }
+        }
     }
 
     @Override
