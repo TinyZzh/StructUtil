@@ -25,11 +25,12 @@ import org.struct.annotation.StructSheet;
 import org.struct.core.converter.Converter;
 import org.struct.core.filter.StructBeanFilter;
 import org.struct.core.handler.StructHandler;
-import org.struct.exception.StructTransformException;
 import org.struct.exception.IllegalAccessPropertyException;
 import org.struct.exception.NoSuchFieldReferenceException;
+import org.struct.exception.StructTransformException;
 import org.struct.util.AnnotationUtils;
 import org.struct.util.ConverterUtil;
+import org.struct.util.Reflects;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
@@ -113,13 +114,13 @@ public class StructWorker<T> {
             }
             map.put(descriptor.getName(), descriptor);
             //  try resolve field reference.
-            this.resolveReferenceFieldValue(descriptor);
+            this.tryLoadReferenceFieldValue(descriptor);
         }
         this.beanFieldMap.putAll(map);
         return map;
     }
 
-    protected void resolveReferenceFieldValue(FieldDescriptor descriptor) throws RuntimeException {
+    protected void tryLoadReferenceFieldValue(FieldDescriptor descriptor) throws RuntimeException {
         if (descriptor == null || !descriptor.isReferenceField()) {
             return;
         }
@@ -148,60 +149,76 @@ public class StructWorker<T> {
         }
     }
 
-    public void setObjectFieldValue(Object instance, String fileName, int columnIndex, Object formattedValue) {
+    public T createInstance(StructImpl struct) {
+        T instance = Reflects.newInstance(clzOfStruct);
+        beanFieldMap.forEach((k, descriptor) -> setObjFieldValue(instance, descriptor, struct.get(descriptor)));
+        return instance;
+    }
+
+    protected void setObjFieldValue(Object instance, FieldDescriptor descriptor, Object value) {
         try {
-            FieldDescriptor descriptor = beanFieldMap.get(fileName);
-            if (descriptor != null) {
-                Converter converter = descriptor.getConverter();
-                if (null != converter) {
-                    descriptor.getField().set(instance, converter.convert(formattedValue, descriptor.getField().getType()));
-                } else if (descriptor.isReferenceField()) {
-                    this.setRefFieldValue(instance, descriptor);
-                } else {
-                    descriptor.getField().set(instance, ConverterUtil.covert(formattedValue, descriptor.getField().getType()));
+            if (descriptor.isRequired() && !descriptor.isReferenceField()) {
+                boolean invalid = value == null
+                        || (value instanceof String && ((String) value).isEmpty());
+                if (invalid) {
+                    throw new IllegalArgumentException("unresolved required clz:" + instance.getClass()
+                            + "#field:" + descriptor.getName() + "'s value. val:" + value);
                 }
             }
+            Converter converter = descriptor.getConverter();
+            if (null != converter) {
+                descriptor.getField().set(instance, converter.convert(value, descriptor.getField().getType()));
+            } else if (descriptor.isReferenceField()) {
+                this.setObjReferenceFieldValue(instance, descriptor);
+            } else {
+                descriptor.getField().set(instance, ConverterUtil.covert(value, descriptor.getField().getType()));
+            }
         } catch (Exception e) {
-            String msg = "cell column index:" + columnIndex + ", msg:" + e.getMessage();
+            String msg = "set instance field's value failure. clz:" + instance.getClass()
+                    + "#field:" + descriptor.getName() + ", msg:" + e.getMessage();
             throw new StructTransformException(msg, e);
         }
     }
 
-    public void afterObjectSetCompleted(Object instance) {
+    protected void setObjReferenceFieldValue(Object obj, FieldDescriptor descriptor) {
+        try {
+            String refFieldKey = descriptor.getRefFieldUrl();
+            Map<Object, Object> map = tempRefFieldValueMap.get(refFieldKey);
+            if (descriptor.isRequired() && map == null || map.isEmpty()) {
+                throw new IllegalArgumentException("unresolved reference dependency. key:" + refFieldKey);
+            }
+            String[] refKeys = descriptor.getRefGroupBy().length > 0
+                    ? descriptor.getRefGroupBy()
+                    : descriptor.getRefUniqueKey();
+            ArrayKey keys = getFieldValueArray(obj, refKeys);
+            Object val = map.get(keys);
+            if (descriptor.isRequired() && val == null) {
+                throw new NoSuchFieldReferenceException("unknown dependent field. make sure field's type and name is right. "
+                        + " ref clazz:" + descriptor.getReference().getName()
+                        + ". map key field's name:" + Arrays.toString(refKeys)
+                        + ", actual:" + keys);
+            }
+            if (val != null
+                    && val.getClass().isArray()) {
+                val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) descriptor.getField().getType());
+            }
+            descriptor.getField().set(obj, val);
+        } catch (Exception e) {
+            throw new StructTransformException(e.getMessage(), e);
+        }
+    }
+
+    public void setObjReferenceFieldValues(Object instance) {
         // resolve reference field.
         beanFieldMap.values().stream()
                 .filter(FieldDescriptor::isReferenceField)
                 .forEach(descriptor -> {
                     try {
-                        setRefFieldValue(instance, descriptor);
+                        setObjReferenceFieldValue(instance, descriptor);
                     } catch (Exception e) {
                         throw new StructTransformException(e.getMessage(), e);
                     }
                 });
-    }
-
-    protected void setRefFieldValue(Object obj, FieldDescriptor descriptor) throws Exception {
-        String refFieldKey = descriptor.getRefFieldUrl();
-        Map<Object, Object> map = tempRefFieldValueMap.get(refFieldKey);
-        if (descriptor.isRequired() && map == null || map.isEmpty()) {
-            throw new IllegalArgumentException("unresolved loop dependence. key:" + refFieldKey);
-        }
-        String[] refKeys = descriptor.getRefGroupBy().length > 0
-                ? descriptor.getRefGroupBy()
-                : descriptor.getRefUniqueKey();
-        ArrayKey keys = getFieldValueArray(obj, refKeys);
-        Object val = map.get(keys);
-        if (descriptor.isRequired() && val == null) {
-            throw new NoSuchFieldReferenceException("unknown dependent field. make sure field's type and name is right. "
-                    + " ref clazz:" + descriptor.getReference().getName()
-                    + ". map key field's name:" + Arrays.toString(refKeys)
-                    + ", actual:" + keys);
-        }
-        if (val != null
-                && val.getClass().isArray()) {
-            val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) descriptor.getField().getType());
-        }
-        descriptor.getField().set(obj, val);
     }
 
     protected ArrayKey getFieldValueArray(Object src, String[] refKeys) throws RuntimeException {

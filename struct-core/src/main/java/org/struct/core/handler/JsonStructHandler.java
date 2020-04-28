@@ -19,10 +19,16 @@
 package org.struct.core.handler;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.stream.JsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.annotation.StructSheet;
+import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
@@ -33,6 +39,7 @@ import org.struct.util.AnnotationUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
@@ -47,7 +54,16 @@ public class JsonStructHandler implements StructHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonStructHandler.class);
     private static final WorkerMatcher MATCHER = new FileExtensionMatcher(FileExtensionMatcher.FILE_JSON);
 
-    private final Gson gson = new Gson();
+    /**
+     * The Google json deserializer.
+     */
+    private final Gson gson;
+
+    public JsonStructHandler() {
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(StructImpl.class, new StructJsonDeserializer());
+        this.gson = builder.create();
+    }
 
     @Override
     public WorkerMatcher matcher() {
@@ -68,15 +84,26 @@ public class JsonStructHandler implements StructHandler {
                     //  end
                     return;
                 } else {
-                    T objInstance = (T) gson.fromJson(reader, clzOfStruct);
-                    worker.afterObjectSetCompleted(objInstance);
-                    cellHandler.accept(objInstance);
+                    StructImpl struct = gson.fromJson(reader, StructImpl.class);
+                    cellHandler.accept(worker.createInstance(struct));
                 }
             }
             reader.endArray();
         } catch (Exception e) {
             LOGGER.warn("json deserialize failure. struct:{}, file:{}, line:{}", clzOfStruct, file.getName(), i, e);
             throw new StructTransformException(e.getMessage(), e);
+        }
+    }
+
+    public static class StructJsonDeserializer implements JsonDeserializer<StructImpl> {
+
+        @Override
+        public StructImpl deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+            StructImpl struct = new StructImpl();
+            jsonElement.getAsJsonObject().entrySet().forEach(e -> {
+                struct.add(e.getKey(), e.getValue().getAsString());
+            });
+            return struct;
         }
     }
 }

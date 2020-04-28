@@ -41,6 +41,7 @@ import org.apache.poi.hssf.record.SSTRecord;
 import org.apache.poi.hssf.record.StringRecord;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.struct.annotation.StructSheet;
+import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
@@ -48,7 +49,6 @@ import org.struct.exception.EndOfExcelSheetException;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
 import org.struct.util.AnnotationUtils;
-import org.struct.util.Reflects;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -75,7 +75,7 @@ public class XlsEventStructHandler implements StructHandler {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         try (POIFSFileSystem fs = new POIFSFileSystem(file)) {
             //
-            XlsListener<T> listener = new XlsListener<>(worker, clzOfStruct, annotation, cellHandler);
+            XlsListener<T> listener = new XlsListener<>(worker, annotation, cellHandler);
 
             HSSFRequest request = new HSSFRequest();
             request.addListenerForAllRecords(listener.getFormatListener());
@@ -96,7 +96,6 @@ public class XlsEventStructHandler implements StructHandler {
     public static class XlsListener<T> implements HSSFListener {
 
         private StructWorker<T> worker;
-        private Class<T> clzOfStruct;
         /**
          * The struct bean's annotation.
          */
@@ -115,7 +114,7 @@ public class XlsEventStructHandler implements StructHandler {
         private int startRow = -1;
         private int endRow = -1;
 
-        private T curInstance;
+        private StructImpl rowStruct;
 
         //
         private int lastRowNumber;
@@ -140,9 +139,8 @@ public class XlsEventStructHandler implements StructHandler {
         /**
          *
          */
-        public XlsListener(StructWorker<T> worker, Class<T> clzOfStruct, StructSheet annotation, Consumer<T> objHandler) {
+        public XlsListener(StructWorker<T> worker, StructSheet annotation, Consumer<T> objHandler) {
             this.worker = worker;
-            this.clzOfStruct = clzOfStruct;
             this.annotation = annotation;
             this.objHandler = objHandler;
 
@@ -277,7 +275,7 @@ public class XlsEventStructHandler implements StructHandler {
                 lastColumnNumber = -1;
 
                 if (!isFirstRow && this.isCurSheet && thisRow >= this.startRow) {
-                    curInstance = Reflects.newInstance(this.clzOfStruct);
+                    rowStruct = new StructImpl();
                 }
             }
 
@@ -307,10 +305,9 @@ public class XlsEventStructHandler implements StructHandler {
 
 
                 // End the row
-                if (!this.isFirstRow && curInstance != null) {
-                    worker.afterObjectSetCompleted(curInstance);
-                    this.objHandler.accept(curInstance);
-                    this.curInstance = null;
+                if (!this.isFirstRow && rowStruct != null) {
+                    this.objHandler.accept(worker.createInstance(rowStruct));
+                    this.rowStruct = null;
                 }
                 this.isFirstRow = false;
 
@@ -320,10 +317,11 @@ public class XlsEventStructHandler implements StructHandler {
         }
 
         private void setObjectFieldValue(int curRow, int columnIndex, String value) {
+            String val = value.trim();
             if (isFirstRow) {
-                headRowMap.put(columnIndex, value.trim());
-            } else if (curInstance != null) {
-                worker.setObjectFieldValue(curInstance, headRowMap.get(columnIndex), columnIndex, value);
+                headRowMap.put(columnIndex, val);
+            } else if (rowStruct != null) {
+                rowStruct.add(headRowMap.get(columnIndex), val);
             }
         }
 

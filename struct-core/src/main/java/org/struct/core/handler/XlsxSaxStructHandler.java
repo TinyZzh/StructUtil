@@ -26,6 +26,7 @@ import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFComment;
 import org.struct.annotation.StructSheet;
+import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
@@ -33,7 +34,6 @@ import org.struct.exception.EndOfExcelSheetException;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
 import org.struct.util.AnnotationUtils;
-import org.struct.util.Reflects;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -73,7 +73,6 @@ public class XlsxSaxStructHandler implements StructHandler {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         XlsxBeanSheetContentHandler<T> contentHandler = new XlsxBeanSheetContentHandler<>();
         contentHandler.setWorker(worker);
-        contentHandler.setClzOfStruct(clzOfStruct);
         contentHandler.setFirstRow(annotation.startOrder());
         contentHandler.setLastRow(annotation.endOrder());
         contentHandler.setObjectConsumer(cellHandler);
@@ -107,7 +106,6 @@ public class XlsxSaxStructHandler implements StructHandler {
 
     public static class XlsxBeanSheetContentHandler<T> implements XSSFSheetXMLHandler.SheetContentsHandler {
 
-        private Class<T> clzOfStruct;
         private StructWorker<T> worker;
         private int firstRow = 0;
         private int lastRow = -1;
@@ -121,36 +119,39 @@ public class XlsxSaxStructHandler implements StructHandler {
         private boolean isFirstRow = true;
 
         private int curColumnIndex = 0;
-
-        private T curInstance;
+        /**
+         * Current row cell's value map.
+         * [column index, field value]
+         */
+        private StructImpl rowStruct;
 
         @Override
         public void startRow(int rowNum) {
             if (this.lastRow >= 0 && rowNum >= this.lastRow)
                 throw new EndOfExcelSheetException();
             if (rowNum >= this.firstRow) {
-                curInstance = Reflects.newInstance(clzOfStruct);
+                rowStruct = new StructImpl();
             }
         }
 
         @Override
         public void endRow(int rowNum) {
-            if (!this.isFirstRow && curInstance != null) {
-                worker.afterObjectSetCompleted(curInstance);
-                this.objHandler.accept(curInstance);
+            if (!this.isFirstRow && rowStruct != null) {
+                this.objHandler.accept(worker.createInstance(rowStruct));
             }
             this.isFirstRow = false;
             this.curColumnIndex = 0;
-            this.curInstance = null;
+            this.rowStruct = null;
         }
 
         @Override
         public void cell(String cellReference, String formattedValue, XSSFComment comment) {
             try {
+                String val = formattedValue.trim();
                 if (isFirstRow) {
-                    headRowMap.put(this.curColumnIndex, formattedValue.trim());
-                } else if (curInstance != null) {
-                    worker.setObjectFieldValue(curInstance, headRowMap.get(this.curColumnIndex), curColumnIndex, formattedValue);
+                    headRowMap.put(this.curColumnIndex, val);
+                } else if (rowStruct != null) {
+                    rowStruct.add(headRowMap.get(this.curColumnIndex), val);
                 }
             } finally {
                 this.curColumnIndex++;
@@ -172,10 +173,6 @@ public class XlsxSaxStructHandler implements StructHandler {
 
         public void setObjectConsumer(Consumer<T> consumer) {
             this.objHandler = consumer;
-        }
-
-        public void setClzOfStruct(Class<T> clzOfStruct) {
-            this.clzOfStruct = clzOfStruct;
         }
 
         public void setWorker(StructWorker<T> worker) {

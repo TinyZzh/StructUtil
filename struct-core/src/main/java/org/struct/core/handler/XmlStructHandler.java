@@ -68,7 +68,7 @@ public class XmlStructHandler implements StructHandler {
                         //  end
                         break;
                     } else {
-                        worker.afterObjectSetCompleted(objInstance);
+                        worker.setObjReferenceFieldValues(objInstance);
                         cellHandler.accept(objInstance);
                     }
                 }

@@ -29,13 +29,13 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.struct.annotation.StructSheet;
+import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
 import org.struct.util.AnnotationUtils;
-import org.struct.util.Reflects;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
@@ -75,7 +75,7 @@ public class ExcelUMStructHandler implements StructHandler {
             IntStream.rangeClosed(getFirstRowOrder(annotation, sheet), getLastRowOrder(annotation, sheet))
                     .mapToObj(sheet::getRow)
                     .filter(Objects::nonNull)
-                    .map(cells -> setObjectFieldValue(worker, clzOfStruct, cells, columnFieldMap, evaluator))
+                    .map(cells -> genRealInstance(worker, clzOfStruct, cells, columnFieldMap, evaluator))
                     .forEach(cellHandler);
         } catch (Exception e) {
             throw new StructTransformException(e.getMessage(), e);
@@ -107,10 +107,10 @@ public class ExcelUMStructHandler implements StructHandler {
         return Math.min(annotation.endOrder(), sheet.getLastRowNum());
     }
 
-    private <T> T setObjectFieldValue(StructWorker<T> worker, Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
-                                      FormulaEvaluator evaluator) {
+    private <T> T genRealInstance(StructWorker<T> worker, Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
+                                  FormulaEvaluator evaluator) {
         try {
-            T obj = Reflects.newInstance(clzOfBean);
+            StructImpl struct = new StructImpl();
             IntStream.rangeClosed(row.getFirstCellNum(), row.getLastCellNum())
                     .mapToObj(row::getCell)
                     .filter(Objects::nonNull)
@@ -121,10 +121,9 @@ public class ExcelUMStructHandler implements StructHandler {
                         } catch (Exception e) {
                             //  no-op
                         }
-                        worker.setObjectFieldValue(obj, columnFieldMap.get(cell.getColumnIndex()), cell.getColumnIndex(), value);
+                        struct.add(columnFieldMap.get(cell.getColumnIndex()), value);
                     });
-            worker.afterObjectSetCompleted(obj);
-            return obj;
+            return worker.createInstance(struct);
         } catch (Exception e) {
             throw new StructTransformException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
         }
