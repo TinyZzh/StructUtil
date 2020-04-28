@@ -130,11 +130,11 @@ public class StringToArrayConverter implements Converter {
 
 ### [Feature] Custom Struct Handler
 
-使用OGSI技术实现动态加载服务. 
-用户通过实现接口`StructHandler`实现自定义的`StructHandler`. 并定义自定义的`StructHandler`
-在`StructHandler`定义一个`WorkerMatcher`实例. 最常见的做法是文件的特征匹配. 例如通过文件独有的后缀名来区别. 参考`FileExtensionMatcher`.
-另外可以通过实现接口`WorkerMatcher`实现自定义的WorkerMatcher. 
+使用OSGI技术实现动态加载服务. 
+实现接口`StructHandler`实现自定义`StructHandler`.  实现`WorkerMatcher`接口来自定义Worker的匹配器.
 
+内嵌的Matcher实现为`FileExtensionMatcher`, 根据文件的扩展名来识别数据文件的类型和匹配有效的`StructHandelr`. 
+`FileExtensionMatcher`是简单的文件的特征匹配实现， 主要利用文件扩展名和文件大小来匹配. 
 
 在META-INF中新增`org.struct.core.handler.StructHandler`文件. 文件内容为用户定义的`StructHandler`的类名. 
 已内嵌的`ExcelUMStructHandler`为例：
@@ -166,7 +166,7 @@ public class ExcelUMStructHandler implements StructHandler {
 
 继承抽象类`StructBeanFilter`实现自定义的Filter. 
 通过自定义Filter和自定义约定的配置表数据标签来筛选和过滤有效的配置表数据. 
-配合模板表热更新可以实现包含但不限于`热屏蔽开发是的测试数据`、`热下线玩家刷BUG或异常的线上配置数据`等功能
+配合模板表热更新可以实现包含但不限于`热屏蔽开发中功能的测试数据`、`热下线玩家刷BUG或异常的线上配置数据`等功能
 
 示例:
 
