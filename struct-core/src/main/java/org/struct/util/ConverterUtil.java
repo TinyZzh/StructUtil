@@ -19,6 +19,7 @@
 package org.struct.util;
 
 import org.struct.core.converter.EmbeddedPrimitiveTypeConverter;
+import org.struct.core.converter.EnumConverter;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -33,7 +34,11 @@ public final class ConverterUtil {
     /**
      * Embedded primitive type converter.
      */
-    private static final EmbeddedPrimitiveTypeConverter primitiveTypeConverter = new EmbeddedPrimitiveTypeConverter();
+    private static final EmbeddedPrimitiveTypeConverter EMBEDDED_PRIMITIVE_TYPE_CONVERTER = new EmbeddedPrimitiveTypeConverter();
+    /**
+     * Embedded enum converter.
+     */
+    private static final EnumConverter ENUM_CONVERTER = new EnumConverter();
 
     private ConverterUtil() {
         //  no-op
@@ -56,12 +61,14 @@ public final class ConverterUtil {
             } else {
                 return parseNumber(value.toString(), requiredType);
             }
+        } else if (requiredType.isEnum()) {
+            return ENUM_CONVERTER.convert(value, requiredType);
         }
         return value;
     }
 
     public static Object convertStringToPrimitiveType(Object value, Class<?> requiredType) {
-        return primitiveTypeConverter.convert(value, requiredType);
+        return EMBEDDED_PRIMITIVE_TYPE_CONVERTER.convert(value, requiredType);
     }
 
     public static boolean isBooleanTrue(String str) {
