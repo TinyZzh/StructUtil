@@ -18,6 +18,8 @@
 
 package org.struct.util;
 
+import org.struct.core.converter.EmbeddedPrimitiveTypeConverter;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
@@ -28,6 +30,11 @@ public final class ConverterUtil {
 
     private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
 
+    /**
+     * Embedded primitive type converter.
+     */
+    private static final EmbeddedPrimitiveTypeConverter primitiveTypeConverter = new EmbeddedPrimitiveTypeConverter();
+
     private ConverterUtil() {
         //  no-op
     }
@@ -36,14 +43,16 @@ public final class ConverterUtil {
         if (Object.class == requiredType) {
             return value;
         } else if (String.class == requiredType) {
-            return value.toString();
+            return null == value ? "" : value.toString();
         } else if (Boolean.class == requiredType) {
-            return isBooleanTrue(value.toString());
+            return null != value && isBooleanTrue(value.toString());
         } else if (requiredType.isPrimitive()) {
-            return convertStringToPrimitiveType(value.toString(), requiredType);
+            return convertStringToPrimitiveType(value, requiredType);
         } else if (Number.class.isAssignableFrom(requiredType)) {
             if (value instanceof Number) {
                 return convertNumberToTargetClass(((Number) value), requiredType);
+            } else if (null == value) {
+                return convertStringToPrimitiveType(null, requiredType);
             } else {
                 return parseNumber(value.toString(), requiredType);
             }
@@ -51,30 +60,15 @@ public final class ConverterUtil {
         return value;
     }
 
-    public static Object convertStringToPrimitiveType(String value, Class<?> requiredType) {
-        if (requiredType == int.class || requiredType == Integer.class) {
-            return Integer.valueOf(value);
-        } else if (requiredType == long.class || requiredType == Long.class) {
-            return Long.valueOf(value);
-        } else if (requiredType == boolean.class || requiredType == Boolean.class) {
-            return isBooleanTrue(value);
-        } else if (requiredType == short.class || requiredType == Short.class) {
-            return Short.valueOf(value);
-        } else if (requiredType == byte.class || requiredType == Byte.class) {
-            return Byte.valueOf(value);
-        } else if (requiredType == float.class || requiredType == Float.class) {
-            return Float.valueOf(value);
-        } else if (requiredType == double.class || requiredType == Double.class) {
-            return Double.valueOf(value);
-        } else if (requiredType == char.class || requiredType == Character.class) {
-            return value.charAt(0);
-        }
-        return value;
+    public static Object convertStringToPrimitiveType(Object value, Class<?> requiredType) {
+        return primitiveTypeConverter.convert(value, requiredType);
     }
 
     public static boolean isBooleanTrue(String str) {
         return "true".equalsIgnoreCase(str)
-                || "1".equalsIgnoreCase(str);
+                || "1".equalsIgnoreCase(str)
+                || "y".equalsIgnoreCase(str)
+                || "yes".equalsIgnoreCase(str);
     }
 
     /// Spring Framework's NumberUtils
@@ -133,7 +127,7 @@ public final class ConverterUtil {
      * i.e. needs to be passed into {@code Integer.decode} instead of
      * {@code Integer.valueOf}, etc.
      */
-    private static boolean isHexNumber(String value) {
+    public static boolean isHexNumber(String value) {
         int index = (value.startsWith("-") ? 1 : 0);
         return (value.startsWith("0x", index) || value.startsWith("0X", index) || value.startsWith("#", index));
     }

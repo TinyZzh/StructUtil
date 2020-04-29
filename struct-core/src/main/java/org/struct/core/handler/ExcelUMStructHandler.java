@@ -69,10 +69,11 @@ public class ExcelUMStructHandler implements StructHandler {
             Workbook wb = WorkbookFactory.create(fis);
             Sheet sheet = wb.getSheet(annotation.sheetName());
 
-            Row headRow = sheet.getRow(sheet.getFirstRowNum());
+            int firstRowOrder = this.getFirstRowOrder(annotation, sheet);
+            Row headRow = sheet.getRow(Math.max(0, firstRowOrder - 1));
             Map<Integer, String> columnFieldMap = resolveExcelColumnToField(headRow);
             FormulaEvaluator evaluator = getFormulaEvaluator(file, wb);
-            IntStream.rangeClosed(getFirstRowOrder(annotation, sheet), getLastRowOrder(annotation, sheet))
+            IntStream.rangeClosed(firstRowOrder, getLastRowOrder(annotation, sheet))
                     .mapToObj(sheet::getRow)
                     .filter(Objects::nonNull)
                     .forEach(cells -> handleObjField(worker, clzOfStruct, cells, columnFieldMap, evaluator, cellHandler));

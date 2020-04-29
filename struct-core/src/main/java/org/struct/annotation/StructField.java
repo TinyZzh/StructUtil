@@ -60,7 +60,7 @@ public @interface StructField {
     /**
      * is this field required.
      */
-    boolean required() default true;
+    boolean required() default false;
 
     /**
      * @return use custom converter replace the default system converter to convert this field value.

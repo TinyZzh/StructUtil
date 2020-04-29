@@ -63,6 +63,10 @@ public class StructWorker<T> {
      */
     protected final Class<T> clzOfStruct;
     /**
+     * Struct configuration.
+     */
+    protected StructConfig config;
+    /**
      * {@link #clzOfStruct}'s all field.
      */
     protected Map<String, FieldDescriptor> beanFieldMap = new ConcurrentHashMap<>();
@@ -108,6 +112,8 @@ public class StructWorker<T> {
                 ) {
                     descriptor.setConverter(ConverterRegistry.lookupOrDefault(annotation.converter(), annotation.converter()));
                 }
+            } else {
+                descriptor.setRequired(this.config != null && this.config.isStructRequiredDefault());
             }
             if (null == descriptor.getName() || descriptor.getName().isEmpty()) {
                 descriptor.setName(field.getName());
