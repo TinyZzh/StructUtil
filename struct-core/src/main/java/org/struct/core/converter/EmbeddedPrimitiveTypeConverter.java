@@ -48,9 +48,11 @@ public class EmbeddedPrimitiveTypeConverter implements Converter {
         for (StructPrimitiveType spt : primitiveTypeMap) {
             for (Class<?> clzOfType : spt.classes) {
                 if (clzOfType == targetType) {
-                    return originValue instanceof String
-                            ? spt.func.apply(originValue)
-                            : spt.defaultValue;
+                    boolean isBlank = originValue == null
+                            || (originValue instanceof String && ((String) originValue).isEmpty());
+                    return isBlank
+                            ? spt.defaultValue
+                            : spt.func.apply(originValue);
                 }
             }
         }
@@ -69,7 +71,7 @@ public class EmbeddedPrimitiveTypeConverter implements Converter {
                 if (obj instanceof String) {
                     return func.apply((String) obj);
                 } else {
-                    return null;
+                    return obj;
                 }
             };
             this.defaultValue = defaultValue;
