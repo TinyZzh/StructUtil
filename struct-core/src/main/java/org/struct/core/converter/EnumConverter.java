@@ -19,6 +19,7 @@
 package org.struct.core.converter;
 
 import org.struct.util.ConverterUtil;
+import org.struct.util.Strings;
 
 /**
  * {@link Enum} converter.
@@ -33,18 +34,41 @@ public class EnumConverter implements Converter {
             return originValue;
         }
         Object[] enums = targetType.getEnumConstants();
+        //  1. int -> enum
         try {
             int i = (int) ConverterUtil.covert(originValue, Integer.class);
-            if (i < enums.length) {
+            if (0 <= i && i < enums.length) {
                 return enums[i];
             }
         } catch (Exception e) {
-            if (originValue instanceof String) {
-                for (Object anEnum : enums) {
-                    if (((String) originValue).equalsIgnoreCase(String.valueOf(anEnum))) {
-                        return anEnum;
+            //  no-op
+        }
+        //  2. string -> enum
+        if (originValue instanceof String) {
+            if (Enum.class.isAssignableFrom(targetType)) {
+                String trim = ((String) originValue).trim();
+                try {
+                    return Enum.valueOf((Class<? extends Enum>) targetType, trim);
+                } catch (Exception e1) {
+                    try {
+                        return Enum.valueOf((Class<? extends Enum>) targetType, Strings.toUpperCaseFirstChar(trim));
+                    } catch (Exception e2) {
+                        //  no-op
                     }
                 }
+            }
+            //  compare string ignore case.
+            for (Object anEnum : enums) {
+                if (((String) originValue).equalsIgnoreCase(String.valueOf(anEnum))) {
+                    return anEnum;
+                }
+            }
+        }
+        //  3. enum -> enum
+        if (originValue.getClass().isEnum()) {
+            int i = ((Enum) originValue).ordinal();
+            if (i < enums.length) {
+                return enums[i];
             }
         }
         throw new IllegalStateException("clz:" + targetType.getName() + ", unknown enum:" + originValue);
