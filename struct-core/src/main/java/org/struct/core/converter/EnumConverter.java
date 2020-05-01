@@ -19,7 +19,6 @@
 package org.struct.core.converter;
 
 import org.struct.util.ConverterUtil;
-import org.struct.util.Strings;
 
 /**
  * {@link Enum} converter.
@@ -51,7 +50,8 @@ public class EnumConverter implements Converter {
                     return Enum.valueOf((Class<? extends Enum>) targetType, trim);
                 } catch (Exception e1) {
                     try {
-                        return Enum.valueOf((Class<? extends Enum>) targetType, Strings.toUpperCaseFirstChar(trim));
+                        //  Upper case
+                        return Enum.valueOf((Class<? extends Enum>) targetType, trim.toUpperCase());
                     } catch (Exception e2) {
                         //  no-op
                     }
