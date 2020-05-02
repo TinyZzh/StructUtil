@@ -18,7 +18,7 @@
 
 package org.struct.util;
 
-import org.struct.core.converter.EmbeddedPrimitiveTypeConverter;
+import org.struct.core.converter.EmbeddedBasicTypeConverter;
 import org.struct.core.converter.EnumConverter;
 
 import java.math.BigDecimal;
@@ -34,7 +34,7 @@ public final class ConverterUtil {
     /**
      * Embedded primitive type converter.
      */
-    private static final EmbeddedPrimitiveTypeConverter EMBEDDED_PRIMITIVE_TYPE_CONVERTER = new EmbeddedPrimitiveTypeConverter();
+    private static final EmbeddedBasicTypeConverter EMBEDDED_PRIMITIVE_TYPE_CONVERTER = new EmbeddedBasicTypeConverter();
     /**
      * Embedded enum converter.
      */
