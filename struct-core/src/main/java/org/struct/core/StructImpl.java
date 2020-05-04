@@ -49,6 +49,9 @@ public class StructImpl {
      * @param force     covert the prevent value if the field has been set.
      */
     public void add(String fieldName, Object val, boolean force) {
+        if (fieldName == null || fieldName.isEmpty()) {
+            return;
+        }
         //  ignore NULL or empty value;
         boolean ignore = (val == null)
                 || (val instanceof String && ((String) val).isEmpty());
