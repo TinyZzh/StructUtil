@@ -56,6 +56,12 @@ public class EnumConverterTest {
         }
     }
 
+    @Test
+    public void testEnum() {
+        Assert.assertTrue(Enum.class.isAssignableFrom(MyEnum.class));
+        Assert.assertEquals(MyEnum.Two, ConverterRegistry.convert("two", MyEnum.class));
+    }
+
     public enum MyEnum {
         One,
         Two,

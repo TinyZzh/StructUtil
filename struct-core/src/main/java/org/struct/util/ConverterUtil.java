@@ -18,9 +18,6 @@
 
 package org.struct.util;
 
-import org.struct.core.converter.EmbeddedBasicTypeConverter;
-import org.struct.core.converter.EnumConverter;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
@@ -31,49 +28,13 @@ public final class ConverterUtil {
 
     private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
 
-    /**
-     * Embedded primitive type converter.
-     */
-    private static final EmbeddedBasicTypeConverter EMBEDDED_PRIMITIVE_TYPE_CONVERTER = new EmbeddedBasicTypeConverter();
-    /**
-     * Embedded enum converter.
-     */
-    private static final EnumConverter ENUM_CONVERTER = new EnumConverter();
-
     private ConverterUtil() {
         //  no-op
     }
 
-    public static Object covert(Object value, Class requiredType) {
-        if (Object.class == requiredType) {
-            return value;
-        } else if (String.class == requiredType) {
-            return null == value ? "" : value.toString();
-        } else if (Boolean.class == requiredType) {
-            return null != value && isBooleanTrue(value.toString());
-        } else if (requiredType.isPrimitive()) {
-            return convertStringToPrimitiveType(value, requiredType);
-        } else if (Number.class.isAssignableFrom(requiredType)) {
-            if (value instanceof Number) {
-                return convertNumberToTargetClass(((Number) value), requiredType);
-            } else if (null == value) {
-                return convertStringToPrimitiveType(null, requiredType);
-            } else {
-                return parseNumber(value.toString(), requiredType);
-            }
-        } else if (requiredType.isEnum()) {
-            return ENUM_CONVERTER.convert(value, requiredType);
-        }
-        return value;
-    }
-
-    public static Object convertStringToPrimitiveType(Object value, Class<?> requiredType) {
-        return EMBEDDED_PRIMITIVE_TYPE_CONVERTER.convert(value, requiredType);
-    }
-
     public static boolean isBooleanTrue(String str) {
         return "true".equalsIgnoreCase(str)
-                || "1".equalsIgnoreCase(str)
+                || "1".equals(str)
                 || "y".equalsIgnoreCase(str)
                 || "yes".equalsIgnoreCase(str);
     }
@@ -140,59 +101,12 @@ public final class ConverterUtil {
     }
 
     /**
-     * Parse the given {@code text} into a {@link Number} instance of the given
-     * target class, using the corresponding {@code decode} / {@code valueOf} method.
-     * <p>Trims the input {@code String} before attempting to parse the number.
-     * <p>Supports numbers in hex format (with leading "0x", "0X", or "#") as well.
-     *
-     * @param text        the text to convert
-     * @param targetClass the target class to parse into
-     * @return the parsed number
-     * @throws IllegalArgumentException if the target class is not supported
-     *                                  (i.e. not a standard Number subclass as included in the JDK)
-     * @see Byte#decode
-     * @see Short#decode
-     * @see Integer#decode
-     * @see Long#decode
-     * @see #decodeBigInteger(String)
-     * @see Float#valueOf
-     * @see Double#valueOf
-     * @see java.math.BigDecimal#BigDecimal(String)
-     */
-    public static Object parseNumber(String text, Class<?> targetClass) {
-        Objects.requireNonNull(text, "Text must not be null");
-        Objects.requireNonNull(targetClass, "Target class must not be null");
-        String trimmed = text.trim();
-
-        if (Byte.class == targetClass) {
-            return (isHexNumber(trimmed) ? Byte.decode(trimmed) : Byte.valueOf(trimmed));
-        } else if (Short.class == targetClass) {
-            return (isHexNumber(trimmed) ? Short.decode(trimmed) : Short.valueOf(trimmed));
-        } else if (Integer.class == targetClass) {
-            return (isHexNumber(trimmed) ? Integer.decode(trimmed) : Integer.valueOf(trimmed));
-        } else if (Long.class == targetClass) {
-            return (isHexNumber(trimmed) ? Long.decode(trimmed) : Long.valueOf(trimmed));
-        } else if (BigInteger.class == targetClass) {
-            return (isHexNumber(trimmed) ? decodeBigInteger(trimmed) : new BigInteger(trimmed));
-        } else if (Float.class == targetClass) {
-            return Float.valueOf(trimmed);
-        } else if (Double.class == targetClass) {
-            return Double.valueOf(trimmed);
-        } else if (BigDecimal.class == targetClass || Number.class == targetClass) {
-            return new BigDecimal(trimmed);
-        } else {
-            throw new IllegalArgumentException(
-                    "Cannot convert String [" + text + "] to target class [" + targetClass.getName() + "]");
-        }
-    }
-
-    /**
      * Decode a {@link java.math.BigInteger} from the supplied {@link String} value.
      * <p>Supports decimal, hex, and octal notation.
      *
      * @see BigInteger#BigInteger(String, int)
      */
-    private static BigInteger decodeBigInteger(String value) {
+    public static BigInteger decodeBigInteger(String value) {
         int radix = 10;
         int index = 0;
         boolean negative = false;
@@ -229,7 +143,7 @@ public final class ConverterUtil {
      * @throws IllegalArgumentException if there is an overflow
      * @see #raiseOverflowException
      */
-    private static long checkedLongValue(Number number, Class<?> targetClass) {
+    public static long checkedLongValue(Number number, Class<?> targetClass) {
         BigInteger bigInt = null;
         if (number instanceof BigInteger) {
             bigInt = (BigInteger) number;
@@ -250,7 +164,7 @@ public final class ConverterUtil {
      * @param targetClass the target class we tried to convert to
      * @throws IllegalArgumentException if there is an overflow
      */
-    private static void raiseOverflowException(Number number, Class<?> targetClass) {
+    public static void raiseOverflowException(Number number, Class<?> targetClass) {
         throw new IllegalArgumentException("Could not convert number [" + number + "] of type [" +
                 number.getClass().getName() + "] to target class [" + targetClass.getName() + "]: overflow");
     }

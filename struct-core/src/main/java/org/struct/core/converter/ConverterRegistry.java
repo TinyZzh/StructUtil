@@ -16,15 +16,14 @@
  *  limitations under the License.
  */
 
-package org.struct.core;
+package org.struct.core.converter;
 
-import org.struct.core.converter.Converter;
-import org.struct.core.converter.StringToArrayConverter;
 import org.struct.util.Reflects;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 /**
  * Converter Registry.
@@ -36,20 +35,13 @@ public final class ConverterRegistry {
     private static final Map<Class, Converter> registeredConverterCacheMap = new ConcurrentHashMap<>();
 
     static {
-        Class<?>[] str2ArrayConverters = new Class[]{
-                String[].class,
-                byte[].class, Byte[].class,
-                boolean[].class, Boolean[].class,
-                short[].class, Short[].class,
-                int[].class, Integer[].class,
-                long[].class, Long[].class,
-                float[].class, Float[].class,
-                double[].class, Double[].class
-        };
-        StringToArrayConverter converter = new StringToArrayConverter();
-        for (Class<?> targetType : str2ArrayConverters) {
-            register(targetType, converter);
-        }
+        Stream.of(
+                new EmbeddedConverters()
+        ).forEach(o -> {
+            for (Map.Entry<Class<?>, Converter> entry : o.getConverters().entrySet()) {
+                register(entry.getKey(), entry.getValue());
+            }
+        });
     }
 
     private ConverterRegistry() {
@@ -98,5 +90,29 @@ public final class ConverterRegistry {
         } catch (Exception e) {
             throw new IllegalArgumentException("clz:" + actualType.getName() + " no such found no args constructor.");
         }
+    }
+
+    /**
+     * Convert originValue to requiredType.
+     *
+     * @param originValue  the origin value.
+     * @param requiredType the required type.
+     * @return the converted object, which must be an instance of {@code requiredType} (or null)
+     */
+    public static Object convert(Object originValue, Class<?> requiredType) {
+        if (Object.class == requiredType
+                || requiredType.isInstance(originValue)) {
+            return originValue;
+        }
+        Converter converter;
+        if (requiredType.isEnum()) {
+            converter = lookup(Enum.class);
+        } else {
+            converter = lookup(requiredType);
+        }
+        if (null != converter) {
+            return converter.convert(originValue, requiredType);
+        }
+        return originValue;
     }
 }

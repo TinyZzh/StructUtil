@@ -99,7 +99,7 @@ List<Animal> list = worker.toList(ArrayList::new);
 
 ### [Feature] Custom Type Converter
 
-实现接口`Converter`来实现自定义的类型转换器. 参考`org.struct.core.converter.StringToArrayConverter`
+实现接口`Converter`来实现自定义的类型转换器. 参考`org.struct.core.converter.ArrayConverter`
 
 示例:
 ```java

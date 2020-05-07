@@ -18,8 +18,6 @@
 
 package org.struct.core.converter;
 
-import org.struct.util.ConverterUtil;
-
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
@@ -27,7 +25,7 @@ import java.util.Arrays;
  * @author TinyZ.
  * @version 2020.03.26
  */
-public class StringToArrayConverter implements Converter {
+public class ArrayConverter implements Converter {
 
     private static final String DEFAULT_SEPARATOR = "\\|";
 
@@ -38,11 +36,11 @@ public class StringToArrayConverter implements Converter {
 
     private final boolean exceptBlank;
 
-    public StringToArrayConverter() {
+    public ArrayConverter() {
         this(DEFAULT_SEPARATOR, true);
     }
 
-    public StringToArrayConverter(String separator, boolean exceptBlank) {
+    public ArrayConverter(String separator, boolean exceptBlank) {
         this.separator = separator;
         this.exceptBlank = exceptBlank;
     }
@@ -63,7 +61,7 @@ public class StringToArrayConverter implements Converter {
         }
         Object array = Array.newInstance(componentType, data.length);
         for (int i = 0; i < data.length; i++) {
-            Array.set(array, i, ConverterUtil.covert(data[i], componentType));
+            Array.set(array, i, ConverterRegistry.convert(data[i], componentType));
         }
         return array;
     }

@@ -23,12 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 import org.struct.core.converter.Converter;
+import org.struct.core.converter.ConverterRegistry;
 import org.struct.core.filter.StructBeanFilter;
 import org.struct.core.handler.StructHandler;
 import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.exception.StructTransformException;
 import org.struct.util.AnnotationUtils;
-import org.struct.util.ConverterUtil;
 import org.struct.util.Reflects;
 import org.struct.util.WorkerUtil;
 
@@ -185,7 +185,7 @@ public class StructWorker<T> {
             } else if (descriptor.isReferenceField()) {
                 this.setObjReferenceFieldValue(instance, descriptor);
             } else {
-                descriptor.setFieldValue(instance, ConverterUtil.covert(value, descriptor.getFieldType()));
+                descriptor.setFieldValue(instance, ConverterRegistry.convert(value, descriptor.getFieldType()));
             }
         } catch (Exception e) {
             String msg = "set instance field's value failure. clz:" + instance.getClass()
