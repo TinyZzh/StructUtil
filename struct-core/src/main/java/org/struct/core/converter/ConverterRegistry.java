@@ -18,12 +18,13 @@
 
 package org.struct.core.converter;
 
+import org.struct.spi.ServiceLoader;
 import org.struct.util.Reflects;
 
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 /**
  * Converter Registry.
@@ -32,12 +33,11 @@ import java.util.stream.Stream;
  */
 public final class ConverterRegistry {
 
-    private static final Map<Class, Converter> registeredConverterCacheMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Converter> REGISTERED_CONVERTER_CACHE_MAP = new ConcurrentHashMap<>();
 
     static {
-        Stream.of(
-                new EmbeddedConverters()
-        ).forEach(o -> {
+        List<Converters> convertersList = ServiceLoader.loadAll(Converters.class);
+        convertersList.forEach(o -> {
             for (Map.Entry<Class<?>, Converter> entry : o.getConverters().entrySet()) {
                 register(entry.getKey(), entry.getValue());
             }
@@ -52,7 +52,7 @@ public final class ConverterRegistry {
      * register custom converter implement.
      */
     public static void register(Class<?> actualType, Converter converter) {
-        registeredConverterCacheMap.put(actualType, converter);
+        REGISTERED_CONVERTER_CACHE_MAP.put(actualType, converter);
     }
 
     public static void register(Class<?> actualType, Class<? extends Converter> clzOfConverter, Object... params) {
@@ -69,18 +69,18 @@ public final class ConverterRegistry {
     }
 
     public static void unregister(Class<?> actualType) {
-        registeredConverterCacheMap.remove(actualType);
+        REGISTERED_CONVERTER_CACHE_MAP.remove(actualType);
     }
 
     public static Converter lookup(Class<?> actualType) {
-        return registeredConverterCacheMap.get(actualType);
+        return REGISTERED_CONVERTER_CACHE_MAP.get(actualType);
     }
 
     /**
      * look up converter by class.
      */
     public static Converter lookupOrDefault(Class<?> actualType, Class<? extends Converter> clzOfConverter, Object... params) {
-        Converter converter = registeredConverterCacheMap.get(actualType);
+        Converter converter = REGISTERED_CONVERTER_CACHE_MAP.get(actualType);
         if (converter != null)
             return converter;
         try {

@@ -19,6 +19,7 @@
 package org.struct.core.converter;
 
 import org.struct.exception.UnSupportConvertOperationException;
+import org.struct.spi.SPI;
 import org.struct.util.ConverterUtil;
 
 import java.math.BigDecimal;
@@ -29,8 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 /**
- * 原生类型的转换器.
+ * 内置的基础的转换器.
  */
+@SPI(name = "embedded", order = 0)
 public class EmbeddedConverters implements Converters {
 
     private static final Map<Class<?>, Converter> CLASS_CONVERTER_MAP = new ConcurrentHashMap<>();
