@@ -27,6 +27,7 @@ task sourcesJar(type: Jar) {
 }
 task javadocJar(type: Jar) {
     from javadoc {
+        options.encoding = 'UTF-8'
         failOnError = false
     }
     archiveClassifier = 'javadoc'
