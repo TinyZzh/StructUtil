@@ -36,8 +36,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -121,7 +123,11 @@ public final class WorkerUtil {
         if (clzOfList.isInterface()
                 || Modifier.isInterface(clzOfList.getModifiers())
                 || Modifier.isAbstract(clzOfList.getModifiers())) {
-            list = new ArrayList<>();
+            if (Set.class.isAssignableFrom(clzOfList)) {
+                list = new HashSet<>();
+            } else {
+                list = new ArrayList<>();
+            }
         } else {
             Constructor<?> constructor = clzOfList.getConstructor();
             list = (Collection<T>) constructor.newInstance();
