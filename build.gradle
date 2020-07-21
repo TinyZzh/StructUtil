@@ -3,10 +3,18 @@ plugins {
     id 'jacoco'
 }
 
+ext.version_options = [
+        SPRING_BOOT_VERSION: "2.2.5.RELEASE",
+        SPRING_VERSION     : "5.2.4.RELEASE",
+        JETTY_VERSION      : "9.4.16.v20140903",
+        JUNIT_VERSION      : "9.4.16.v20140903",
+        MOCKITO_VERSION    : "2.2.22"
+]
+
 group = 'org.structutil'
 version = '3.0.1-SNAPSHOT'
 
-allprojects {
+subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'jacoco'
@@ -31,9 +39,9 @@ allprojects {
         compile 'org.apache.logging.log4j:log4j-core:2.9.1'
         compile 'org.slf4j:slf4j-api:1.7.30'
         compile 'org.slf4j:jcl-over-slf4j:1.7.30'
-        //  junit 4.x and mockito
+        //  junit 5.x and mockito
         testCompile("org.mockito:mockito-core:2.25.0")
-        testCompile("junit:junit:4.12")
+        testImplementation('org.junit.jupiter:junit-jupiter:5.6.2')
     }
 
     test {
