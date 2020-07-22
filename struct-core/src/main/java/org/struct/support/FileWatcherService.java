@@ -201,7 +201,7 @@ public class FileWatcherService implements Runnable {
             Path dir;
             if ((key = ws.poll()) == null
                     || (dir = keys.get(key)) == null) {
-                LOGGER.info("watch key not registered. key:{}", key);
+                LOGGER.debug("watch key not registered. key:{}", key);
                 return;
             }
             for (WatchEvent<?> event : key.pollEvents()) {
