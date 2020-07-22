@@ -26,6 +26,11 @@ import org.struct.annotation.StructField;
 public class StructConfig {
 
     /**
+     * {@link org.struct.core.converter.ArrayConverter}
+     */
+    private String arrayConverterStringSeparator = "\\|";
+
+    /**
      * The default {@link StructField#required()}'s value.
      */
     private boolean structRequiredDefault = false;
@@ -52,5 +57,11 @@ public class StructConfig {
         this.ignoreEmptyRow = ignoreEmptyRow;
     }
 
+    public String getArrayConverterStringSeparator() {
+        return arrayConverterStringSeparator;
+    }
 
+    public void setArrayConverterStringSeparator(String arrayConverterStringSeparator) {
+        this.arrayConverterStringSeparator = arrayConverterStringSeparator;
+    }
 }

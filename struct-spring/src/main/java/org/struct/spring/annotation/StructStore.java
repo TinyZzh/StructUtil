@@ -8,7 +8,6 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.function.Function;
 
 /**
  * @author TinyZ.
@@ -22,15 +21,9 @@ public @interface StructStore {
 
     String value();
 
-    String identify();
+    String keyResolverBeanName() default "";
 
     Class<? extends StructKeyResolver> keyResolver() default StructKeyResolver.class;
-
-
-
-
-
-
 
 
 }

@@ -10,6 +10,7 @@ ext.version_options = [
         JUNIT_VERSION      : "9.4.16.v20140903",
         MOCKITO_VERSION    : "2.2.22"
 ]
+ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
 version = '3.0.1-SNAPSHOT'
@@ -25,6 +26,7 @@ subprojects {
     compileTestJava.options.setEncoding("UTF-8")
 
     repositories {
+        maven { url "http://192.168.0.2:8081/nexus/content/repositories/snapshots/" }
         mavenLocal()
         mavenCentral()
         maven { url "http://repo.maven.apache.org/maven2" }

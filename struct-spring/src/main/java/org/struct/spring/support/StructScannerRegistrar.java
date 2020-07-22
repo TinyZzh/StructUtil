@@ -1,8 +1,11 @@
 package org.struct.spring.support;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
@@ -22,9 +25,10 @@ import java.util.stream.Stream;
  * @author TinyZ.
  * @version 2020.07.17
  */
-public class StructScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
+public class StructScannerRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware, ApplicationContextAware {
 
     private ResourceLoader resourceLoader;
+    private ApplicationContext applicationContext;
 
     @Override
     public void setResourceLoader(ResourceLoader resourceLoader) {
@@ -56,8 +60,14 @@ public class StructScannerRegistrar implements ImportBeanDefinitionRegistrar, Re
                 .flatMap((Function<String[], Stream<String>>) Stream::of)
                 .filter(StringUtils::hasText)
                 .forEach(basePackages::add);
-        //  scan Rule annotation
+        //  scan
+        scanner.setConfig(this.applicationContext.getBean(StructConfig.class));
         scanner.registerFilters();
         scanner.doScan(StringUtils.toStringArray(basePackages));
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

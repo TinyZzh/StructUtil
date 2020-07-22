@@ -9,6 +9,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.ClassMetadata;
@@ -24,6 +25,10 @@ import java.util.Set;
  * @version 2020.07.17
  */
 public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
+
+    private StructConfig config;
+
+    private String structKeyResolverBeanName;
 
     public ClassPathStructScanner(BeanDefinitionRegistry registry) {
         super(registry);
@@ -42,25 +47,25 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
     }
 
     public void registerFilters() {
-        this.addExcludeFilter((mr, mrf) -> mr.getClassMetadata().getClassName().equals(StructMapper.class.getName()));
-        //  1. StructMapper annotation.
+        this.addExcludeFilter((mr, mrf) -> mr.getClassMetadata().getClassName().equals(GenericStructMapper.class.getName()));
+        //  1. GenericStructMapper annotation.
         this.addIncludeFilter((mr, mrf) ->
                 mr.getAnnotationMetadata().hasAnnotation(StructStore.class.getName())
                         && mr.getAnnotationMetadata().hasAnnotation(StructSheet.class.getName())
         );
-        //  2. this class implement StructMapper interface.
+        //  2. this class implement GenericStructMapper interface.
         this.addIncludeFilter((mr, mrf) -> {
             ClassMetadata cm = mr.getClassMetadata();
             if (cm.isConcrete()) {
                 if (cm.hasSuperClass()) {
-                    if (StructMapper.class.getName().equals(cm.getSuperClassName())) {
+                    if (GenericStructMapper.class.getName().equals(cm.getSuperClassName())) {
                         return true;
                     }
                 }
                 ClassLoader classLoader = ClassPathStructScanner.class.getClassLoader();
                 try {
                     Class<?> clzOfBean = ClassUtils.forName(cm.getClassName(), classLoader);
-                    if (StructMapper.class.isAssignableFrom(clzOfBean)) {
+                    if (org.struct.spring.support.StructStore.class.isAssignableFrom(clzOfBean)) {
                         return true;
                     }
                 } catch (ClassNotFoundException e) {
@@ -72,7 +77,7 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
     }
 
     @Override
-    protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
+    public Set<BeanDefinitionHolder> doScan(String... basePackages) {
         Set<BeanDefinitionHolder> holders = super.doScan(basePackages);
         return holders;
     }
@@ -99,18 +104,23 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                 return;
             }
             //  register user custom's struct mapper.
+            Class<?>[] typeArguments = GenericTypeResolver.resolveTypeArguments(gbd.getBeanClass(), StructStore.class);
+            BeanDefinition bd = definitionHolder.getBeanDefinition();
+            bd.getPropertyValues().add(StructConstant.CLZ_OF_BEAN, typeArguments[1]);
+            bd.getPropertyValues().add(StructConstant.CONFIG, this.config);
             super.registerBeanDefinition(definitionHolder, registry);
         } else {
             //  Generate mapper's bean definition
             String mapperBeanName = definitionHolder.getBeanName() + org.struct.spring.support.StructStore.class.getSimpleName();
 
-            AnnotatedGenericBeanDefinition mbd = new AnnotatedGenericBeanDefinition(StructMapper.class);
+            AnnotatedGenericBeanDefinition mbd = new AnnotatedGenericBeanDefinition(GenericStructMapper.class);
             mbd.setRole(BeanDefinition.ROLE_APPLICATION);
             mbd.setScope(BeanDefinition.SCOPE_SINGLETON);
             mbd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_NAME);
             ConstructorArgumentValues cavs = new ConstructorArgumentValues();
             cavs.addIndexedArgumentValue(0, gbd.getBeanClass());
             mbd.getConstructorArgumentValues().addArgumentValues(cavs);
+            mbd.getPropertyValues().add(StructConstant.CONFIG, this.config);
 
             AnnotationConfigUtils.processCommonDefinitionAnnotations(mbd);
             BeanDefinitionHolder mapperDefinitionHolder = new BeanDefinitionHolder(mbd, mapperBeanName);
@@ -118,5 +128,11 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
         }
     }
 
+    public StructConfig getConfig() {
+        return config;
+    }
 
+    public void setConfig(StructConfig config) {
+        this.config = config;
+    }
 }

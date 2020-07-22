@@ -41,55 +41,6 @@ public final class ConverterUtil {
 
     /// Spring Framework's NumberUtils
 
-    public static Object convertNumberToTargetClass(Number number, Class<?> targetClass) throws IllegalArgumentException {
-        Objects.requireNonNull(number, "Number must not be null");
-        Objects.requireNonNull(targetClass, "Target class must not be null");
-
-        if (targetClass.isInstance(number)) {
-            return number;
-        } else if (Byte.class == targetClass) {
-            long value = checkedLongValue(number, targetClass);
-            if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
-                raiseOverflowException(number, targetClass);
-            }
-            return Byte.valueOf(number.byteValue());
-        } else if (Short.class == targetClass) {
-            long value = checkedLongValue(number, targetClass);
-            if (value < Short.MIN_VALUE || value > Short.MAX_VALUE) {
-                raiseOverflowException(number, targetClass);
-            }
-            return Short.valueOf(number.shortValue());
-        } else if (Integer.class == targetClass) {
-            long value = checkedLongValue(number, targetClass);
-            if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                raiseOverflowException(number, targetClass);
-            }
-            return Integer.valueOf(number.intValue());
-        } else if (Long.class == targetClass) {
-            long value = checkedLongValue(number, targetClass);
-            return Long.valueOf(value);
-        } else if (BigInteger.class == targetClass) {
-            if (number instanceof BigDecimal) {
-                // do not lose precision - use BigDecimal's own conversion
-                return ((BigDecimal) number).toBigInteger();
-            } else {
-                // original value is not a Big* number - use standard long conversion
-                return BigInteger.valueOf(number.longValue());
-            }
-        } else if (Float.class == targetClass) {
-            return Float.valueOf(number.floatValue());
-        } else if (Double.class == targetClass) {
-            return Double.valueOf(number.doubleValue());
-        } else if (BigDecimal.class == targetClass) {
-            // always use BigDecimal(String) here to avoid unpredictability of BigDecimal(double)
-            // (see BigDecimal javadoc for details)
-            return new BigDecimal(number.toString());
-        } else {
-            throw new IllegalArgumentException("Could not convert number [" + number + "] of type [" +
-                    number.getClass().getName() + "] to unsupported target class [" + targetClass.getName() + "]");
-        }
-    }
-
     /**
      * Determine whether the given {@code value} String indicates a hex number,
      * i.e. needs to be passed into {@code Integer.decode} instead of

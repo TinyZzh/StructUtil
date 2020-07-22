@@ -1,6 +1,7 @@
 package org.struct.support;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.util.WorkerUtil;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.*;
 
 public class FileWatcherServiceTest {
@@ -32,7 +32,7 @@ public class FileWatcherServiceTest {
         Runnable runnable = () -> {
             StructWorker<VipConfigSyncBean> worker = WorkerUtil.newWorker("./examples/", VipConfigSyncBean.class);
             List<VipConfigSyncBean> beans = worker.toList(ArrayList::new);
-            assertFalse(beans.isEmpty());
+            Assertions.assertFalse(beans.isEmpty());
         };
         fws.register("./examples/")
                 .registerHook("./examples/tpl_vip.xml", runnable)

@@ -1,6 +1,7 @@
 package org.struct.spring.support;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -30,6 +31,10 @@ public interface StructStore<K, B> {
     List<B> getAll();
 
     B get(K key);
+
+    B getOrDefault(K key, B dv);
+
+    Optional<B> tryGet(K key);
 
     List<B> lookup(K... keys);
 

@@ -8,6 +8,9 @@ import org.struct.util.WorkerUtil;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ExcelWorkerTest {
 
@@ -19,6 +22,11 @@ public class ExcelWorkerTest {
         StructWorker<Animal> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", Animal.class);
 //        StructWorker<Animal> worker = StructWorker.of("./out/test/resources/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
+
+        List<Animal> collect = worker.load(ArrayList::new).stream().collect(Collectors.toList());
+        Map<Object, Object> collected = worker.load(ArrayList::new).stream().collect(Collectors.toMap(o -> o.id, o -> o));
+
+
         Assert.assertTrue(!list.isEmpty());
         Assert.assertEquals(10, list.size());
     }

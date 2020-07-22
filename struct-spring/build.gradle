@@ -1,6 +1,8 @@
 dependencies {
     implementation project(":struct-core")
     implementation("org.springframework:spring-context:${version_options.SPRING_VERSION}")
+    implementation("org.springframework:spring-beans:${version_options.SPRING_VERSION}")
+    implementation("org.springframework:spring-core:${version_options.SPRING_VERSION}")
     implementation("org.springframework:spring-test:${version_options.SPRING_VERSION}")
     testImplementation('org.junit.jupiter:junit-jupiter:5.6.2')
 }

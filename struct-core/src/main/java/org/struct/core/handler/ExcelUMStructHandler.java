@@ -65,8 +65,8 @@ public class ExcelUMStructHandler implements StructHandler {
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
-        try (FileInputStream fis = new FileInputStream(file)) {
-            Workbook wb = WorkbookFactory.create(fis);
+        try (FileInputStream fis = new FileInputStream(file);
+             Workbook wb = WorkbookFactory.create(fis)) {
             Sheet sheet = wb.getSheet(annotation.sheetName());
 
             int firstRowOrder = this.getFirstRowOrder(annotation, sheet);
