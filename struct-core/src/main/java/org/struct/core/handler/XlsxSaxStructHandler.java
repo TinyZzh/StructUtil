@@ -19,6 +19,7 @@
 package org.struct.core.handler;
 
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackageAccess;
 import org.apache.poi.util.SAXHelper;
 import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
@@ -77,7 +78,7 @@ public class XlsxSaxStructHandler implements StructHandler {
         contentHandler.setLastRow(annotation.endOrder());
         contentHandler.setObjectConsumer(cellHandler);
 
-        try (OPCPackage pkg = OPCPackage.open(file)) {
+        try (OPCPackage pkg = OPCPackage.open(file, PackageAccess.READ)) {
             XSSFReader reader = new XSSFReader(pkg);
             StylesTable styles = reader.getStylesTable();
             ReadOnlySharedStringsTable sharedStrings = new ReadOnlySharedStringsTable(pkg);

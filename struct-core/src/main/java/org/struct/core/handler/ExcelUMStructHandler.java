@@ -39,7 +39,6 @@ import org.struct.util.AnnotationUtils;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -65,8 +64,7 @@ public class ExcelUMStructHandler implements StructHandler {
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
-        try (FileInputStream fis = new FileInputStream(file);
-             Workbook wb = WorkbookFactory.create(fis)) {
+        try (Workbook wb = WorkbookFactory.create(file, null, true)) {
             Sheet sheet = wb.getSheet(annotation.sheetName());
 
             int firstRowOrder = this.getFirstRowOrder(annotation, sheet);

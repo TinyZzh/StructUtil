@@ -73,7 +73,7 @@ public class XlsEventStructHandler implements StructHandler {
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
-        try (POIFSFileSystem fs = new POIFSFileSystem(file)) {
+        try (POIFSFileSystem fs = new POIFSFileSystem(file, true)) {
             //
             XlsListener<T> listener = new XlsListener<>(worker, annotation, cellHandler);
 
