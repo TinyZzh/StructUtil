@@ -1,31 +1,43 @@
 package org.struct.exception;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class IllegalAccessPropertyExceptionTest {
 
-    @Test(expected = IllegalAccessPropertyException.class)
+    @Test()
     public void raiseException() {
-        throw new IllegalAccessPropertyException();
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new StructTransformException();
+        });
     }
 
-    @Test(expected = IllegalAccessPropertyException.class)
+    @Test()
     public void raiseException1() {
-        throw new IllegalAccessPropertyException("msg");
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new IllegalAccessPropertyException("msg");
+        });
     }
 
-    @Test(expected = IllegalAccessPropertyException.class)
+    @Test()
     public void raiseException2() {
-        throw new IllegalAccessPropertyException("msg", new IllegalAccessPropertyException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new IllegalAccessPropertyException("msg", new IllegalAccessPropertyException());
+        });
     }
 
-    @Test(expected = IllegalAccessPropertyException.class)
+    @Test()
     public void raiseException3() {
-        throw new IllegalAccessPropertyException(new IllegalAccessPropertyException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new IllegalAccessPropertyException(new IllegalAccessPropertyException());
+        });
     }
 
-    @Test(expected = IllegalAccessPropertyException.class)
+    @Test()
     public void raiseException4() {
-        throw new IllegalAccessPropertyException("msg", new IllegalAccessPropertyException(), false, true);
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new IllegalAccessPropertyException("msg", new IllegalAccessPropertyException(), false, true);
+        });
     }
 }

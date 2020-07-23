@@ -1,7 +1,7 @@
 package org.struct.core;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 import org.struct.util.WorkerUtil;
@@ -27,15 +27,15 @@ public class ExcelWorkerTest {
         Map<Object, Object> collected = worker.load(ArrayList::new).stream().collect(Collectors.toMap(o -> o.id, o -> o));
 
 
-        Assert.assertTrue(!list.isEmpty());
-        Assert.assertEquals(10, list.size());
+        Assertions.assertTrue(!list.isEmpty());
+        Assertions.assertEquals(10, list.size());
     }
 
     @Test
     public void testAnimalWithArray() throws Exception {
         StructWorker<AnimalWithArray> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", AnimalWithArray.class);
         ArrayList<AnimalWithArray> list = worker.load(ArrayList::new);
-        Assert.assertTrue(!list.isEmpty());
+        Assertions.assertTrue(!list.isEmpty());
     }
 
     @Test
@@ -48,7 +48,7 @@ public class ExcelWorkerTest {
             e.printStackTrace();
             return;
         }
-        Assert.fail();
+        Assertions.fail();
     }
 
     @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet2")

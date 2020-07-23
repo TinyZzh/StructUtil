@@ -1,31 +1,42 @@
 package org.struct.exception;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ExcelTransformExceptionTest {
 
-    @Test(expected = StructTransformException.class)
+    @Test()
     public void raiseException() {
-        throw new StructTransformException();
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new StructTransformException();
+        });
     }
 
-    @Test(expected = StructTransformException.class)
+    @Test()
     public void raiseException1() {
-        throw new StructTransformException("msg");
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new StructTransformException("msg");
+        });
     }
 
-    @Test(expected = StructTransformException.class)
+    @Test()
     public void raiseException2() {
-        throw new StructTransformException("msg", new StructTransformException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new StructTransformException("msg", new StructTransformException());
+        });
     }
 
-    @Test(expected = StructTransformException.class)
+    @Test()
     public void raiseException3() {
-        throw new StructTransformException(new StructTransformException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new StructTransformException(new StructTransformException());
+        });
     }
 
-    @Test(expected = StructTransformException.class)
+    @Test()
     public void raiseException4() {
-        throw new StructTransformException("msg", new StructTransformException(), false, true);
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new StructTransformException("msg", new StructTransformException(), false, true);
+        });
     }
 }

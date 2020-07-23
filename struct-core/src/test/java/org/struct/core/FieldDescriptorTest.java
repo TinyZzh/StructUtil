@@ -1,7 +1,7 @@
 package org.struct.core;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class FieldDescriptorTest {
 
@@ -11,12 +11,12 @@ public class FieldDescriptorTest {
         new FieldDescriptor("name", null, null, null, null, false, null);
 
         {
-            Assert.assertEquals(
+            Assertions.assertEquals(
                     new FieldDescriptor("name", null, FieldDescriptorTest.class, new String[]{"1"}, new String[]{"1"}, false, null),
                     new FieldDescriptor("name", null, FieldDescriptorTest.class, new String[]{"1"}, new String[]{"1"}, false, null)
             );
         }
-        Assert.assertNotNull(descriptor.toString());
+        Assertions.assertNotNull(descriptor.toString());
     }
 
 

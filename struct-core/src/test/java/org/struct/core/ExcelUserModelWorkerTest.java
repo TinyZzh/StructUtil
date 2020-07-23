@@ -1,7 +1,7 @@
 package org.struct.core;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 
@@ -13,7 +13,7 @@ public class ExcelUserModelWorkerTest {
     public void test() throws Exception {
         StructWorker<Animal> worker = new StructWorker<>("classpath:/org/struct/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
-        Assert.assertTrue(!list.isEmpty());
+        Assertions.assertTrue(!list.isEmpty());
     }
 
     @StructSheet(fileName = "bean.xls", sheetName = "Sheet2")

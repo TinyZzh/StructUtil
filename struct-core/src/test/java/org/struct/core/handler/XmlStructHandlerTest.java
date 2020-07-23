@@ -1,7 +1,7 @@
 package org.struct.core.handler;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.core.filter.StructBeanFilter;
@@ -18,7 +18,7 @@ public class XmlStructHandlerTest {
     public void test() {
         StructWorker<VipConfigSyncBean> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", VipConfigSyncBean.class);
         ArrayList<VipConfigSyncBean> beans = worker.toList(ArrayList::new);
-        Assert.assertEquals(10, beans.size());
+        Assertions.assertEquals(10, beans.size());
     }
 
     @XmlRootElement(name = "child")
@@ -55,7 +55,7 @@ public class XmlStructHandlerTest {
     public void testLoadWithBeanFilter() {
         StructWorker<VipConfigSyncBeanWithFilter> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", VipConfigSyncBeanWithFilter.class);
         ArrayList<VipConfigSyncBeanWithFilter> beans = worker.toList(ArrayList::new);
-        Assert.assertEquals(8, beans.size());
+        Assertions.assertEquals(8, beans.size());
     }
 
     public static class MyFilter extends StructBeanFilter<VipConfigSyncBeanWithFilter> {

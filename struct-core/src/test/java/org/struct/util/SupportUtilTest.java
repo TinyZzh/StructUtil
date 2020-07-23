@@ -18,7 +18,8 @@
 
 package org.struct.util;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;

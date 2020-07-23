@@ -18,7 +18,7 @@
 
 package org.struct.core;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 import org.struct.util.WorkerUtil;

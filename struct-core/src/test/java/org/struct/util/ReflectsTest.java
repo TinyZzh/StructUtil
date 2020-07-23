@@ -1,7 +1,8 @@
 package org.struct.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ReflectsTest {
 
@@ -11,40 +12,40 @@ public class ReflectsTest {
         try {
             Reflects.newInstance(Apple.class);
         } catch (Exception e) {
-            Assert.assertEquals(e.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(e.getClass(), IllegalArgumentException.class);
         }
         //  [suc] static class
         StaticApple apple = Reflects.newInstance(StaticApple.class);
-        Assert.assertNotNull(apple);
+        Assertions.assertNotNull(apple);
         //  [suc] parameter class
         Pyrus pyrus = Reflects.newInstance(Pyrus.class, 10);
-        Assert.assertNotNull(pyrus);
+        Assertions.assertNotNull(pyrus);
         //  [fail] wrong parameter count
         try {
             Reflects.newInstance(Pyrus.class, 10, 1000);
         } catch (Exception e) {
-            Assert.assertEquals(e.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(e.getClass(), IllegalArgumentException.class);
         }
         //  [fail] wrong parameter type
         try {
             Reflects.newInstance(Pyrus.class, "11");
         } catch (Exception e) {
-            Assert.assertEquals(e.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(e.getClass(), IllegalArgumentException.class);
         }
         //  [suc]
         Orange orange = Reflects.newInstance(Orange.class);
-        Assert.assertNotNull(orange);
+        Assertions.assertNotNull(orange);
         //  [fail]  constructor throw exception
         try {
             Reflects.newInstance(OnlyException.class);
         } catch (Exception e) {
-            Assert.assertEquals(e.getClass(), Exception.class);
+            Assertions.assertEquals(e.getClass(), Exception.class);
         }
         //  [fail]  private constructor throw exception
         try {
             Reflects.newInstance(OnlyPriParamException.class, "xx");
         } catch (Exception e) {
-            Assert.assertEquals(e.getClass(), IllegalArgumentException.class);
+            Assertions.assertEquals(e.getClass(), IllegalArgumentException.class);
         }
     }
 

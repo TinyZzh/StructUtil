@@ -18,8 +18,8 @@
 
 package org.struct.core.converter;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,7 +32,7 @@ public class ConverterRegistryTest {
         final int num = 9999;
         Object obj = ConverterRegistry.lookupOrDefault(A.class, MyConverter.class, num)
                 .convert("x", int.class);
-        Assert.assertEquals(num, obj);
+        Assertions.assertEquals(num, obj);
     }
 
     @Test
@@ -41,7 +41,7 @@ public class ConverterRegistryTest {
         ConverterRegistry.register(A.class, MyConverter.class, num);
         Object obj = ConverterRegistry.lookup(A.class)
                 .convert("x", int.class);
-        Assert.assertEquals(num, obj);
+        Assertions.assertEquals(num, obj);
     }
 
     public static class A {
@@ -77,7 +77,7 @@ public class ConverterRegistryTest {
             }
         });
         B obj = (B) ConverterRegistry.lookup(B.class).convert(content, String.class);
-        Assert.assertEquals(content, obj.content);
+        Assertions.assertEquals(content, obj.content);
     }
 
     public static class B {
@@ -91,50 +91,50 @@ public class ConverterRegistryTest {
 
     @Test
     public void covert() {
-        Assert.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert("1", byte.class));
-        Assert.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert("1", Byte.class));
-        Assert.assertEquals(Short.valueOf("1"), ConverterRegistry.convert("1", short.class));
-        Assert.assertEquals(Short.valueOf("1"), ConverterRegistry.convert("1", Short.class));
-        Assert.assertEquals(1, ConverterRegistry.convert("1", int.class));
-        Assert.assertEquals(1, ConverterRegistry.convert("1", Integer.class));
-        Assert.assertEquals(1L, ConverterRegistry.convert("1", long.class));
-        Assert.assertEquals(1L, ConverterRegistry.convert("1", Long.class));
-        Assert.assertEquals(true, ConverterRegistry.convert("true", boolean.class));
-        Assert.assertEquals(false, ConverterRegistry.convert("false", Boolean.class));
-        Assert.assertEquals(BigInteger.valueOf(1L), ConverterRegistry.convert("1", BigInteger.class));
-        Assert.assertEquals("1", ConverterRegistry.convert("1", String.class));
-        Assert.assertEquals("1", ConverterRegistry.convert("1", Object.class));
-        Assert.assertEquals(1.0F, ConverterRegistry.convert("1", float.class));
-        Assert.assertEquals(1.0F, ConverterRegistry.convert("1", Float.class));
-        Assert.assertEquals(1.0D, ConverterRegistry.convert("1", double.class));
-        Assert.assertEquals(1.0D, ConverterRegistry.convert("1", Double.class));
+        Assertions.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert("1", byte.class));
+        Assertions.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert("1", Byte.class));
+        Assertions.assertEquals(Short.valueOf("1"), ConverterRegistry.convert("1", short.class));
+        Assertions.assertEquals(Short.valueOf("1"), ConverterRegistry.convert("1", Short.class));
+        Assertions.assertEquals(1, ConverterRegistry.convert("1", int.class));
+        Assertions.assertEquals(1, ConverterRegistry.convert("1", Integer.class));
+        Assertions.assertEquals(1L, ConverterRegistry.convert("1", long.class));
+        Assertions.assertEquals(1L, ConverterRegistry.convert("1", Long.class));
+        Assertions.assertEquals(true, ConverterRegistry.convert("true", boolean.class));
+        Assertions.assertEquals(false, ConverterRegistry.convert("false", Boolean.class));
+        Assertions.assertEquals(BigInteger.valueOf(1L), ConverterRegistry.convert("1", BigInteger.class));
+        Assertions.assertEquals("1", ConverterRegistry.convert("1", String.class));
+        Assertions.assertEquals("1", ConverterRegistry.convert("1", Object.class));
+        Assertions.assertEquals(1.0F, ConverterRegistry.convert("1", float.class));
+        Assertions.assertEquals(1.0F, ConverterRegistry.convert("1", Float.class));
+        Assertions.assertEquals(1.0D, ConverterRegistry.convert("1", double.class));
+        Assertions.assertEquals(1.0D, ConverterRegistry.convert("1", Double.class));
         Object obj = new Object();
-        Assert.assertEquals(obj, ConverterRegistry.convert(obj, ConverterRegistry.class));
+        Assertions.assertEquals(obj, ConverterRegistry.convert(obj, ConverterRegistry.class));
     }
 
     @Test
     public void testConvertNumberToTargetClass() {
-        Assert.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert(1, byte.class));
-        Assert.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert(1, Byte.class));
-        Assert.assertEquals(Short.valueOf("1"), ConverterRegistry.convert(1, short.class));
-        Assert.assertEquals(Short.valueOf("1"), ConverterRegistry.convert(1, Short.class));
-        Assert.assertEquals(1, ConverterRegistry.convert(1, int.class));
-        Assert.assertEquals(1, ConverterRegistry.convert(1, Integer.class));
-        Assert.assertEquals(1L, ConverterRegistry.convert(1, long.class));
-        Assert.assertEquals(1L, ConverterRegistry.convert(1, Long.class));
-        Assert.assertEquals(true, ConverterRegistry.convert(1, boolean.class));
-        Assert.assertEquals(false, ConverterRegistry.convert(0, Boolean.class));
-        Assert.assertEquals(BigInteger.valueOf(1L), ConverterRegistry.convert(1, BigInteger.class));
-        Assert.assertEquals("1", ConverterRegistry.convert(1, String.class));
-        Assert.assertEquals(1, ConverterRegistry.convert(1, Object.class));
-        Assert.assertEquals(1.0F, ConverterRegistry.convert(1, float.class));
-        Assert.assertEquals(1.0F, ConverterRegistry.convert(1, Float.class));
-        Assert.assertEquals(1.0D, ConverterRegistry.convert(1, double.class));
-        Assert.assertEquals(1.0D, ConverterRegistry.convert(1, Double.class));
-        Assert.assertEquals(BigInteger.valueOf(1), ConverterRegistry.convert(BigDecimal.valueOf(1), BigInteger.class));
-        Assert.assertEquals(1, ConverterRegistry.convert(BigInteger.valueOf(1), Integer.class));
-        Assert.assertEquals('a', ConverterRegistry.convert('a', char.class));
-        Assert.assertEquals('a', ConverterRegistry.convert('a', Character.class));
+        Assertions.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert(1, byte.class));
+        Assertions.assertEquals(Byte.valueOf("1"), ConverterRegistry.convert(1, Byte.class));
+        Assertions.assertEquals(Short.valueOf("1"), ConverterRegistry.convert(1, short.class));
+        Assertions.assertEquals(Short.valueOf("1"), ConverterRegistry.convert(1, Short.class));
+        Assertions.assertEquals(1, ConverterRegistry.convert(1, int.class));
+        Assertions.assertEquals(1, ConverterRegistry.convert(1, Integer.class));
+        Assertions.assertEquals(1L, ConverterRegistry.convert(1, long.class));
+        Assertions.assertEquals(1L, ConverterRegistry.convert(1, Long.class));
+        Assertions.assertEquals(true, ConverterRegistry.convert(1, boolean.class));
+        Assertions.assertEquals(false, ConverterRegistry.convert(0, Boolean.class));
+        Assertions.assertEquals(BigInteger.valueOf(1L), ConverterRegistry.convert(1, BigInteger.class));
+        Assertions.assertEquals("1", ConverterRegistry.convert(1, String.class));
+        Assertions.assertEquals(1, ConverterRegistry.convert(1, Object.class));
+        Assertions.assertEquals(1.0F, ConverterRegistry.convert(1, float.class));
+        Assertions.assertEquals(1.0F, ConverterRegistry.convert(1, Float.class));
+        Assertions.assertEquals(1.0D, ConverterRegistry.convert(1, double.class));
+        Assertions.assertEquals(1.0D, ConverterRegistry.convert(1, Double.class));
+        Assertions.assertEquals(BigInteger.valueOf(1), ConverterRegistry.convert(BigDecimal.valueOf(1), BigInteger.class));
+        Assertions.assertEquals(1, ConverterRegistry.convert(BigInteger.valueOf(1), Integer.class));
+        Assertions.assertEquals('a', ConverterRegistry.convert('a', char.class));
+        Assertions.assertEquals('a', ConverterRegistry.convert('a', Character.class));
     }
 
     @Test
@@ -150,11 +150,11 @@ public class ConverterRegistryTest {
                 new Object[]{BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE), Long.class}
         )) {
             try {
-                Assert.assertEquals(1.0D, ConverterRegistry.convert(objs[0], (Class) objs[1]));
+                Assertions.assertEquals(1.0D, ConverterRegistry.convert(objs[0], (Class) objs[1]));
             } catch (Exception e) {
                 continue;
             }
-            Assert.fail();
+            Assertions.fail();
         }
     }
 }

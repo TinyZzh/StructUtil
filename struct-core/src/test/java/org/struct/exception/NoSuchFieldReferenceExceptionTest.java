@@ -1,31 +1,43 @@
 package org.struct.exception;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class NoSuchFieldReferenceExceptionTest {
 
-    @Test(expected = NoSuchFieldReferenceException.class)
+    @Test()
     public void raiseException() {
-        throw new NoSuchFieldReferenceException();
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new NoSuchFieldReferenceException();
+        });
     }
 
-    @Test(expected = NoSuchFieldReferenceException.class)
+    @Test()
     public void raiseException1() {
-        throw new NoSuchFieldReferenceException("msg");
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new NoSuchFieldReferenceException("msg");
+        });
     }
 
-    @Test(expected = NoSuchFieldReferenceException.class)
+    @Test()
     public void raiseException2() {
-        throw new NoSuchFieldReferenceException("msg", new NoSuchFieldReferenceException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new NoSuchFieldReferenceException("msg", new NoSuchFieldReferenceException());
+        });
     }
 
-    @Test(expected = NoSuchFieldReferenceException.class)
+    @Test()
     public void raiseException3() {
-        throw new NoSuchFieldReferenceException(new NoSuchFieldReferenceException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new NoSuchFieldReferenceException(new NoSuchFieldReferenceException());
+        });
     }
 
-    @Test(expected = NoSuchFieldReferenceException.class)
+    @Test()
     public void raiseException4() {
-        throw new NoSuchFieldReferenceException("msg", new NoSuchFieldReferenceException(), false, true);
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new NoSuchFieldReferenceException("msg", new NoSuchFieldReferenceException(), false, true);
+        });
     }
 }

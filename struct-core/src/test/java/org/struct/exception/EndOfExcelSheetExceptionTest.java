@@ -1,31 +1,44 @@
 package org.struct.exception;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class EndOfExcelSheetExceptionTest {
 
-    @Test(expected = EndOfExcelSheetException.class)
+
+    @Test()
     public void raiseException() {
-        throw new EndOfExcelSheetException();
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new EndOfExcelSheetException();
+        });
     }
 
-    @Test(expected = EndOfExcelSheetException.class)
+    @Test()
     public void raiseException1() {
-        throw new EndOfExcelSheetException("msg");
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new EndOfExcelSheetException("msg");
+        });
     }
 
-    @Test(expected = EndOfExcelSheetException.class)
+    @Test()
     public void raiseException2() {
-        throw new EndOfExcelSheetException("msg", new EndOfExcelSheetException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new EndOfExcelSheetException("msg", new EndOfExcelSheetException());
+        });
     }
 
-    @Test(expected = EndOfExcelSheetException.class)
+    @Test()
     public void raiseException3() {
-        throw new EndOfExcelSheetException(new EndOfExcelSheetException());
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new EndOfExcelSheetException(new EndOfExcelSheetException());
+        });
     }
 
-    @Test(expected = EndOfExcelSheetException.class)
+    @Test()
     public void raiseException4() {
-        throw new EndOfExcelSheetException("msg", new EndOfExcelSheetException(), false, true);
+        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+            throw new EndOfExcelSheetException("msg", new EndOfExcelSheetException(), false, true);
+        });
     }
 }

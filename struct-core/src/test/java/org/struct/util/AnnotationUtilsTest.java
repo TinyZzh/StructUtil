@@ -18,8 +18,9 @@
 
 package org.struct.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -34,9 +35,9 @@ public class AnnotationUtilsTest {
 
     @Test
     public void test() {
-        Assert.assertNull(AnnotationUtils.findAnnotation(Test.class, ClassA.class));
-        Assert.assertNotNull(AnnotationUtils.findAnnotation(Parent.class, ClassA.class));
-        Assert.assertNotNull(AnnotationUtils.findAnnotation(Parent.class, ClassB.class));
+        Assertions.assertNull(AnnotationUtils.findAnnotation(Test.class, ClassA.class));
+        Assertions.assertNotNull(AnnotationUtils.findAnnotation(Parent.class, ClassA.class));
+        Assertions.assertNotNull(AnnotationUtils.findAnnotation(Parent.class, ClassB.class));
 
     }
 
