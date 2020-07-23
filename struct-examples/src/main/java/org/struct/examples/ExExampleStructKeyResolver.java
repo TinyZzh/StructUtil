@@ -18,14 +18,18 @@
 
 package org.struct.examples;
 
-import org.struct.spring.annotation.AutoStruct;
-import org.struct.spring.support.MapStructStore;
+import org.springframework.stereotype.Component;
+import org.struct.spring.support.StructKeyResolver;
 
 /**
  * @author TinyZ.
- * @date 2020-07-22.
+ * @date 2020-07-23.
  */
-@AutoStruct(keyResolverBeanClass = ExExampleStructKeyResolver.class)
-public class ExExampleDataMapperImpl extends MapStructStore<Integer, ExExampleDataInfo> {
-
+@Component
+public class ExExampleStructKeyResolver implements StructKeyResolver<Integer, Object> {
+    @Override
+    public Integer resolve(Object bean) {
+        //  only test.
+        return bean.hashCode();
+    }
 }

@@ -10,6 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Either {@link #keyResolverBeanName()} or {@link #keyResolverBeanClass()} must be set.
+ *
  * @author TinyZ.
  * @version 2020.07.12
  */
@@ -17,13 +19,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented()
-public @interface StructStore {
-
-    String value();
+public @interface AutoStruct {
 
     String keyResolverBeanName() default "";
 
-    Class<? extends StructKeyResolver> keyResolver() default StructKeyResolver.class;
+    Class<? extends StructKeyResolver> keyResolverBeanClass() default StructKeyResolver.class;
 
 
 }

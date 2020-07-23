@@ -10,21 +10,19 @@ import org.springframework.context.ApplicationContextAware;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * default {@link GenericStructMapper}'s service implements.
+ * default {@link StructStore}'s service implements.
  *
  * @author TinyZ.
  * @version 2020.07.15
  */
-public class StructMapperService implements SmartInitializingSingleton, DisposableBean, ApplicationContextAware {
+public class StructStoreService implements SmartInitializingSingleton, DisposableBean, ApplicationContextAware {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StructMapperService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StructStoreService.class);
 
     private StructConfig config;
 
@@ -32,7 +30,10 @@ public class StructMapperService implements SmartInitializingSingleton, Disposab
 
     private final ConcurrentHashMap<Class<?>, StructStore> structMap = new ConcurrentHashMap<>();
 
-    public StructMapperService(StructConfig config) {
+    public StructStoreService() {
+    }
+
+    public StructStoreService(StructConfig config) {
         this.config = config;
     }
 
@@ -43,11 +44,10 @@ public class StructMapperService implements SmartInitializingSingleton, Disposab
 
     @Override
     public void afterSingletonsInstantiated() {
-        Map<String, StructStore> beansMap = this.applicationContext.getBeansOfType(StructStore.class);
-        if (!config.isLazyLoad()) {
-            //  initialize.
-            beansMap.values().parallelStream().forEach(StructStore::initialize);
+        if (null == this.config) {
+            this.config = this.applicationContext.getBean(StructConfig.class);
         }
+        LOGGER.info("struct store service initialize completed.");
     }
 
     @Override
@@ -58,7 +58,11 @@ public class StructMapperService implements SmartInitializingSingleton, Disposab
     private <K, B extends StructStore<K, B>> Optional<StructStore<K, B>> lookup(Class<B> clzOfBean) {
         Optional<StructStore<K, B>> optional = Optional.ofNullable(structMap.get(clzOfBean));
         if (config.isLazyLoad()) {
-            optional.ifPresent(StructStore::initialize);
+            optional.ifPresent(ss -> {
+                if (!ss.isInitialized()) {
+                    ss.initialize();
+                }
+            });
         }
         return optional;
     }
@@ -97,9 +101,5 @@ public class StructMapperService implements SmartInitializingSingleton, Disposab
 
     public <K, B extends StructStore<K, B>> List<B> lookup(Class<B> clzOfBean, Predicate<B> filter) {
         return lookup(clzOfBean).map(m -> m.lookup(filter)).orElse(Collections.emptyList());
-    }
-
-    public <K, B extends StructStore<K, B>> void addShutdownHook(Class<B> clzOfBean, Consumer<List<B>> consumer) {
-        lookup(clzOfBean).ifPresent(m -> m.addShutdownHook(consumer));
     }
 }

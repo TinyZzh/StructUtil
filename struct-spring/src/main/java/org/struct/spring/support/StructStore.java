@@ -2,7 +2,6 @@ package org.struct.spring.support;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -18,6 +17,11 @@ public interface StructStore<K, B> {
      */
     String identify();
 
+    /**
+     * Get class of the store bean instances.
+     *
+     * @return class of the store bean instances.
+     */
     Class<B> clzOfBean();
 
     void initialize();
@@ -39,7 +43,5 @@ public interface StructStore<K, B> {
     List<B> lookup(K... keys);
 
     List<B> lookup(Predicate<B> filter);
-
-    void addShutdownHook(Consumer<List<B>> consumer);
 
 }

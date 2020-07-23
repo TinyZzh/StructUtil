@@ -19,13 +19,13 @@
 package org.struct.examples;
 
 import org.struct.annotation.StructSheet;
-import org.struct.spring.annotation.StructStore;
+import org.struct.spring.annotation.AutoStruct;
 
 /**
  * @author TinyZ.
  * @date 2020-07-22.
  */
-@StructStore(value = "")
+@AutoStruct(keyResolverBeanName = "exExampleStructKeyResolver")
 @StructSheet(fileName = "t_example_data.xlsx", sheetName = "Sheet1")
 public class ExExampleDataInfo {
 

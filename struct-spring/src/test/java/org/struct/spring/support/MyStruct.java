@@ -1,13 +1,13 @@
 package org.struct.spring.support;
 
 import org.struct.annotation.StructSheet;
-import org.struct.spring.annotation.StructStore;
+import org.struct.spring.annotation.AutoStruct;
 
 /**
  * @author TinyZ.
  * @version 2020.07.21
  */
-@StructStore(value = "myStruct", identify = "myStruct")
+@AutoStruct(value = "myStruct", identify = "myStruct")
 @StructSheet()
 public class MyStruct {
 

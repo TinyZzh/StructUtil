@@ -2,7 +2,6 @@ package org.struct.spring.boot.autoconfigure;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
@@ -13,8 +12,6 @@ import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -26,8 +23,8 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
 import org.struct.annotation.StructSheet;
 import org.struct.spring.support.ClassPathStructScanner;
-import org.struct.spring.support.StructMapperService;
 import org.struct.spring.support.StructConfig;
+import org.struct.spring.support.StructStoreService;
 import org.struct.spring.support.StructStore;
 import org.struct.support.FileWatcherService;
 import org.struct.util.WorkerUtil;
@@ -65,8 +62,8 @@ public class StructAutoConfiguration {
     @ConditionalOnProperty(prefix = StarterConstant.STRUCT_MAPPER_SERVICE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public StructMapperService structMapperService(StructConfig config) {
-        StructMapperService service = new StructMapperService(config);
+    public StructStoreService structMapperService(StructConfig config) {
+        StructStoreService service = new StructStoreService(config);
         return service;
     }
 
@@ -89,23 +86,21 @@ public class StructAutoConfiguration {
         return fws;
     }
 
-    public static class AutoConfiguredMapperScannerRegistrar implements BeanFactoryAware, ImportBeanDefinitionRegistrar, ApplicationContextAware {
+    public static class AutoConfiguredMapperScannerRegistrar implements BeanFactoryAware, ImportBeanDefinitionRegistrar {
 
         private BeanFactory beanFactory;
-        private ApplicationContext applicationContext;
 
         @Override
         public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
             if (!AutoConfigurationPackages.has(this.beanFactory)) {
-                LOGGER.debug("Could not determine auto-configuration package, automatic mapper scanning disabled.");
+                LOGGER.debug("Could not determine auto-configuration package, automatic struct store scanning disabled.");
                 return;
             }
-            LOGGER.debug("Searching for mappers annotated with @Mapper");
+            LOGGER.debug("Searching for struct store");
             List<String> packages = AutoConfigurationPackages.get(this.beanFactory);
 
             ClassPathStructScanner scanner = new ClassPathStructScanner(registry, false);
             scanner.registerFilters();
-            scanner.setConfig(applicationContext.getBean(StructConfig.class));
             scanner.doScan(StringUtils.toStringArray(packages));
         }
 
@@ -113,21 +108,16 @@ public class StructAutoConfiguration {
         public void setBeanFactory(BeanFactory beanFactory) {
             this.beanFactory = beanFactory;
         }
-
-        @Override
-        public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-            this.applicationContext = applicationContext;
-        }
     }
 
     @Configuration
     @Import(AutoConfiguredMapperScannerRegistrar.class)
-    @ConditionalOnMissingBean({StructMapperService.class})
+    @ConditionalOnMissingBean({StructStoreService.class})
     public static class StructMapperServiceNotFoundConfiguration implements InitializingBean {
 
         @Override
         public void afterPropertiesSet() {
-            LOGGER.debug("Not found configuration for StructMapperService.");
+            LOGGER.debug("Not found configuration for StructScan.");
         }
     }
 

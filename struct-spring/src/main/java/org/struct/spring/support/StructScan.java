@@ -55,13 +55,5 @@ public @interface StructScan {
      */
     Class<? extends BeanNameGenerator> nameGenerator() default BeanNameGenerator.class;
 
-    /**
-     * Struct worker's workspace.
-     */
-    String workspace() default "";
-
-    String keyResolverBeanName() default "";
-
-
 }
 

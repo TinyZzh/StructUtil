@@ -33,7 +33,7 @@ public class StructConfig {
     /**
      * Lazy load struct data before user use it.
      *
-     * @see GenericStructMapper#initialize()
+     * @see StructStore#initialize()
      */
     private boolean lazyLoad = false;
     /**
