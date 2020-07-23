@@ -74,4 +74,10 @@ public class ListStructStore<K, B> extends AbstractStructStore<K, B> {
         return this.cached.stream().filter(filter).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
+    @Override
+    public String toString() {
+        return "ListStructStore{" +
+                "clzOfBean=" + clzOfBean +
+                "} " + super.toString();
+    }
 }

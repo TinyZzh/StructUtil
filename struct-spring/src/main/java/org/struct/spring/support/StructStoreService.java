@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -47,6 +48,13 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
         if (null == this.config) {
             this.config = this.applicationContext.getBean(StructConfig.class);
         }
+        Map<String, StructStore> beansMap = this.applicationContext.getBeansOfType(StructStore.class);
+        beansMap.values().forEach(ss -> {
+            StructStore prev = structMap.putIfAbsent(ss.clzOfBean(), ss);
+            if (null != prev) {
+                LOGGER.info("struct:{} has bean registered  by {}.", ss.clzOfBean(), prev);
+            }
+        });
         LOGGER.info("struct store service initialize completed.");
     }
 
@@ -55,7 +63,7 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
         this.structMap.clear();
     }
 
-    private <K, B extends StructStore<K, B>> Optional<StructStore<K, B>> lookup(Class<B> clzOfBean) {
+    private <K, B> Optional<StructStore<K, B>> lookup(Class<B> clzOfBean) {
         Optional<StructStore<K, B>> optional = Optional.ofNullable(structMap.get(clzOfBean));
         if (config.isLazyLoad()) {
             optional.ifPresent(ss -> {
@@ -67,39 +75,39 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
         return optional;
     }
 
-    public <K, B extends StructStore<K, B>> void initialize(Class<B> clzOfBean) {
+    public <K, B> void initialize(Class<B> clzOfBean) {
         lookup(clzOfBean).ifPresent(StructStore::initialize);
     }
 
-    public <K, B extends StructStore<K, B>> void reload(Class<B> clzOfBean) {
+    public <K, B> void reload(Class<B> clzOfBean) {
         lookup(clzOfBean).ifPresent(StructStore::reload);
     }
 
-    public <K, B extends StructStore<K, B>> void dispose(Class<B> clzOfBean) {
+    public <K, B> void dispose(Class<B> clzOfBean) {
         lookup(clzOfBean).ifPresent(StructStore::dispose);
     }
 
-    public <K, B extends StructStore<K, B>> List<B> getAll(Class<B> clzOfBean) {
+    public <K, B> List<B> getAll(Class<B> clzOfBean) {
         return lookup(clzOfBean).map(StructStore::getAll).orElse(Collections.emptyList());
     }
 
-    public <K, B extends StructStore<K, B>> B get(Class<B> clzOfBean, K key) {
+    public <K, B> B get(Class<B> clzOfBean, K key) {
         return lookup(clzOfBean).map(m -> m.get(key)).orElse(null);
     }
 
-    public <K, B extends StructStore<K, B>> B getOrDefault(Class<B> clzOfBean, K key, B dv) {
+    public <K, B> B getOrDefault(Class<B> clzOfBean, K key, B dv) {
         return lookup(clzOfBean).map(m -> m.getOrDefault(key, dv)).orElse(null);
     }
 
-    public <K, B extends StructStore<K, B>> Optional<B> tryGet(Class<B> clzOfBean, K key) {
+    public <K, B> Optional<B> tryGet(Class<B> clzOfBean, K key) {
         return lookup(clzOfBean).flatMap(m -> m.tryGet(key));
     }
 
-    public <K, B extends StructStore<K, B>> List<B> lookup(Class<B> clzOfBean, K... keys) {
+    public <K, B> List<B> lookup(Class<B> clzOfBean, K... keys) {
         return lookup(clzOfBean).map(m -> m.lookup(keys)).orElse(Collections.emptyList());
     }
 
-    public <K, B extends StructStore<K, B>> List<B> lookup(Class<B> clzOfBean, Predicate<B> filter) {
+    public <K, B> List<B> lookup(Class<B> clzOfBean, Predicate<B> filter) {
         return lookup(clzOfBean).map(m -> m.lookup(filter)).orElse(Collections.emptyList());
     }
 }

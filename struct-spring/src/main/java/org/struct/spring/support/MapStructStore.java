@@ -150,4 +150,13 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     public void setKeyResolver(StructKeyResolver<K, B> keyResolver) {
         this.keyResolver = keyResolver;
     }
+
+    @Override
+    public String toString() {
+        return "MapStructStore{" +
+                "keyResolverBeanName='" + keyResolverBeanName + '\'' +
+                ", keyResolverBeanClass=" + keyResolverBeanClass +
+                ", clzOfBean=" + clzOfBean +
+                "} " + super.toString();
+    }
 }
