@@ -90,22 +90,28 @@ public class FileWatcherServiceTest {
         fws.deregisterHook(path);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test()
     public void testSetScheduleInitialDelay() throws IOException {
-        FileWatcherService fws = new FileWatcherService();
-        fws.setScheduleInitialDelay(-1);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            FileWatcherService fws = new FileWatcherService();
+            fws.setScheduleInitialDelay(-1);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test()
     public void testSetScheduleDelay() throws IOException {
-        FileWatcherService fws = new FileWatcherService();
-        fws.setScheduleDelay(-1);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            FileWatcherService fws = new FileWatcherService();
+            fws.setScheduleDelay(-1);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test()
     public void testSetScheduleTimeUnit() throws IOException {
-        FileWatcherService fws = new FileWatcherService();
-        fws.setScheduleTimeUnit(null);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            FileWatcherService fws = new FileWatcherService();
+            fws.setScheduleTimeUnit(null);
+        });
     }
 
 
