@@ -8,6 +8,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter:${version_options.SPRING_BOOT_VERSION}") {
         exclude module:"spring-boot-starter-logging"
     }
-    implementation("org.springframework.boot:spring-boot-log4j2:${version_options.SPRING_BOOT_VERSION}")
+    implementation("org.springframework.boot:spring-boot-starter-log4j2:${version_options.SPRING_BOOT_VERSION}")
 
 }
