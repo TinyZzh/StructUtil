@@ -31,10 +31,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
+ * Not support all <code>key</code> related method. like {@link #get(Object)}.
+ *
  * @author TinyZ.
  * @version 2020.07.12
  */
-public class ListStructStore<K, B> extends AbstractStructStore<K, B> {
+public class ListStructStore<B> extends AbstractStructStore<Object, B> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ListStructStore.class);
 
@@ -65,7 +67,7 @@ public class ListStructStore<K, B> extends AbstractStructStore<K, B> {
         } catch (Exception e) {
             LOGGER.error("initialize struct failure. identify:{}, clz:{}", this.identify(), this.clzOfBean, e);
         } finally {
-            casStatusInitDone();
+            casStatusDone();
         }
     }
 
@@ -82,7 +84,7 @@ public class ListStructStore<K, B> extends AbstractStructStore<K, B> {
     }
 
     @Override
-    public B get(K key) {
+    public B get(Object key) {
         //  not implement
         throw new UnsupportedOperationException(this.getClass() + " Unsupported the @get operation.");
     }

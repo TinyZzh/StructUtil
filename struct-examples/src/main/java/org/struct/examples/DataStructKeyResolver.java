@@ -26,7 +26,7 @@ import org.struct.spring.support.StructKeyResolver;
  * @date 2020-07-23.
  */
 @Component
-public class ExExampleStructKeyResolver implements StructKeyResolver<Integer, Object> {
+public class DataStructKeyResolver implements StructKeyResolver<Integer, Object> {
     @Override
     public Integer resolve(Object bean) {
         //  only test.

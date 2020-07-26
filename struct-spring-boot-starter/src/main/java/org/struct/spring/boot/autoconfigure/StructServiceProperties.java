@@ -20,19 +20,58 @@ package org.struct.spring.boot.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author TinyZ.
  * @version 2020.07.09
  */
-@ConfigurationProperties(prefix = StarterConstant.STRUCT_MAPPER_SERVICE)
+@ConfigurationProperties(prefix = StarterConstant.SERVICE)
 public class StructServiceProperties {
 
-    /**
-     * Lazy load struct data before user use it.
-     *
-     * @see org.struct.spring.support.StructStore#initialize()
-     */
-    private boolean lazyLoad = false;
+    private boolean lazyLoad = true;
+    private boolean monitorFileChange = true;
+    private long scheduleInitialDelay = 10000L;
+    private long scheduleDelay = 5000L;
+    private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
 
+    public boolean isLazyLoad() {
+        return lazyLoad;
+    }
 
+    public void setLazyLoad(boolean lazyLoad) {
+        this.lazyLoad = lazyLoad;
+    }
+
+    public boolean isMonitorFileChange() {
+        return monitorFileChange;
+    }
+
+    public void setMonitorFileChange(boolean monitorFileChange) {
+        this.monitorFileChange = monitorFileChange;
+    }
+
+    public long getScheduleInitialDelay() {
+        return scheduleInitialDelay;
+    }
+
+    public void setScheduleInitialDelay(long scheduleInitialDelay) {
+        this.scheduleInitialDelay = scheduleInitialDelay;
+    }
+
+    public long getScheduleDelay() {
+        return scheduleDelay;
+    }
+
+    public void setScheduleDelay(long scheduleDelay) {
+        this.scheduleDelay = scheduleDelay;
+    }
+
+    public TimeUnit getScheduleTimeUnit() {
+        return scheduleTimeUnit;
+    }
+
+    public void setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
+        this.scheduleTimeUnit = scheduleTimeUnit;
+    }
 }

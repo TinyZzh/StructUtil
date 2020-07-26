@@ -35,7 +35,7 @@ public class StructConfig {
      *
      * @see StructStore#initialize()
      */
-    private boolean lazyLoad = false;
+    private boolean lazyLoad = true;
     /**
      * Monitor struct file changed event.
      */
@@ -51,7 +51,7 @@ public class StructConfig {
     /**
      * Set schedule job's {@link TimeUnit}
      */
-    private TimeUnit scheduleTimeUnit;
+    private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
 
 
     public String getWorkspace() {

@@ -42,7 +42,6 @@ import org.springframework.util.StringUtils;
 import org.struct.annotation.StructSheet;
 import org.struct.spring.support.ClassPathStructScanner;
 import org.struct.spring.support.StructConfig;
-import org.struct.spring.support.StructScannerRegistrar;
 import org.struct.spring.support.StructStore;
 import org.struct.spring.support.StructStoreService;
 import org.struct.support.FileWatcherService;
@@ -57,7 +56,7 @@ import java.util.List;
  * @version 2020.07.09
  */
 @ConditionalOnProperty(prefix = StarterConstant.STRUCT_UTIL, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
-@AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE + 1000)
 @Configuration
 @EnableConfigurationProperties({StructProperties.class, StructServiceProperties.class})
 public class StructAutoConfiguration {
@@ -66,19 +65,19 @@ public class StructAutoConfiguration {
 
     @ConditionalOnMissingBean()
     @Bean()
-    public StructConfig structConfig(StructProperties properties) {
+    public StructConfig structConfig(StructProperties properties, StructServiceProperties serviceProperties) {
         StructConfig config = new StructConfig();
         config.setWorkspace(properties.getWorkspace());
-        config.setLazyLoad(properties.isLazyLoad());
-        config.setMonitorFileChange(properties.isMonitorFileChange());
-        config.setScheduleInitialDelay(properties.getScheduleInitialDelay());
-        config.setScheduleDelay(properties.getScheduleDelay());
-        config.setScheduleTimeUnit(properties.getScheduleTimeUnit());
+        config.setLazyLoad(serviceProperties.isLazyLoad());
+        config.setMonitorFileChange(serviceProperties.isMonitorFileChange());
+        config.setScheduleInitialDelay(serviceProperties.getScheduleInitialDelay());
+        config.setScheduleDelay(serviceProperties.getScheduleDelay());
+        config.setScheduleTimeUnit(serviceProperties.getScheduleTimeUnit());
         return config;
     }
 
     @ConditionalOnMissingBean()
-    @ConditionalOnProperty(prefix = StarterConstant.STRUCT_MAPPER_SERVICE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = StarterConstant.SERVICE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
     public StructStoreService structMapperService(StructConfig config) {
@@ -87,7 +86,7 @@ public class StructAutoConfiguration {
     }
 
     @ConditionalOnMissingBean()
-    @ConditionalOnProperty(prefix = StarterConstant.STRUCT_UTIL_MONITOR_FILE_CHANGE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = StarterConstant.MONITOR_FILE_CHANGE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     public FileWatcherService fileWatcherService(StructConfig config, List<StructStore> storeList) throws IOException {
         FileWatcherService fws = new FileWatcherService();

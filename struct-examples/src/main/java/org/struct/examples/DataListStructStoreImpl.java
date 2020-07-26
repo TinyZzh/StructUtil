@@ -16,25 +16,17 @@
  *  limitations under the License.
  */
 
-package org.struct.spring.boot.autoconfigure;
+package org.struct.examples;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.struct.spring.support.ListStructStore;
 
 /**
+ * if the class extends from {@link org.struct.spring.support.ListStructStore}
+ * ,the {@link org.struct.spring.annotation.AutoStruct} can ignored.
+ *
  * @author TinyZ.
- * @version 2020.07.09
+ * @date 2020-07-22.
  */
-@ConfigurationProperties(prefix = StarterConstant.STRUCT_UTIL)
-public class StructProperties {
+public class DataListStructStoreImpl extends ListStructStore<DataInfo> {
 
-    private String workspace = "";
-
-    public String getWorkspace() {
-        return workspace;
-    }
-
-    public StructProperties setWorkspace(String workspace) {
-        this.workspace = workspace;
-        return this;
-    }
 }

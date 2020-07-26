@@ -16,25 +16,16 @@
  *  limitations under the License.
  */
 
-package org.struct.spring.boot.autoconfigure;
+package org.struct.examples;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.struct.spring.annotation.AutoStruct;
+import org.struct.spring.support.MapStructStore;
 
 /**
  * @author TinyZ.
- * @version 2020.07.09
+ * @date 2020-07-22.
  */
-@ConfigurationProperties(prefix = StarterConstant.STRUCT_UTIL)
-public class StructProperties {
+@AutoStruct(keyResolverBeanClass = DataStructKeyResolver.class)
+public class DataMapStructStoreImpl extends MapStructStore<Integer, DataInfo> {
 
-    private String workspace = "";
-
-    public String getWorkspace() {
-        return workspace;
-    }
-
-    public StructProperties setWorkspace(String workspace) {
-        this.workspace = workspace;
-        return this;
-    }
 }

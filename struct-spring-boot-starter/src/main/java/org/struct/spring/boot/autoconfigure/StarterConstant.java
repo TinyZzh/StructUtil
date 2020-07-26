@@ -26,7 +26,7 @@ public final class StarterConstant {
 
     public static final String STRUCT_UTIL = "struct-util";
     public static final String ENABLE = "enable";
-    public static final String STRUCT_MAPPER_SERVICE = STRUCT_UTIL + ".service";
-    public static final String STRUCT_UTIL_MONITOR_FILE_CHANGE = STRUCT_UTIL + ".monitor-file-change";
+    public static final String SERVICE = STRUCT_UTIL + ".service";
+    public static final String MONITOR_FILE_CHANGE = SERVICE + ".monitor-file-change";
 
 }

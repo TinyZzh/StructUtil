@@ -42,7 +42,7 @@ public abstract class AbstractStructStore<K, B>
 
     private static final int NORMAL = 0;
     private static final int INITIALIZING = 1;
-    private static final int INITIALIZED = 2;
+    private static final int DONE = 2;
     private static final AtomicIntegerFieldUpdater<AbstractStructStore> STATUS_UPDATER
             = AtomicIntegerFieldUpdater.newUpdater(AbstractStructStore.class, "status");
 
@@ -80,7 +80,9 @@ public abstract class AbstractStructStore<K, B>
 
     @Override
     public void afterSingletonsInstantiated() {
-        this.config = this.applicationContext.getBean(StructConfig.class);
+        if (null == this.config) {
+            this.config = this.applicationContext.getBean(StructConfig.class);
+        }
         LOGGER.info("struct:{} store autowired properties completed.", clzOfBean());
         if (!this.config.isLazyLoad()) {
             this.initialize();
@@ -104,7 +106,7 @@ public abstract class AbstractStructStore<K, B>
 
     @Override
     public boolean isInitialized() {
-        return INITIALIZED == STATUS_UPDATER.get(this);
+        return DONE == STATUS_UPDATER.get(this);
     }
 
     public Class<B> getClzOfBean() {
@@ -144,8 +146,8 @@ public abstract class AbstractStructStore<K, B>
         return STATUS_UPDATER.compareAndSet(this, NORMAL, INITIALIZING);
     }
 
-    protected boolean casStatusInitDone() {
-        return STATUS_UPDATER.compareAndSet(this, INITIALIZING, INITIALIZED);
+    protected boolean casStatusDone() {
+        return STATUS_UPDATER.compareAndSet(this, INITIALIZING, DONE);
     }
 
     protected void casStatusReset() {

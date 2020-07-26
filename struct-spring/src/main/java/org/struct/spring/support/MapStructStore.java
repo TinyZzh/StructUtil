@@ -119,7 +119,7 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
         } catch (Exception e) {
             LOGGER.error("initialize struct data failure. identify:{}, clz:{}", this.identify(), this.clzOfBean, e);
         } finally {
-            casStatusInitDone();
+            casStatusDone();
         }
     }
 
