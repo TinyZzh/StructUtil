@@ -25,6 +25,9 @@ subprojects {
     compileJava.options.setEncoding("UTF-8")
     compileTestJava.options.setEncoding("UTF-8")
 
+    group = "${rootProject.group}"
+    version = "${rootProject.version}"
+
     repositories {
         mavenLocal()
         maven { url "https://maven.aliyun.com/repository/central" }

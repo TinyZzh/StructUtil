@@ -2,10 +2,6 @@ plugins {
     id 'maven-publish'
 }
 
-group = 'org.structutil'
-version = '3.0.2.beta-SNAPSHOT'
-ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
-
 dependencies {
     implementation 'org.apache.poi:poi:3.17'
     implementation 'org.apache.poi:poi-ooxml:3.17'
@@ -49,10 +45,6 @@ publishing {
     }
     repositories {
         mavenLocal()
-
-        maven { url "http://repo.maven.apache.org/maven2" }
-        maven { url "http://repo.typesafe.com/typesafe/repo" }
-        maven { url "http://repo1.maven.org/maven2/" }
         maven {
             name "wooduan_nexus"
             url "http://192.168.0.2:8081/nexus/content/repositories/snapshots"

@@ -3,6 +3,7 @@
  */
 
 rootProject.name = 'struct-util'
+include 'struct-all'
 include 'struct-core'
 include 'struct-examples'
 include 'struct-spring'
