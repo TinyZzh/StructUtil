@@ -20,12 +20,14 @@ package org.struct.spring.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.struct.core.TypeRefFactory;
 import org.struct.spring.exceptions.NoSuchKeyResolverException;
 import org.struct.util.WorkerUtil;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -110,9 +112,7 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
         }
         try {
             Map<K, B> collected = WorkerUtil.newWorker(this.config.getWorkspace(), this.clzOfBean())
-                    .toList(ArrayList::new)
-                    .stream()
-                    .collect(Collectors.toMap(b -> this.keyResolver.resolve(b), b -> b));
+                    .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
             this.cached.clear();
             this.cached.putAll(collected);
             LOGGER.info("initialize struct data successfully. identify:{}, clz:{}", this.identify(), this.clzOfBean);
