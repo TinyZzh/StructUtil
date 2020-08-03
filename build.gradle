@@ -15,6 +15,13 @@ ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : ver
 group = 'org.structutil'
 version = '3.0.2.beta-SNAPSHOT'
 
+ext.struct_jvm_projects = [
+        ':struct-all',
+        ':struct-core',
+        ':struct-spring',
+        ':struct-spring-boot-starter'
+]
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
@@ -40,13 +47,13 @@ subprojects {
 
     dependencies {
         //  log4j 2.x
-        compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.12.1'
-        compile 'org.apache.logging.log4j:log4j-api:2.12.1'
-        compile 'org.apache.logging.log4j:log4j-core:2.12.1'
-        compile 'org.slf4j:slf4j-api:1.7.30'
-        compile 'org.slf4j:jcl-over-slf4j:1.7.30'
+        implementation('org.apache.logging.log4j:log4j-slf4j-impl:2.12.1')
+        implementation('org.apache.logging.log4j:log4j-api:2.12.1')
+        implementation('org.apache.logging.log4j:log4j-core:2.12.1')
+        implementation('org.slf4j:slf4j-api:1.7.30')
+        implementation('org.slf4j:jcl-over-slf4j:1.7.30')
         //  junit 5.x and mockito
-        testCompile("org.mockito:mockito-core:2.25.0")
+        testImplementation("org.mockito:mockito-core:2.25.0")
         testImplementation('org.junit.jupiter:junit-jupiter:5.6.2')
     }
 
@@ -87,3 +94,52 @@ codeCoverageReport.dependsOn {
     subprojects*.test
 }
 /// </editor-fold>
+
+
+//  <editor-fold desc="   Maven Publish  Local ">
+//  https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:install
+
+Closure init_publish_module = {
+
+    apply plugin: 'maven-publish'
+
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allSource
+        archiveClassifier.set('sources')
+    }
+
+    task javadocJar(type: Jar) {
+        from javadoc {
+            options.encoding = 'UTF-8'
+            failOnError = false
+        }
+        archiveClassifier.set('javadoc')
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+//                artifactId = "struct-util"
+                from components.java
+                artifact sourcesJar
+                artifact javadocJar
+            }
+        }
+        repositories {
+            mavenLocal()
+            maven {
+                name "wooduan_nexus"
+                url "http://192.168.0.2:8081/nexus/content/repositories/snapshots"
+                credentials {
+                    username = 'admin'
+                    password = 'admin123'
+                }
+            }
+        }
+    }
+}
+ext.struct_jvm_projects.each {
+    project(it, init_publish_module.curry())
+}
+/// </editor-fold>
+

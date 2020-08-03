@@ -42,7 +42,20 @@ jar {
             include '**/*'
         }
     }
-    archiveFileName = "${rootProject.name}-all-${project.version}.jar"
+}
+jar.dependsOn {
+    subprojects*.build
+}
+
+sourcesJar {
+    //  collect sources
+    subprojects.each {
+        from it.sourceSets.main.allSource
+    }
+}
+
+javadocJar {
+
 }
 
 distTar {
