@@ -17,9 +17,5 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc:${version_options.SPRING_BOOT_VERSION}")
 
     implementation('mysql:mysql-connector-java:8.0.15')
-    //    POI
-    implementation('org.apache.poi:poi:3.17')
-    implementation('org.apache.poi:poi-ooxml:3.17')
-    implementation('org.dom4j:dom4j:2.1.1')
 
 }
