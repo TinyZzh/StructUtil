@@ -122,7 +122,7 @@ Closure init_publish_module = {
     model {
         tasks.jar {
             manifest {
-                attributes 'Implementation-Title': project.description ?: project.name,
+                attributes 'Implementation-Title': project.description ?: rootProject.description,
                         'Implementation-Version': project.version,
                         'Built-By': System.getProperty('user.name'),
                         'Built-Date': new Date(),
