@@ -24,7 +24,7 @@ package org.struct.spring.boot.autoconfigure;
  */
 public final class StarterConstant {
 
-    public static final String STRUCT_UTIL = "struct-util";
+    public static final String STRUCT_UTIL = "struct";
     public static final String ENABLE = "enable";
     public static final String SERVICE = STRUCT_UTIL + ".service";
     public static final String MONITOR_FILE_CHANGE = SERVICE + ".monitor-file-change";

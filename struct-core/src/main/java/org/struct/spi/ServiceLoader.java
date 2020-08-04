@@ -20,6 +20,7 @@ package org.struct.spi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.struct.exception.ServiceNotFoundException;
 import org.struct.util.AnnotationUtils;
 
 import java.io.BufferedReader;
@@ -29,6 +30,7 @@ import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -165,12 +167,12 @@ public final class ServiceLoader {
         if (allClazzs.isEmpty()) {
             return allInstances;
         }
-        try {
-            for (Class clazz : allClazzs) {
+        for (Class clazz : allClazzs) {
+            try {
                 allInstances.add(createInstance(service, clazz, argsType, args));
+            } catch (Throwable t) {
+                LOGGER.error("Load @SPI:{} failure. clazz:{}, argsType:{}, args:{}", service.getSimpleName(), clazz.getName(), Arrays.toString(argsType), Arrays.toString(args), t);
             }
-        } catch (Throwable t) {
-            throw new ServiceNotFoundException(t);
         }
         return allInstances;
     }

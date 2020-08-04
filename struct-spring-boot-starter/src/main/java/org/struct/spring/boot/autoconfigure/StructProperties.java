@@ -33,8 +33,7 @@ public class StructProperties {
         return workspace;
     }
 
-    public StructProperties setWorkspace(String workspace) {
+    public void setWorkspace(String workspace) {
         this.workspace = workspace;
-        return this;
     }
 }

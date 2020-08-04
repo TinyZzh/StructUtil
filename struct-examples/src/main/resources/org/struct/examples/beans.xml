@@ -6,7 +6,7 @@
 <!--    Use keyResolverBeanName    -->
     <bean id="store_1" class="org.struct.spring.support.MapStructStore">
         <property name="clzOfBean" value="org.struct.examples.DataInfo"/>
-        <property name="keyResolverBeanName" value="exExampleStructKeyResolver"/>
+        <property name="keyResolverBeanName" value="dataStructKeyResolver"/>
     </bean>
 <!--    Use keyResolverBeanClass    -->
     <bean id="store_2" class="org.struct.spring.support.MapStructStore">

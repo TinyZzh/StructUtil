@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.struct.spi;
+package org.struct.exception;
 
 public class ServiceNotFoundException extends RuntimeException {
     private static final long serialVersionUID = -412382901999678754L;

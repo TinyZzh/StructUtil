@@ -25,7 +25,7 @@ import org.struct.spring.annotation.AutoStruct;
  * @author TinyZ.
  * @date 2020-07-22.
  */
-@AutoStruct(keyResolverBeanName = "exExampleStructKeyResolver")
+@AutoStruct(keyResolverBeanName = "dataStructKeyResolver")
 @StructSheet(fileName = "t_example_data.xlsx", sheetName = "Sheet1")
 public class DataInfo {
 

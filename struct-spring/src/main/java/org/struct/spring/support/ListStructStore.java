@@ -98,6 +98,6 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
     public String toString() {
         return "ListStructStore{" +
                 "clzOfBean=" + clzOfBean +
-                "} " + super.toString();
+                '}';
     }
 }

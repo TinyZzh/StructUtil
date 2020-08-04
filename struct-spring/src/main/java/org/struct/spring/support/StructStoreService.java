@@ -70,7 +70,7 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
         beansMap.values().forEach(ss -> {
             StructStore prev = structMap.putIfAbsent(ss.clzOfBean(), ss);
             if (null != prev) {
-                LOGGER.info("struct:{} has bean registered  by {}.", ss.clzOfBean(), prev);
+                LOGGER.info("struct:{} has bean registered  by {}.", ss.clzOfBean().getName(), prev);
             }
         });
         LOGGER.info("struct store service initialize completed.");

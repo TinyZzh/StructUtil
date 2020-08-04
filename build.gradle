@@ -14,6 +14,7 @@ ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : ver
 
 group = 'org.structutil'
 version = '3.0.2.beta-SNAPSHOT'
+description = 'Light Flexible And Generic Struct Data File Loader. Convert Struct Data To Java Bean'
 
 ext.struct_jvm_projects = [
         ':struct-all',
@@ -103,6 +104,39 @@ Closure init_publish_module = {
 
     apply plugin: 'maven-publish'
 
+    task generatePomPropertiesFile {
+        inputs.properties ([
+                'version': "${ -> project.version }",
+                'groupId': "${ -> project.group }",
+                'artifactId': "${ -> project.name }"
+        ])
+        outputs.file "$project.buildDir/generatePomPropertiesFile/pom.properties"
+        doLast {
+            File file = outputs.files.singleFile
+            file.parentFile.mkdirs()
+            file << inputs.properties.collect{ key, value -> "$key: $value" }.join('\n')
+        }
+    }
+
+    model {
+        tasks.jar {
+            manifest {
+                attributes 'Implementation-Title': project.description ?: project.name,
+                        'Implementation-Version': project.version,
+                        'Built-By': System.getProperty('user.name'),
+                        'Built-Date': new Date(),
+                        'Built-JDK': System.getProperty('java.version'),
+                        'Built-Gradle': gradle.gradleVersion,
+                        'Target-JDK': project.targetCompatibility
+            }
+            into("META-INF/maven/$project.group/$project.name") {
+                from { generatePomFileForMavenPublication }
+                rename ".*.xml", "pom.xml"
+                from generatePomPropertiesFile
+            }
+        }
+    }
+
     task sourcesJar(type: Jar) {
         from sourceSets.main.allSource
         archiveClassifier.set('sources')
@@ -119,10 +153,28 @@ Closure init_publish_module = {
     publishing {
         publications {
             maven(MavenPublication) {
-//                artifactId = "struct-util"
                 from components.java
                 artifact sourcesJar
                 artifact javadocJar
+
+                pom {
+                    name = "$project.name"
+                    description = "$project.description"
+                    url = "https://github.com/TinyZzh/StructUtil"
+                    licenses {
+                        license {
+                            name = "The Apache License, Version 2.0"
+                            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = "TinyZ"
+                            name = "TinyZzh"
+                            email = "tinyzzh815@gmail.com"
+                        }
+                    }
+                }
             }
         }
         repositories {
@@ -139,7 +191,6 @@ Closure init_publish_module = {
     }
 }
 ext.struct_jvm_projects.each {
-    project(it, init_publish_module.curry())
+    project(it, init_publish_module)
 }
 /// </editor-fold>
-

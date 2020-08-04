@@ -20,6 +20,7 @@ package org.struct.spring.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.struct.core.TypeRefFactory;
 import org.struct.spring.exceptions.NoSuchKeyResolverException;
 import org.struct.util.WorkerUtil;
@@ -81,10 +82,10 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
                 String krbn = this.keyResolverBeanName;
                 if (null != krbn
                         && !krbn.isEmpty()) {
-                    this.keyResolver = this.applicationContext.getBean(StructKeyResolver.class, krbn);
+                    this.keyResolver = this.applicationContext.getBean(krbn, StructKeyResolver.class);
                 }
             } catch (Exception e) {
-                //  no-op
+                LOGGER.debug("resolve KeyResolver failure. identify:{}, clz:{}, keyResolverBeanName:{}", this.identify(), this.clzOfBean, this.keyResolverBeanName, e);
             }
         }
         if (null == this.keyResolver) {
@@ -93,10 +94,15 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
                 if (null != krbs
                         && StructKeyResolver.class != krbs) {
                     assert !Modifier.isAbstract(krbs.getModifiers());
-                    this.keyResolver = this.applicationContext.getBean(krbs);
+                    try {
+                        this.keyResolver = this.applicationContext.getBean(krbs);
+                    } catch (NoUniqueBeanDefinitionException nubde) {
+                        //  return any of it
+                        this.keyResolver = this.applicationContext.getBeansOfType(krbs).values().stream().findFirst().orElse(null);
+                    }
                 }
             } catch (Exception e) {
-                //  no-op
+                LOGGER.debug("resolve KeyResolver failure. identify:{}, clz:{}, keyResolverBeanClass:{}", this.identify(), this.clzOfBean, this.keyResolverBeanClass, e);
             }
         }
         if (null == this.keyResolver) {
@@ -175,6 +181,6 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
                 "keyResolverBeanName='" + keyResolverBeanName + '\'' +
                 ", keyResolverBeanClass=" + keyResolverBeanClass +
                 ", clzOfBean=" + clzOfBean +
-                "} " + super.toString();
+                '}';
     }
 }

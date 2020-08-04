@@ -4,6 +4,7 @@ package org.struct.spi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.struct.exception.EndOfExcelSheetException;
+import org.struct.exception.ServiceNotFoundException;
 
 public class ServiceNotFoundExceptionTest {
     @Test()

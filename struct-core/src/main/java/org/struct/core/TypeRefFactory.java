@@ -22,6 +22,7 @@ package org.struct.core;
  * @author TinyZ.
  * @version 2019.04.06
  */
+@FunctionalInterface
 public interface TypeRefFactory<T> {
 
     T newInstance();
