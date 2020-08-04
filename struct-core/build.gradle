@@ -8,4 +8,11 @@ dependencies {
     compileOnly('org.xerial.snappy:snappy-java:1.1.7.3')
 
     implementation('org.apache.commons:commons-lang3:3.9')
+
+    //  
+    testRuntimeOnly('org.apache.poi:poi:3.17')
+    testRuntimeOnly('org.apache.poi:poi-ooxml:3.17')
+    testRuntimeOnly('org.dom4j:dom4j:2.1.1')
+    testRuntimeOnly('com.google.code.gson:gson:2.8.6')
+    testRuntimeOnly('org.xerial.snappy:snappy-java:1.1.7.3')
 }
