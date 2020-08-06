@@ -171,7 +171,7 @@ public final class ServiceLoader {
             try {
                 allInstances.add(createInstance(service, clazz, argsType, args));
             } catch (Throwable t) {
-                LOGGER.error("Load @SPI:{} failure. clazz:{}, argsType:{}, args:{}", service.getSimpleName(), clazz.getName(), Arrays.toString(argsType), Arrays.toString(args), t);
+                LOGGER.warn("Load @SPI:{} failure. clazz:{}, argsType:{}, args:{}", service.getSimpleName(), clazz.getName(), Arrays.toString(argsType), Arrays.toString(args), t);
             }
         }
         return allInstances;
