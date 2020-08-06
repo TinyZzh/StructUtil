@@ -42,6 +42,7 @@ import org.springframework.util.StringUtils;
 import org.struct.annotation.StructSheet;
 import org.struct.spring.support.ClassPathStructScanner;
 import org.struct.spring.support.StructConfig;
+import org.struct.spring.support.StructScannerRegistrar;
 import org.struct.spring.support.StructStore;
 import org.struct.spring.support.StructStoreService;
 import org.struct.support.FileWatcherService;
@@ -130,7 +131,7 @@ public class StructAutoConfiguration {
 
     @Configuration
     @Import(AutoConfiguredMapperScannerRegistrar.class)
-    @ConditionalOnMissingBean({StructStoreService.class})
+    @ConditionalOnMissingBean({StructScannerRegistrar.class})
     public static class StructMapperServiceNotFoundConfiguration implements InitializingBean {
 
         @Override
