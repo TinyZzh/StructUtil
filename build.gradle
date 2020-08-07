@@ -181,7 +181,7 @@ Closure init_publish_module = {
         repositories {
             mavenLocal()
             maven {
-                name "wooduan_nexus"
+                name "local_nexus"
                 url "http://192.168.0.2:8081/nexus/content/repositories/snapshots"
                 credentials {
                     username = 'admin'
