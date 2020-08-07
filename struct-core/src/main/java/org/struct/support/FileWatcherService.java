@@ -129,7 +129,10 @@ public class FileWatcherService implements Runnable {
     public FileWatcherService register(Path dir) throws IOException {
         Objects.requireNonNull(dir, "dir");
         WatchKey key = dir.register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
-        keys.putIfAbsent(key, dir);
+        Path p = keys.putIfAbsent(key, dir);
+        if (null == p) {
+            LOGGER.info("Register file watcher service. path: {}", dir.toAbsolutePath());
+        }
         return this;
     }
 
@@ -159,7 +162,10 @@ public class FileWatcherService implements Runnable {
     }
 
     public FileWatcherService registerHook(Path path, Runnable hook) {
-        this.hookMap.putIfAbsent(path, hook);
+        Runnable r = this.hookMap.putIfAbsent(path, hook);
+        if (null == r) {
+            LOGGER.info("Register file hook. path: {}", path.toAbsolutePath());
+        }
         return this;
     }
 
@@ -168,7 +174,10 @@ public class FileWatcherService implements Runnable {
     }
 
     public FileWatcherService deregisterHook(Path path) {
-        this.hookMap.remove(path);
+        Runnable r = this.hookMap.remove(path);
+        if (null != r) {
+            LOGGER.info("Deregister file hook. path: {}", path.toAbsolutePath());
+        }
         return this;
     }
 

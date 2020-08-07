@@ -83,7 +83,7 @@ public abstract class AbstractStructStore<K, B>
         if (null == this.config) {
             this.config = this.applicationContext.getBean(StructConfig.class);
         }
-        LOGGER.info("struct:{} store autowired properties completed.", clzOfBean());
+        LOGGER.debug("struct:{} store autowired properties completed.", clzOfBean());
         if (!this.config.isLazyLoad()) {
             this.initialize();
         }
