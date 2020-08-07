@@ -63,9 +63,9 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
                     .toList(ArrayList::new);
             this.cached.clear();
             this.cached.addAll(collected);
-            LOGGER.info("initialize struct successfully. identify:{}, clz:{}", this.identify(), this.clzOfBean);
+            LOGGER.info("initialize [{} - {}] store successfully.", this.clzOfBean.getName(), this.identify());
         } catch (Exception e) {
-            LOGGER.error("initialize struct failure. identify:{}, clz:{}", this.identify(), this.clzOfBean, e);
+            LOGGER.info("initialize [{} - {}] store failure.", this.clzOfBean.getName(), this.identify(), e);
         } finally {
             casStatusDone();
         }
