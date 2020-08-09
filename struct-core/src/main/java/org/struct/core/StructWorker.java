@@ -89,7 +89,7 @@ public class StructWorker<T> {
 
     protected Map<String, FieldDescriptor> resolveBeanFields(Class<?> clzBean) throws RuntimeException {
         final Map<String, FieldDescriptor> map = new HashMap<>();
-        Field[] fields = clzBean.getDeclaredFields();
+        List<Field> fields = Reflects.resolveAllFields(clzBean, true);
         for (Field field : fields) {
             field.setAccessible(true);
 

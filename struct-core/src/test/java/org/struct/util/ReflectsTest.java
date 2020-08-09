@@ -4,6 +4,9 @@ package org.struct.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.util.List;
+
 public class ReflectsTest {
 
     @Test
@@ -87,5 +90,29 @@ public class ReflectsTest {
             this.str = str;
             throw new Exception();
         }
+    }
+
+
+    public static class Fruit2 {
+
+        private String name;
+
+    }
+
+    public static class Apple2 extends Fruit2 {
+
+        private int weight;
+        public int quality;
+        protected double price;
+    }
+
+    @Test
+    public void resolveAllFields() {
+        Field[] fields = Apple2.class.getFields();
+        Assertions.assertEquals(1, fields.length);
+        Field[] fields2 = Apple2.class.getDeclaredFields();
+        Assertions.assertEquals(3, fields2.length);
+        List<Field> fields3 = Reflects.resolveAllFields(Apple2.class, true);
+        Assertions.assertEquals(4, fields3.size());
     }
 }

@@ -21,7 +21,11 @@ package org.struct.util;
 import org.apache.commons.lang3.ClassUtils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public final class Reflects {
 
@@ -97,5 +101,19 @@ public final class Reflects {
             constructor.setAccessible(true);
         }
         return constructor;
+    }
+
+    public static List<Field> resolveAllFields(Class<?> clz) {
+        return resolveAllFields(clz, true);
+    }
+
+    public static List<Field> resolveAllFields(Class<?> originClz, boolean declared) {
+        List<Field> result = new ArrayList<>();
+        Class<?> thatClz = originClz;
+        while (thatClz != Object.class) {
+            Collections.addAll(result, declared ? thatClz.getDeclaredFields() : thatClz.getFields());
+            thatClz = thatClz.getSuperclass();
+        }
+        return result;
     }
 }
