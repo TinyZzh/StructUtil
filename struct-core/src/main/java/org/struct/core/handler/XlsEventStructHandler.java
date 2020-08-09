@@ -40,7 +40,7 @@ import org.apache.poi.hssf.record.RowRecord;
 import org.apache.poi.hssf.record.SSTRecord;
 import org.apache.poi.hssf.record.StringRecord;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
@@ -48,7 +48,6 @@ import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.EndOfExcelSheetException;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
-import org.struct.util.AnnotationUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -72,10 +71,10 @@ public class XlsEventStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
+        StructDescriptor descriptor = worker.getDescriptor();
         try (POIFSFileSystem fs = new POIFSFileSystem(file, true)) {
             //
-            XlsListener<T> listener = new XlsListener<>(worker, annotation, cellHandler);
+            XlsListener<T> listener = new XlsListener<>(worker, descriptor, cellHandler);
 
             HSSFRequest request = new HSSFRequest();
             request.addListenerForAllRecords(listener.getFormatListener());
@@ -97,9 +96,9 @@ public class XlsEventStructHandler implements StructHandler {
 
         private StructWorker<T> worker;
         /**
-         * The struct bean's annotation.
+         * The struct bean's descriptor.
          */
-        private StructSheet annotation;
+        private StructDescriptor descriptor;
 
         private Consumer<T> objHandler;
         /**
@@ -139,9 +138,9 @@ public class XlsEventStructHandler implements StructHandler {
         /**
          *
          */
-        public XlsListener(StructWorker<T> worker, StructSheet annotation, Consumer<T> objHandler) {
+        public XlsListener(StructWorker<T> worker, StructDescriptor descriptor, Consumer<T> objHandler) {
             this.worker = worker;
-            this.annotation = annotation;
+            this.descriptor = descriptor;
             this.objHandler = objHandler;
 
             MissingRecordAwareHSSFListener listener = new MissingRecordAwareHSSFListener(this);
@@ -166,17 +165,17 @@ public class XlsEventStructHandler implements StructHandler {
                         }
                         sheetIndex++;
 
-                        this.isCurSheet = annotation.sheetName().equalsIgnoreCase(orderedBSRs[sheetIndex - 1].getSheetname());
+                        this.isCurSheet = descriptor.getSheetName().equalsIgnoreCase(orderedBSRs[sheetIndex - 1].getSheetname());
                     }
                     break;
                 case RowRecord.sid:
                     RowRecord rr = (RowRecord) record;
                     if (this.isCurSheet) {
                         if (this.startRow < 0) {
-                            this.startRow = Math.max(annotation.startOrder(), rr.getRowNumber());
+                            this.startRow = Math.max(descriptor.getStartOrder(), rr.getRowNumber());
                         }
-                        if (annotation.endOrder() > 0) {
-                            this.endRow = Math.min(annotation.endOrder(), rr.getRowNumber());
+                        if (descriptor.getEndOrder() > 0) {
+                            this.endRow = Math.min(descriptor.getEndOrder(), rr.getRowNumber());
                         } else {
                             this.endRow = rr.getRowNumber() + 1;
                         }

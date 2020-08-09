@@ -20,18 +20,18 @@ package org.struct.core.handler;
 
 import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
-import java.util.concurrent.CompletableFuture;
 
-@StructSheet( fileName = "")
+@StructSheet(fileName = "")
 public class CompletableFutureTest {
 
     @Test
     public void test() {
-        String path = WorkerUtil.resolveFilePath("file:examples/CfgItem.xlsx", CompletableFutureTest.class.getAnnotation(StructSheet.class));
-        System.out.println(path);;
+        String path = WorkerUtil.resolveFilePath("file:examples/CfgItem.xlsx", new StructDescriptor(CompletableFutureTest.class).getFileName());
+        System.out.println(path);
 
         System.out.println(new File(path).exists());
         System.out.println(new File(path));

@@ -36,10 +36,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
-import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.spring.support.ClassPathStructScanner;
 import org.struct.spring.support.StructConfig;
 import org.struct.spring.support.StructScannerRegistrar;
@@ -98,8 +97,8 @@ public class StructAutoConfiguration {
         storeList.parallelStream()
                 .forEach(store -> {
                     //  register reload hook
-                    StructSheet annotation = AnnotationUtils.findAnnotation(store.clzOfBean(), StructSheet.class);
-                    fws.registerHook(WorkerUtil.resolveFilePath(config.getWorkspace(), annotation), store::reload);
+                    StructDescriptor descriptor = new StructDescriptor(store.clzOfBean());
+                    fws.registerHook(WorkerUtil.resolveFilePath(config.getWorkspace(), descriptor.getFileName()), store::reload);
                 });
         fws.bootstrap();
         return fws;

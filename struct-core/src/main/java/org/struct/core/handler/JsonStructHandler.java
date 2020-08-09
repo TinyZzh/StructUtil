@@ -27,14 +27,13 @@ import com.google.gson.JsonParseException;
 import com.google.gson.stream.JsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
-import org.struct.util.AnnotationUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -72,15 +71,15 @@ public class JsonStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
+        StructDescriptor descriptor = worker.getDescriptor();
         int i = 0;
         try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
             reader.beginArray();
             while (reader.hasNext()) {
                 int line = ++i;
-                if (annotation.startOrder() > 0 && line < annotation.startOrder()) {
+                if (descriptor.getStartOrder() > 0 && line < descriptor.getStartOrder()) {
                     reader.skipValue();
-                } else if (annotation.endOrder() > 0 && line > annotation.endOrder()) {
+                } else if (descriptor.getEndOrder() > 0 && line > descriptor.getEndOrder()) {
                     //  end
                     return;
                 } else {

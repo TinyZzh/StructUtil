@@ -20,13 +20,12 @@ package org.struct.core.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
-import org.struct.util.AnnotationUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -52,7 +51,7 @@ public class XmlStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
+        StructDescriptor descriptor = worker.getDescriptor();
         int i = 0;
         try {
             JAXBContext context = JAXBContext.newInstance(JaxbCollectionWrapper.class, clzOfStruct);
@@ -62,9 +61,9 @@ public class XmlStructHandler implements StructHandler {
             if (wrapper != null) {
                 for (T objInstance : wrapper.getRoot()) {
                     int line = ++i;
-                    if (annotation.startOrder() > 0 && line < annotation.startOrder()) {
+                    if (descriptor.getStartOrder() > 0 && line < descriptor.getStartOrder()) {
                         //  do nothing
-                    } else if (annotation.endOrder() > 0 && line > annotation.endOrder()) {
+                    } else if (descriptor.getEndOrder() > 0 && line > descriptor.getEndOrder()) {
                         //  end
                         break;
                     } else {

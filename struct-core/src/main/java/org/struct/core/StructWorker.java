@@ -21,7 +21,6 @@ package org.struct.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.annotation.StructField;
-import org.struct.annotation.StructSheet;
 import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
 import org.struct.core.filter.StructBeanFilter;
@@ -66,6 +65,8 @@ public class StructWorker<T> {
      * Struct configuration.
      */
     protected StructConfig config;
+
+    protected StructDescriptor descriptor;
     /**
      * {@link #clzOfStruct}'s all field.
      */
@@ -76,12 +77,13 @@ public class StructWorker<T> {
     protected final Map<String, Map<Object, Object>> tempRefFieldValueMap;
 
     public StructWorker(String workspace, Class<T> clzOfStruct) {
-        this(workspace, clzOfStruct, new ConcurrentHashMap<>());
+        this(workspace, clzOfStruct, new StructDescriptor(clzOfStruct), new ConcurrentHashMap<>());
     }
 
-    public StructWorker(String workspace, Class<T> clzOfStruct, Map<String, Map<Object, Object>> tempRefFieldValueMap) {
+    public StructWorker(String workspace, Class<T> clzOfStruct, StructDescriptor descriptor, Map<String, Map<Object, Object>> tempRefFieldValueMap) {
         this.workspace = workspace;
         this.clzOfStruct = clzOfStruct;
+        this.descriptor = descriptor;
         this.tempRefFieldValueMap = tempRefFieldValueMap;
     }
 
@@ -248,6 +250,10 @@ public class StructWorker<T> {
         return new ArrayKey(ary);
     }
 
+    public StructDescriptor getDescriptor() {
+        return descriptor;
+    }
+
     /// </editor-fold>
 
     /// <editor-fold desc=" Excel Convert Collection "  defaultstate="collapsed">
@@ -332,17 +338,15 @@ public class StructWorker<T> {
     /// </editor-fold>
 
     public void handleDataFile(Consumer<T> cellHandler) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
-        WorkerUtil.checkMissingExcelSheetAnnotation(annotation, clzOfStruct);
-        String filePath = WorkerUtil.resolveFilePath(this.workspace, annotation);
+        String filePath = WorkerUtil.resolveFilePath(this.workspace, this.descriptor.getFileName());
         File file = new File(filePath);
         if (!file.exists()) {
             throw new IllegalArgumentException("file not exists. path: " + filePath);
         }
-        List<StructHandler> collected = WorkerUtil.lookupStructHandler(annotation, file);
+        List<StructHandler> collected = WorkerUtil.lookupStructHandler(this.descriptor, file);
         for (StructHandler handler : collected) {
             try {
-                handler.handle(this, this.clzOfStruct, wrapCellHandler(annotation, cellHandler), file);
+                handler.handle(this, this.clzOfStruct, wrapCellHandler(this.descriptor, cellHandler), file);
                 return;
             } catch (Exception e) {
                 //  try next handler.
@@ -354,9 +358,9 @@ public class StructWorker<T> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Consumer<T> wrapCellHandler(StructSheet annotation, Consumer<T> cellHandler) {
+    private Consumer<T> wrapCellHandler(StructDescriptor descriptor, Consumer<T> cellHandler) {
         Consumer<T> handler = cellHandler;
-        Class<? extends StructBeanFilter> clzOfFilter = annotation.filter();
+        Class<? extends StructBeanFilter> clzOfFilter = descriptor.getFilter();
         if (StructBeanFilter.class != clzOfFilter
                 && !Modifier.isInterface(clzOfFilter.getModifiers())
                 && !Modifier.isAbstract(clzOfFilter.getModifiers())
@@ -365,7 +369,7 @@ public class StructWorker<T> {
                 Constructor<? extends StructBeanFilter> constructor = clzOfFilter.getConstructor(Consumer.class);
                 handler = constructor.newInstance(cellHandler);
             } catch (Exception e) {
-                String msg = "wrap cell handler failure. struct:" + annotation.fileName() + ", sheet:" + annotation.sheetName();
+                String msg = "wrap cell handler failure. struct:" + descriptor.getFileName() + ", sheet:" + descriptor.getSheetName();
                 LOGGER.error(msg, e);
                 throw new RuntimeException(msg, e);
             }

@@ -26,7 +26,7 @@ import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
 import org.apache.poi.xssf.model.StylesTable;
 import org.apache.poi.xssf.usermodel.XSSFComment;
-import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
@@ -34,7 +34,6 @@ import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.EndOfExcelSheetException;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
-import org.struct.util.AnnotationUtils;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -56,8 +55,6 @@ import java.util.function.Consumer;
  * <p>3. Formula evaluation is not supported
  * <p>See more details at SXSSF <a href='http://poi.apache.org/components/spreadsheet/how-to.html#sxssf'>How-To</a>
  * <p><img alt="image" src='http://poi.apache.org/components/spreadsheet/images/ss-features.png'/>
- *
- * @param <T> the target java bean class.
  */
 @SPI(name = "xlsx")
 public class XlsxSaxStructHandler implements StructHandler {
@@ -71,11 +68,11 @@ public class XlsxSaxStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
+        StructDescriptor descriptor = worker.getDescriptor();
         XlsxBeanSheetContentHandler<T> contentHandler = new XlsxBeanSheetContentHandler<>();
         contentHandler.setWorker(worker);
-        contentHandler.setFirstRow(annotation.startOrder());
-        contentHandler.setLastRow(annotation.endOrder());
+        contentHandler.setFirstRow(descriptor.getStartOrder());
+        contentHandler.setLastRow(descriptor.getEndOrder());
         contentHandler.setObjectConsumer(cellHandler);
 
         try (OPCPackage pkg = OPCPackage.open(file, PackageAccess.READ)) {
@@ -91,7 +88,7 @@ public class XlsxSaxStructHandler implements StructHandler {
                 try {
                     while (it.hasNext()) {
                         InputStream inputStream = it.next();
-                        if (((XSSFReader.SheetIterator) it).getSheetName().equalsIgnoreCase(annotation.sheetName())) {
+                        if (((XSSFReader.SheetIterator) it).getSheetName().equalsIgnoreCase(descriptor.getSheetName())) {
                             parser.parse(new InputSource(inputStream));
                             break;
                         }

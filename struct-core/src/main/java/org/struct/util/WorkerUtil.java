@@ -22,7 +22,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.core.StructWorker;
 import org.struct.core.handler.StructHandler;
 import org.struct.core.matcher.WorkerMatcher;
@@ -55,47 +55,43 @@ public final class WorkerUtil {
     }
 
     public static <T> StructWorker<T> newWorker(String rootPath, Class<T> clzOfBean) {
-        return newWorker(rootPath, clzOfBean, new ConcurrentHashMap<>());
+        return newWorker(rootPath, clzOfBean, new StructDescriptor(clzOfBean), new ConcurrentHashMap<>());
     }
 
     public static <T> StructWorker<T> newWorker(String rootPath, Class<T> clzOfBean, Map<String, Map<Object, Object>> refFieldValueMap) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfBean);
-        checkMissingExcelSheetAnnotation(annotation, clzOfBean);
-        return new StructWorker<>(rootPath, clzOfBean, refFieldValueMap);
+        return newWorker(rootPath, clzOfBean, new StructDescriptor(clzOfBean), refFieldValueMap);
     }
 
-    public static List<StructHandler> lookupStructHandler(StructSheet annotation, File file) {
+    public static <T> StructWorker<T> newWorker(String rootPath, Class<T> clzOfBean, StructDescriptor descriptor, Map<String, Map<Object, Object>> refFieldValueMap) {
+        return new StructWorker<>(rootPath, clzOfBean, descriptor, refFieldValueMap);
+    }
+
+    public static List<StructHandler> lookupStructHandler(StructDescriptor descriptor, File file) {
         List<StructHandler> handlers = ServiceLoader.loadAll(StructHandler.class);
         Stream<StructHandler> stream = handlers.stream();
-        if (WorkerMatcher.class != annotation.matcher()) {
-            stream = stream.filter(handler -> handler.matcher().getClass().isAssignableFrom(annotation.matcher()));
+        if (WorkerMatcher.class != descriptor.getMatcher()) {
+            stream = stream.filter(handler -> handler.matcher().getClass().isAssignableFrom(descriptor.getMatcher()));
         } else {
             stream = stream.filter(handler -> handler.matcher().matchFile(file));
         }
         return stream.sorted(Comparator.comparingInt(o -> o.matcher().order())).collect(Collectors.toList());
     }
 
-    public static void checkMissingExcelSheetAnnotation(StructSheet annotation, Class<?> clz) {
-        if (null == annotation) {
-            throw new IllegalArgumentException("class: " + clz + " undefined @StructSheet annotation");
-        }
-    }
-
     /**
      * Resolve struct file's path.
      * 1. classpath:   the path is class's path
      */
-    public static String resolveFilePath(String filepath, StructSheet annotation) {
+    public static String resolveFilePath(String filepath, String fileName) {
         if (filepath.startsWith("classpath:")) {
-            String path = filepath.substring(filepath.indexOf(":") + 1) + "/" + annotation.fileName();
+            String path = filepath.substring(filepath.indexOf(":") + 1) + "/" + fileName;
             URL resource = StructWorker.class.getResource(path);
             return resource == null
-                    ? (filepath + (filepath.endsWith("/") ? "" : "/") + annotation.fileName())
+                    ? (filepath + (filepath.endsWith("/") ? "" : "/") + fileName)
                     : resource.getPath();
         } else if (filepath.startsWith("file:")) {
-            return filepath.substring(filepath.indexOf(":") + 1) + "/" + annotation.fileName();
+            return filepath.substring(filepath.indexOf(":") + 1) + "/" + fileName;
         } else {
-            return filepath + "/" + annotation.fileName();
+            return filepath + "/" + fileName;
         }
     }
 

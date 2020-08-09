@@ -28,14 +28,13 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.struct.annotation.StructSheet;
+import org.struct.core.StructDescriptor;
 import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
-import org.struct.util.AnnotationUtils;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
@@ -63,15 +62,15 @@ public class ExcelUMStructHandler implements StructHandler {
 
     @Override
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
+        StructDescriptor descriptor = worker.getDescriptor();
         try (Workbook wb = WorkbookFactory.create(file, null, true)) {
-            Sheet sheet = wb.getSheet(annotation.sheetName());
+            Sheet sheet = wb.getSheet(descriptor.getSheetName());
 
-            int firstRowOrder = this.getFirstRowOrder(annotation, sheet);
+            int firstRowOrder = this.getFirstRowOrder(descriptor, sheet);
             Row headRow = sheet.getRow(Math.max(0, firstRowOrder - 1));
             Map<Integer, String> columnFieldMap = resolveExcelColumnToField(headRow);
             FormulaEvaluator evaluator = getFormulaEvaluator(file, wb);
-            IntStream.rangeClosed(firstRowOrder, getLastRowOrder(annotation, sheet))
+            IntStream.rangeClosed(firstRowOrder, getLastRowOrder(descriptor, sheet))
                     .mapToObj(sheet::getRow)
                     .filter(Objects::nonNull)
                     .forEach(cells -> handleObjField(worker, clzOfStruct, cells, columnFieldMap, evaluator, cellHandler));
@@ -91,18 +90,18 @@ public class ExcelUMStructHandler implements StructHandler {
         }
     }
 
-    private int getFirstRowOrder(StructSheet annotation, Sheet sheet) {
-        if (annotation.startOrder() < 0) {
+    private int getFirstRowOrder(StructDescriptor descriptor, Sheet sheet) {
+        if (descriptor.getStartOrder() < 0) {
             return sheet.getFirstRowNum();
         }
-        return Math.max(annotation.startOrder(), sheet.getFirstRowNum());
+        return Math.max(descriptor.getStartOrder(), sheet.getFirstRowNum());
     }
 
-    private int getLastRowOrder(StructSheet annotation, Sheet sheet) {
-        if (annotation.endOrder() < 0) {
+    private int getLastRowOrder(StructDescriptor descriptor, Sheet sheet) {
+        if (descriptor.getEndOrder() < 0) {
             return sheet.getLastRowNum();
         }
-        return Math.min(annotation.endOrder(), sheet.getLastRowNum());
+        return Math.min(descriptor.getEndOrder(), sheet.getLastRowNum());
     }
 
     private <T> void handleObjField(StructWorker<T> worker, Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
