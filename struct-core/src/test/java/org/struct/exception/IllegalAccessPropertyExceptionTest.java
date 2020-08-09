@@ -8,35 +8,35 @@ public class IllegalAccessPropertyExceptionTest {
 
     @Test()
     public void raiseException() {
-        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
-            throw new StructTransformException();
+        Assertions.assertThrows(IllegalAccessPropertyException.class, () -> {
+            throw new IllegalAccessPropertyException();
         });
     }
 
     @Test()
     public void raiseException1() {
-        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+        Assertions.assertThrows(IllegalAccessPropertyException.class, () -> {
             throw new IllegalAccessPropertyException("msg");
         });
     }
 
     @Test()
     public void raiseException2() {
-        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+        Assertions.assertThrows(IllegalAccessPropertyException.class, () -> {
             throw new IllegalAccessPropertyException("msg", new IllegalAccessPropertyException());
         });
     }
 
     @Test()
     public void raiseException3() {
-        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+        Assertions.assertThrows(IllegalAccessPropertyException.class, () -> {
             throw new IllegalAccessPropertyException(new IllegalAccessPropertyException());
         });
     }
 
     @Test()
     public void raiseException4() {
-        Assertions.assertThrows(EndOfExcelSheetException.class, () -> {
+        Assertions.assertThrows(IllegalAccessPropertyException.class, () -> {
             throw new IllegalAccessPropertyException("msg", new IllegalAccessPropertyException(), false, true);
         });
     }
