@@ -90,6 +90,8 @@ public class StructWorker<T> {
     /// <editor-fold desc="   Protected Methods    "  defaultstate="collapsed">
 
     protected Map<String, FieldDescriptor> resolveBeanFields(Class<?> clzBean) throws RuntimeException {
+        if (!this.beanFieldMap.isEmpty())
+            return this.beanFieldMap;
         final Map<String, FieldDescriptor> map = new HashMap<>();
         List<Field> fields = Reflects.resolveAllFields(clzBean, true);
         for (Field field : fields) {
