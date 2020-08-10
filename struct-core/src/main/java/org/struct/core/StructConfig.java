@@ -29,6 +29,10 @@ public class StructConfig {
      * {@link org.struct.core.converter.ArrayConverter}
      */
     private String arrayConverterStringSeparator = "\\|";
+    /**
+     *
+     */
+    private boolean arrayConverterStringTrim = true;
 
     /**
      * The default {@link StructField#required()}'s value.
@@ -63,5 +67,13 @@ public class StructConfig {
 
     public void setArrayConverterStringSeparator(String arrayConverterStringSeparator) {
         this.arrayConverterStringSeparator = arrayConverterStringSeparator;
+    }
+
+    public boolean isArrayConverterStringTrim() {
+        return arrayConverterStringTrim;
+    }
+
+    public void setArrayConverterStringTrim(boolean arrayConverterStringTrim) {
+        this.arrayConverterStringTrim = arrayConverterStringTrim;
     }
 }

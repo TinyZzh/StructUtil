@@ -59,7 +59,7 @@ public abstract class AbstractStructStore<K, B>
      *
      * @see StructConstant#CONFIG
      */
-    protected StructConfig config;
+    protected StructStoreConfig config;
 
     protected ApplicationContext applicationContext;
 
@@ -81,7 +81,7 @@ public abstract class AbstractStructStore<K, B>
     @Override
     public void afterSingletonsInstantiated() {
         if (null == this.config) {
-            this.config = this.applicationContext.getBean(StructConfig.class);
+            this.config = this.applicationContext.getBean(StructStoreConfig.class);
         }
         LOGGER.debug("struct:{} store autowired properties completed.", clzOfBean());
         if (!this.config.isLazyLoad()) {

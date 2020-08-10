@@ -32,17 +32,35 @@ public class ArrayConverter implements Converter {
     /**
      * The string separator.
      */
-    private final String separator;
-
-    private final boolean exceptBlank;
+    private String separator;
+    /**
+     * Trim string originValue.
+     */
+    private boolean strTrim;
 
     public ArrayConverter() {
         this(DEFAULT_SEPARATOR, true);
     }
 
-    public ArrayConverter(String separator, boolean exceptBlank) {
+    public ArrayConverter(String separator, boolean strTrim) {
         this.separator = separator;
-        this.exceptBlank = exceptBlank;
+        this.strTrim = strTrim;
+    }
+
+    public String getSeparator() {
+        return separator;
+    }
+
+    public void setSeparator(String separator) {
+        this.separator = separator;
+    }
+
+    public boolean isStrTrim() {
+        return strTrim;
+    }
+
+    public void setStrTrim(boolean strTrim) {
+        this.strTrim = strTrim;
     }
 
     @Override
@@ -53,7 +71,7 @@ public class ArrayConverter implements Converter {
         String content = (String) originValue;
         Class<?> componentType = targetType.getComponentType();
         String[] data = content.split(separator);
-        if (exceptBlank) {
+        if (strTrim) {
             data = Arrays.stream(data)
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())

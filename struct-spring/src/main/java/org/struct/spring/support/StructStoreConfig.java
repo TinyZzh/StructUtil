@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @author TinyZ.
  * @date 2020-07-22.
  */
-public class StructConfig {
+public class StructStoreConfig {
 
     /**
      * set {@link org.struct.core.StructWorker}'s workspace.
@@ -58,7 +58,7 @@ public class StructConfig {
         return workspace;
     }
 
-    public StructConfig setWorkspace(String workspace) {
+    public StructStoreConfig setWorkspace(String workspace) {
         this.workspace = workspace;
         return this;
     }
@@ -67,7 +67,7 @@ public class StructConfig {
         return lazyLoad;
     }
 
-    public StructConfig setLazyLoad(boolean lazyLoad) {
+    public StructStoreConfig setLazyLoad(boolean lazyLoad) {
         this.lazyLoad = lazyLoad;
         return this;
     }
@@ -76,7 +76,7 @@ public class StructConfig {
         return monitorFileChange;
     }
 
-    public StructConfig setMonitorFileChange(boolean monitorFileChange) {
+    public StructStoreConfig setMonitorFileChange(boolean monitorFileChange) {
         this.monitorFileChange = monitorFileChange;
         return this;
     }
@@ -85,7 +85,7 @@ public class StructConfig {
         return scheduleInitialDelay;
     }
 
-    public StructConfig setScheduleInitialDelay(long scheduleInitialDelay) {
+    public StructStoreConfig setScheduleInitialDelay(long scheduleInitialDelay) {
         this.scheduleInitialDelay = scheduleInitialDelay;
         return this;
     }
@@ -94,7 +94,7 @@ public class StructConfig {
         return scheduleDelay;
     }
 
-    public StructConfig setScheduleDelay(long scheduleDelay) {
+    public StructStoreConfig setScheduleDelay(long scheduleDelay) {
         this.scheduleDelay = scheduleDelay;
         return this;
     }
@@ -103,7 +103,7 @@ public class StructConfig {
         return scheduleTimeUnit;
     }
 
-    public StructConfig setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
+    public StructStoreConfig setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
         this.scheduleTimeUnit = scheduleTimeUnit;
         return this;
     }

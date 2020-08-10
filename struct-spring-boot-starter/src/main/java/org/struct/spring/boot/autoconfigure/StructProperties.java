@@ -20,6 +20,8 @@ package org.struct.spring.boot.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.Objects;
+
 /**
  * @author TinyZ.
  * @version 2020.07.09
@@ -27,13 +29,67 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = StarterConstant.STRUCT_UTIL)
 public class StructProperties {
 
-    private String workspace = "";
+    private String arrayConverterStringSeparator = "\\|";
+    private boolean arrayConverterStringTrim = true;
+    private boolean structRequiredDefault = false;
+    private boolean ignoreEmptyRow = true;
 
-    public String getWorkspace() {
-        return workspace;
+    public String getArrayConverterStringSeparator() {
+        return arrayConverterStringSeparator;
     }
 
-    public void setWorkspace(String workspace) {
-        this.workspace = workspace;
+    public void setArrayConverterStringSeparator(String arrayConverterStringSeparator) {
+        this.arrayConverterStringSeparator = arrayConverterStringSeparator;
     }
+
+    public boolean isArrayConverterStringTrim() {
+        return arrayConverterStringTrim;
+    }
+
+    public void setArrayConverterStringTrim(boolean arrayConverterStringTrim) {
+        this.arrayConverterStringTrim = arrayConverterStringTrim;
+    }
+
+    public boolean isStructRequiredDefault() {
+        return structRequiredDefault;
+    }
+
+    public void setStructRequiredDefault(boolean structRequiredDefault) {
+        this.structRequiredDefault = structRequiredDefault;
+    }
+
+    public boolean isIgnoreEmptyRow() {
+        return ignoreEmptyRow;
+    }
+
+    public void setIgnoreEmptyRow(boolean ignoreEmptyRow) {
+        this.ignoreEmptyRow = ignoreEmptyRow;
+    }
+
+    @Override
+    public String toString() {
+        return "StructProperties{" +
+                "arrayConverterStringSeparator='" + arrayConverterStringSeparator + '\'' +
+                ", arrayConverterStringTrim=" + arrayConverterStringTrim +
+                ", structRequiredDefault=" + structRequiredDefault +
+                ", ignoreEmptyRow=" + ignoreEmptyRow +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StructProperties that = (StructProperties) o;
+        return arrayConverterStringTrim == that.arrayConverterStringTrim &&
+                structRequiredDefault == that.structRequiredDefault &&
+                ignoreEmptyRow == that.ignoreEmptyRow &&
+                Objects.equals(arrayConverterStringSeparator, that.arrayConverterStringSeparator);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(arrayConverterStringSeparator, arrayConverterStringTrim, structRequiredDefault, ignoreEmptyRow);
+    }
+
 }

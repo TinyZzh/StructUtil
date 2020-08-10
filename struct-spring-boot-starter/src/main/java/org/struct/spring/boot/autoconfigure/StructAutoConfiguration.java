@@ -38,11 +38,15 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.core.Ordered;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
+import org.struct.core.StructConfig;
 import org.struct.core.StructDescriptor;
+import org.struct.core.converter.ArrayConverter;
+import org.struct.core.converter.Converter;
+import org.struct.core.converter.ConverterRegistry;
 import org.struct.spring.support.ClassPathStructScanner;
-import org.struct.spring.support.StructConfig;
 import org.struct.spring.support.StructScannerRegistrar;
 import org.struct.spring.support.StructStore;
+import org.struct.spring.support.StructStoreConfig;
 import org.struct.spring.support.StructStoreService;
 import org.struct.support.FileWatcherService;
 import org.struct.util.WorkerUtil;
@@ -55,18 +59,37 @@ import java.util.List;
  * @author TinyZ.
  * @version 2020.07.09
  */
-@ConditionalOnProperty(prefix = StarterConstant.STRUCT_UTIL, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = StarterConstant.STRUCT_STORE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE + 1000)
 @Configuration
-@EnableConfigurationProperties({StructProperties.class, StructServiceProperties.class})
+@EnableConfigurationProperties({StructProperties.class, StructStoreProperties.class, StructServiceProperties.class})
 public class StructAutoConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StructAutoConfiguration.class);
 
+    @Bean
+    @ConditionalOnMissingBean
+    public StructConfig structConfig(StructProperties properties) {
+        StructConfig config = new StructConfig();
+        config.setArrayConverterStringSeparator(properties.getArrayConverterStringSeparator());
+        config.setArrayConverterStringTrim(properties.isArrayConverterStringTrim());
+        config.setStructRequiredDefault(properties.isStructRequiredDefault());
+        config.setIgnoreEmptyRow(properties.isIgnoreEmptyRow());
+
+        //  set array converter's properties
+        Converter arrayConverter = ConverterRegistry.lookup(int[].class);
+        if (arrayConverter instanceof ArrayConverter) {
+            ((ArrayConverter) arrayConverter).setSeparator(config.getArrayConverterStringSeparator());
+            ((ArrayConverter) arrayConverter).setStrTrim(config.isArrayConverterStringTrim());
+        }
+
+        return config;
+    }
+
     @ConditionalOnMissingBean()
     @Bean()
-    public StructConfig structConfig(StructProperties properties, StructServiceProperties serviceProperties) {
-        StructConfig config = new StructConfig();
+    public StructStoreConfig structStoreConfig(StructStoreProperties properties, StructServiceProperties serviceProperties) {
+        StructStoreConfig config = new StructStoreConfig();
         config.setWorkspace(properties.getWorkspace());
         config.setLazyLoad(serviceProperties.isLazyLoad());
         config.setMonitorFileChange(serviceProperties.isMonitorFileChange());
@@ -80,7 +103,7 @@ public class StructAutoConfiguration {
     @ConditionalOnProperty(prefix = StarterConstant.SERVICE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public StructStoreService structMapperService(StructConfig config) {
+    public StructStoreService structMapperService(StructStoreConfig config) {
         StructStoreService service = new StructStoreService(config);
         return service;
     }
@@ -88,7 +111,7 @@ public class StructAutoConfiguration {
     @ConditionalOnMissingBean()
     @ConditionalOnProperty(prefix = StarterConstant.MONITOR_FILE_CHANGE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
-    public FileWatcherService fileWatcherService(StructConfig config, List<StructStore> storeList) throws IOException {
+    public FileWatcherService fileWatcherService(StructStoreConfig config, List<StructStore> storeList) throws IOException {
         FileWatcherService fws = new FileWatcherService();
         fws.registerAll(config.getWorkspace())
                 .setScheduleInitialDelay(config.getScheduleInitialDelay())

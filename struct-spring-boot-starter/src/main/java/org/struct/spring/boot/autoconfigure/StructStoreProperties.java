@@ -18,16 +18,22 @@
 
 package org.struct.spring.boot.autoconfigure;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 /**
  * @author TinyZ.
  * @version 2020.07.09
  */
-public final class StarterConstant {
+@ConfigurationProperties(prefix = StarterConstant.STRUCT_STORE)
+public class StructStoreProperties {
 
-    public static final String STRUCT_UTIL = "struct";
-    public static final String STRUCT_STORE = STRUCT_UTIL + ".store";
-    public static final String ENABLE = "enable";
-    public static final String SERVICE = STRUCT_STORE + ".service";
-    public static final String MONITOR_FILE_CHANGE = SERVICE + ".monitor-file-change";
+    private String workspace = "./data/";
 
+    public String getWorkspace() {
+        return workspace;
+    }
+
+    public void setWorkspace(String workspace) {
+        this.workspace = workspace;
+    }
 }

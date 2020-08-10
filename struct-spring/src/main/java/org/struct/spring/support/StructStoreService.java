@@ -43,7 +43,7 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StructStoreService.class);
 
-    private StructConfig config;
+    private StructStoreConfig config;
 
     private ApplicationContext applicationContext;
 
@@ -52,7 +52,7 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
     public StructStoreService() {
     }
 
-    public StructStoreService(StructConfig config) {
+    public StructStoreService(StructStoreConfig config) {
         this.config = config;
     }
 
@@ -64,7 +64,7 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
     @Override
     public void afterSingletonsInstantiated() {
         if (null == this.config) {
-            this.config = this.applicationContext.getBean(StructConfig.class);
+            this.config = this.applicationContext.getBean(StructStoreConfig.class);
         }
         Map<String, StructStore> beansMap = this.applicationContext.getBeansOfType(StructStore.class);
         beansMap.values().forEach(ss -> {
