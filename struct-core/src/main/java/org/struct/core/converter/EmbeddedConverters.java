@@ -126,6 +126,8 @@ public class EmbeddedConverters implements Converters {
         public Object convert(Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return false;
+            } else if (originValue.getClass() == Boolean.class) {
+                return originValue;
             } else if (originValue.getClass().isPrimitive()) {
                 return 1 == (int) originValue;
             } else if (originValue instanceof String) {
