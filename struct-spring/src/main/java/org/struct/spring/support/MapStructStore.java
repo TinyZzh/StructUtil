@@ -121,7 +121,7 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
                     .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
             this.cached.clear();
             this.cached.putAll(collected);
-            LOGGER.info("initialize [{} - {}] store successfully.", this.clzOfBean.getName(), this.identify());
+            LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), collected.size());
         } catch (Exception e) {
             LOGGER.info("initialize [{} - {}] store failure.", this.clzOfBean.getName(), this.identify(), e);
         } finally {
