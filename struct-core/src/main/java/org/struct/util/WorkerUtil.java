@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -54,7 +55,8 @@ public final class WorkerUtil {
     /**
      * {@link StructHandler}'s holder.
      */
-    private static final Holder<List<StructHandler>> HANDLERS_HOLDER = new Holder<>(() -> ServiceLoader.loadAll(StructHandler.class));
+    private static final Holder<List<StructHandler>> HANDLERS_HOLDER = new Holder<>(() ->
+            ServiceLoader.loadAll(StructHandler.class).stream().filter(Objects::nonNull).collect(Collectors.toList()));
 
     private WorkerUtil() {
         //  no-op
