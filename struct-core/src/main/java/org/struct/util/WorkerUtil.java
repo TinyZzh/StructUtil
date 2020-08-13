@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,6 +50,11 @@ import java.util.stream.Stream;
  * @version 2019.03.23
  */
 public final class WorkerUtil {
+
+    /**
+     * {@link StructHandler}'s holder.
+     */
+    private static final Holder<List<StructHandler>> HANDLERS_HOLDER = new Holder<>(() -> ServiceLoader.loadAll(StructHandler.class));
 
     private WorkerUtil() {
         //  no-op
@@ -67,7 +73,7 @@ public final class WorkerUtil {
     }
 
     public static List<StructHandler> lookupStructHandler(StructDescriptor descriptor, File file) {
-        List<StructHandler> handlers = ServiceLoader.loadAll(StructHandler.class);
+        List<StructHandler> handlers = HANDLERS_HOLDER.get();
         Stream<StructHandler> stream = handlers.stream();
         if (WorkerMatcher.class != descriptor.getMatcher()) {
             stream = stream.filter(handler -> handler.matcher().getClass().isAssignableFrom(descriptor.getMatcher()));
@@ -80,6 +86,9 @@ public final class WorkerUtil {
     /**
      * Resolve struct file's path.
      * 1. classpath:   the path is class's path
+     *
+     * @param filepath file's path
+     * @param fileName file Name.
      */
     public static String resolveFilePath(String filepath, String fileName) {
         if (filepath.startsWith("classpath:")) {
@@ -192,6 +201,28 @@ public final class WorkerUtil {
                     return false;
             default:
                 throw new Exception("Unknown Cell type");
+        }
+    }
+
+    static class Holder<T> {
+
+        volatile T value;
+
+        final Supplier<T> supplier;
+
+        Holder(Supplier<T> supplier) {
+            this.supplier = supplier;
+        }
+
+        T get() {
+            if (value == null) {
+                synchronized (this) {
+                    if (value == null) {
+                        this.value = supplier.get();
+                    }
+                }
+            }
+            return this.value;
         }
     }
 }
