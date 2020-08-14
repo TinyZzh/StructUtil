@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 /**
  * Java Bean Filter. filter the java bean after struct data convert done.
  *
- * @param <T>
+ * @param <T> the struct bean's clazz.
  */
 public abstract class StructBeanFilter<T> implements Consumer<T>, Predicate<T> {
 
