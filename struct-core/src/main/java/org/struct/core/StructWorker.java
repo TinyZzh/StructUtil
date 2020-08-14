@@ -71,6 +71,8 @@ public class StructWorker<T> {
      * {@link #clzOfStruct}'s all field.
      */
     protected Map<String, FieldDescriptor> beanFieldMap = new ConcurrentHashMap<>();
+
+    private List<FieldDescriptor> beanFieldList = new ArrayList<>();
     /**
      * field namespace url - unique key - ref field's value
      */
@@ -127,6 +129,16 @@ public class StructWorker<T> {
             this.tryLoadReferenceFieldValue(descriptor);
         }
         this.beanFieldMap.putAll(map);
+        this.beanFieldList = map.values().stream().sorted((o1, o2) -> {
+            if (o1.isReferenceField() && o2.isReferenceField()) {
+                if (o1.getConverter() == null && o2.getConverter() == null) {
+                    return 0;
+                } else {
+                    return o1.getConverter() == null ? -1 : 1;
+                }
+            }
+            return o1.isReferenceField() ? 1 : -1;
+        }).collect(Collectors.toList());
         return map;
     }
 
@@ -169,7 +181,7 @@ public class StructWorker<T> {
         if (struct.isEmpty())
             return Optional.empty();
         T instance = Reflects.newInstance(clzOfStruct);
-        beanFieldMap.forEach((k, descriptor) -> setObjFieldValue(instance, descriptor, struct.get(descriptor)));
+        this.beanFieldList.forEach(descriptor -> setObjFieldValue(instance, descriptor, struct.get(descriptor)));
         return Optional.ofNullable(instance);
     }
 
