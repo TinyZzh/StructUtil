@@ -26,7 +26,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class FieldDescriptor implements Serializable {
+public class FieldDescriptor implements Serializable, Comparable<FieldDescriptor> {
     private static final long serialVersionUID = 8949543119635057452L;
 
     private String name;
@@ -201,5 +201,18 @@ public class FieldDescriptor implements Serializable {
         result = 31 * result + Arrays.hashCode(refGroupBy);
         result = 31 * result + Arrays.hashCode(refUniqueKey);
         return result;
+    }
+
+    @Override
+    public int compareTo(FieldDescriptor o2) {
+        if (this.isReferenceField() && o2.isReferenceField()) {
+            if (this.getConverter() == null && o2.getConverter() == null) {
+                return 0;
+            } else {
+                return this.getConverter() == null ? -1 : 1;
+            }
+        } else {
+            return this.isReferenceField() ? 1 : -1;
+        }
     }
 }

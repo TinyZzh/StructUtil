@@ -129,16 +129,7 @@ public class StructWorker<T> {
             this.tryLoadReferenceFieldValue(descriptor);
         }
         this.beanFieldMap.putAll(map);
-        this.beanFieldList = map.values().stream().sorted((o1, o2) -> {
-            if (o1.isReferenceField() && o2.isReferenceField()) {
-                if (o1.getConverter() == null && o2.getConverter() == null) {
-                    return 0;
-                } else {
-                    return o1.getConverter() == null ? -1 : 1;
-                }
-            }
-            return o1.isReferenceField() ? 1 : -1;
-        }).collect(Collectors.toList());
+        this.beanFieldList = map.values().stream().sorted().collect(Collectors.toList());
         return map;
     }
 
