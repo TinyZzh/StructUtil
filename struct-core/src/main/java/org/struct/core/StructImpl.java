@@ -18,7 +18,7 @@
 
 package org.struct.core;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 
 /**
  * Temp struct instance implement.
@@ -29,7 +29,7 @@ public class StructImpl {
      * Current row cell's value map.
      * [column index, field value]
      */
-    private LinkedHashMap<String, Object> valuesMap = new LinkedHashMap<>();
+    private HashMap<String, Object> valuesMap = new HashMap<>();
 
     /**
      * Add field's value.
