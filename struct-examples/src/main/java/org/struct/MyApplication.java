@@ -23,11 +23,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ImportResource;
-import org.struct.examples.DataInfo;
-import org.struct.spring.support.StructConfig;
-import org.struct.spring.support.StructStoreService;
-
-import java.util.List;
+import org.struct.spring.support.StructStoreConfig;
 
 /**
  * @author TinyZ.
@@ -45,7 +41,7 @@ import java.util.List;
 public class MyApplication {
     public static void main(String[] args) {
         ConfigurableApplicationContext ctx = SpringApplication.run(MyApplication.class, args);
-        StructConfig bean = ctx.getBean(StructConfig.class);
+        StructStoreConfig bean = ctx.getBean(StructStoreConfig.class);
         System.out.println();
     }
 }
