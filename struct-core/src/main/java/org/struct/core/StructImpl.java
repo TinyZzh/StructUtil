@@ -65,7 +65,7 @@ public class StructImpl {
         }
     }
 
-    public Object get(FieldDescriptor descriptor) {
+    public Object get(SingleFieldDescriptor descriptor) {
         return valuesMap.get(descriptor.getName());
     }
 

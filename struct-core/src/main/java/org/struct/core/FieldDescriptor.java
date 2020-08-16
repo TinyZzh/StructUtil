@@ -18,37 +18,19 @@
 
 package org.struct.core;
 
-import org.struct.core.converter.Converter;
-import org.struct.exception.IllegalAccessPropertyException;
-
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.Objects;
 
-public class FieldDescriptor implements Serializable, Comparable<FieldDescriptor> {
+public abstract class FieldDescriptor implements Serializable, Comparable<FieldDescriptor> {
     private static final long serialVersionUID = 8949543119635057452L;
 
-    private String name;
-    private Field field;
-    private Class<?> fieldType;
-    private Class<?> reference;
-    private String[] refGroupBy;
-    private String[] refUniqueKey;
-    private boolean required;
-    private Converter converter;
+    protected String name;
 
     public FieldDescriptor() {
     }
 
-    public FieldDescriptor(String name, Field field, Class<?> reference, String[] refGroupBy, String[] refUniqueKey, boolean required, Converter converter) {
+    public FieldDescriptor(String name) {
         this.name = name;
-        this.field = field;
-        this.reference = reference;
-        this.refGroupBy = refGroupBy;
-        this.refUniqueKey = refUniqueKey;
-        this.required = required;
-        this.converter = converter;
     }
 
     public String getName() {
@@ -59,125 +41,10 @@ public class FieldDescriptor implements Serializable, Comparable<FieldDescriptor
         this.name = name;
     }
 
-    public Field getField() {
-        return field;
-    }
-
-    public void setField(Field field) {
-        this.field = field;
-    }
-
-    public Class<?> getReference() {
-        return reference;
-    }
-
-    public void setReference(Class<?> reference) {
-        this.reference = reference;
-    }
-
-    public String[] getRefGroupBy() {
-        return refGroupBy;
-    }
-
-    public void setRefGroupBy(String[] refGroupBy) {
-        this.refGroupBy = refGroupBy;
-    }
-
-    public String[] getRefUniqueKey() {
-        return refUniqueKey;
-    }
-
-    public void setRefUniqueKey(String[] refUniqueKey) {
-        this.refUniqueKey = refUniqueKey;
-    }
-
-    public boolean isRequired() {
-        return required;
-    }
-
-    public void setRequired(boolean required) {
-        this.required = required;
-    }
-
-    public Converter getConverter() {
-        return converter;
-    }
-
-    public void setConverter(Converter converter) {
-        this.converter = converter;
-    }
-
-    /**
-     * Is this field is reference field?
-     *
-     * @return return true if the field is reference other clz.
-     */
-    public boolean isReferenceField() {
-        return null != this.reference && Object.class != this.reference;
-    }
-
-    /**
-     * @return the reference field url.
-     */
-    public String getRefFieldUrl() {
-        return getReference().getName() + ":" + getName();
-    }
-
-    public Class<?> getFieldType() {
-        Field field = getField();
-        if (field != null) {
-            return field.getType();
-        } else if (this.fieldType != null) {
-            return this.fieldType;
-        }
-        return Object.class;
-    }
-
-    /**
-     * Get field's value.
-     *
-     * @param instance the instance object
-     * @return field's value.
-     */
-    public Object getFieldValue(Object instance) {
-        Field field = getField();
-        if (field != null) {
-            try {
-                return field.get(instance);
-            } catch (IllegalAccessException e) {
-                throw new IllegalAccessPropertyException("get field value failure. field:" + field.getName(), e);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Set field's value.
-     *
-     * @param instance the instance object
-     * @param value    the field's value.
-     */
-    public void setFieldValue(Object instance, Object value) {
-        Field field = getField();
-        if (field != null) {
-            try {
-                field.set(instance, value);
-            } catch (IllegalAccessException e) {
-                throw new IllegalAccessPropertyException("set field value failure. field:" + field.getName() + ", val:" + value, e);
-            }
-        }
-    }
-
     @Override
     public String toString() {
-        return "FieldDescriptor{" +
+        return "SingleFieldDescriptor{" +
                 "name='" + name + '\'' +
-                ", field=" + field +
-                ", ref=" + reference +
-                ", refGroupBy=" + Arrays.toString(refGroupBy) +
-                ", refUniqueKey=" + Arrays.toString(refUniqueKey) +
-                ", required=" + required +
-                ", converter=" + converter +
                 '}';
     }
 
@@ -186,33 +53,39 @@ public class FieldDescriptor implements Serializable, Comparable<FieldDescriptor
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FieldDescriptor that = (FieldDescriptor) o;
-        return required == that.required &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(field, that.field) &&
-                Objects.equals(reference, that.reference) &&
-                Arrays.equals(refGroupBy, that.refGroupBy) &&
-                Arrays.equals(refUniqueKey, that.refUniqueKey) &&
-                Objects.equals(converter, that.converter);
+        return Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(name, field, reference, required, converter);
-        result = 31 * result + Arrays.hashCode(refGroupBy);
-        result = 31 * result + Arrays.hashCode(refUniqueKey);
-        return result;
+        return Objects.hash(name);
     }
 
     @Override
-    public int compareTo(FieldDescriptor o2) {
-        if (this.isReferenceField() && o2.isReferenceField()) {
-            if (this.getConverter() == null && o2.getConverter() == null) {
-                return 0;
+    public int compareTo(FieldDescriptor o) {
+        //  优先SingleFieldDescriptor > OptionalFieldDescriptor
+        if (this instanceof OptionalDescriptor
+                && o instanceof OptionalDescriptor) {
+            return this.getName().compareTo(o.getName());
+        } else if (this instanceof OptionalDescriptor) {
+            return 1;
+        } else if (o instanceof OptionalDescriptor) {
+            return -1;
+        } else if (this instanceof SingleFieldDescriptor
+                && o instanceof SingleFieldDescriptor) {
+            //  优先级  field > ref field > custom converter field
+            SingleFieldDescriptor fd0 = (SingleFieldDescriptor) this;
+            SingleFieldDescriptor fd1 = (SingleFieldDescriptor) o;
+            if (fd0.isReferenceField() && fd1.isReferenceField()) {
+                if (fd0.getConverter() == null && fd1.getConverter() == null) {
+                    return 0;
+                } else {
+                    return fd0.getConverter() == null ? -1 : 1;
+                }
             } else {
-                return this.getConverter() == null ? -1 : 1;
+                return fd0.isReferenceField() ? 1 : -1;
             }
-        } else {
-            return this.isReferenceField() ? 1 : -1;
         }
+        return 0;
     }
 }

@@ -21,6 +21,7 @@ package org.struct.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.annotation.StructField;
+import org.struct.annotation.StructOptional;
 import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
 import org.struct.core.filter.StructBeanFilter;
@@ -46,6 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @param <T> the target java bean class.
@@ -72,7 +74,7 @@ public class StructWorker<T> {
      */
     protected Map<String, FieldDescriptor> beanFieldMap = new ConcurrentHashMap<>();
 
-    private List<FieldDescriptor> beanFieldList = new ArrayList<>();
+    private List<FieldDescriptor> beanFieldsList = new ArrayList<>();
     /**
      * field namespace url - unique key - ref field's value
      */
@@ -98,46 +100,68 @@ public class StructWorker<T> {
         List<Field> fields = Reflects.resolveAllFields(clzBean, true);
         for (Field field : fields) {
             field.setAccessible(true);
-
-            StructField annotation = AnnotationUtils.findAnnotation(StructField.class, field);
-            FieldDescriptor descriptor = new FieldDescriptor();
-            descriptor.setField(field);
-            if (annotation != null) {
-                descriptor.setRequired(annotation.required());
-                if (!annotation.name().isEmpty()) {
-                    descriptor.setName(annotation.name());
-                }
-                if (Object.class != annotation.ref()) {
-                    descriptor.setReference(annotation.ref());
-                    descriptor.setRefGroupBy(annotation.refGroupBy());
-                    descriptor.setRefUniqueKey(annotation.refUniqueKey());
-                }
-                if (Converter.class != annotation.converter()
-                        && !Modifier.isInterface(annotation.converter().getModifiers())
-                        && !Modifier.isAbstract(annotation.converter().getModifiers())
-                ) {
-                    descriptor.setConverter(ConverterRegistry.lookupOrDefault(annotation.converter(), annotation.converter()));
-                }
-            } else {
-                descriptor.setRequired(this.config != null && this.config.isStructRequiredDefault());
+            FieldDescriptor descriptor = this.resolveFieldDescriptor(field);
+            FieldDescriptor prevFd = map.putIfAbsent(descriptor.getName(), descriptor);
+            if (prevFd != null) {
+                LOGGER.warn("field descriptor new:{} conflicted with prev:{}.", descriptor, prevFd);
             }
-            if (null == descriptor.getName() || descriptor.getName().isEmpty()) {
-                descriptor.setName(field.getName());
-            }
-            map.put(descriptor.getName(), descriptor);
-            //  try resolve field reference.
-            this.tryLoadReferenceFieldValue(descriptor);
         }
         this.beanFieldMap.putAll(map);
-        this.beanFieldList = map.values().stream().sorted().collect(Collectors.toList());
+        this.beanFieldsList = map.values().stream().sorted().collect(Collectors.toList());
         return map;
     }
 
-    protected void tryLoadReferenceFieldValue(FieldDescriptor descriptor) throws RuntimeException {
+    protected FieldDescriptor resolveFieldDescriptor(Field field) {
+        StructOptional anSmf;
+        FieldDescriptor descriptor;
+        if (null != (anSmf = AnnotationUtils.findAnnotation(StructOptional.class, field))) {
+            descriptor = new OptionalDescriptor();
+            if (!anSmf.name().isEmpty()) {
+                descriptor.setName(anSmf.name());
+            }
+            ((OptionalDescriptor) descriptor).setDescriptors(Stream.of(anSmf.value()).map(sf -> resolveSingleFieldDescriptor(field, sf)).toArray(SingleFieldDescriptor[]::new));
+        } else {
+            descriptor = this.resolveSingleFieldDescriptor(field, AnnotationUtils.findAnnotation(StructField.class, field));
+        }
+        return descriptor;
+    }
+
+    protected SingleFieldDescriptor resolveSingleFieldDescriptor(Field field, StructField annotation) {
+        SingleFieldDescriptor descriptor = new SingleFieldDescriptor();
+        descriptor.setField(field);
+        if (annotation != null) {
+            descriptor.setRequired(annotation.required());
+            if (!annotation.name().isEmpty()) {
+                descriptor.setName(annotation.name());
+            }
+            if (Object.class != annotation.ref()) {
+                descriptor.setReference(annotation.ref());
+                descriptor.setRefGroupBy(annotation.refGroupBy());
+                descriptor.setRefUniqueKey(annotation.refUniqueKey());
+            }
+            Class<? extends Converter> c = annotation.converter();
+            if (Converter.class != c
+                    && !Modifier.isInterface(c.getModifiers())
+                    && !Modifier.isAbstract(c.getModifiers())
+            ) {
+                descriptor.setConverter(ConverterRegistry.lookupOrDefault(c, c));
+            }
+        } else {
+            descriptor.setRequired(this.config != null && this.config.isStructRequiredDefault());
+        }
+        if (null == descriptor.getName() || descriptor.getName().isEmpty()) {
+            descriptor.setName(field.getName());
+        }
+        //  try resolve field reference.
+        this.tryLoadReferenceFieldValue(descriptor);
+        return descriptor;
+    }
+
+    protected void tryLoadReferenceFieldValue(SingleFieldDescriptor descriptor) throws RuntimeException {
         if (descriptor == null || !descriptor.isReferenceField()) {
             return;
         }
-        String clzFieldUrl = descriptor.getReference().getName() + ":" + descriptor.getName();
+        String clzFieldUrl = descriptor.getRefFieldUrl();
         if (tempRefFieldValueMap.containsKey(clzFieldUrl)) {
             throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
         }
@@ -162,21 +186,23 @@ public class StructWorker<T> {
         }
     }
 
-    /**
-     * Create a new {@link #clzOfStruct} instance.
-     *
-     * @param struct the struct data.
-     * @return new instance.
-     */
-    public Optional<T> createInstance(StructImpl struct) {
-        if (struct.isEmpty())
-            return Optional.empty();
-        T instance = Reflects.newInstance(clzOfStruct);
-        this.beanFieldList.forEach(descriptor -> setObjFieldValue(instance, descriptor, struct.get(descriptor)));
-        return Optional.ofNullable(instance);
+    protected Object resolveObjFieldValue(Object structImpl, SingleFieldDescriptor sfd) {
+        //  TODO: 优化逻辑 - 反射支持字段的访问
+        if (structImpl instanceof StructImpl) {
+            return ((StructImpl) structImpl).get(sfd);
+        } else {
+            try {
+                Field field = structImpl.getClass().getField(sfd.getName());
+                field.setAccessible(true);
+                return field.get(structImpl);
+            } catch (Exception e) {
+
+            }
+            return null;
+        }
     }
 
-    protected void setObjFieldValue(Object instance, FieldDescriptor descriptor, Object value) {
+    protected boolean setObjFieldValue(Object instance, SingleFieldDescriptor descriptor, Object value) {
         try {
             if (descriptor.isRequired() && !descriptor.isReferenceField()) {
                 boolean invalid = value == null
@@ -194,6 +220,7 @@ public class StructWorker<T> {
             } else {
                 descriptor.setFieldValue(instance, ConverterRegistry.convert(value, descriptor.getFieldType()));
             }
+            return descriptor.getFieldValue(instance) != null;
         } catch (Exception e) {
             String msg = "set instance field's value failure. clz:" + instance.getClass()
                     + "#field:" + descriptor.getName() + ", msg:" + e.getMessage();
@@ -201,7 +228,7 @@ public class StructWorker<T> {
         }
     }
 
-    protected void setObjReferenceFieldValue(Object obj, FieldDescriptor descriptor) {
+    protected void setObjReferenceFieldValue(Object obj, SingleFieldDescriptor descriptor) {
         try {
             String refFieldKey = descriptor.getRefFieldUrl();
             Map<Object, Object> map = tempRefFieldValueMap.get(refFieldKey);
@@ -229,34 +256,17 @@ public class StructWorker<T> {
         }
     }
 
-    public void setObjReferenceFieldValues(Object instance) {
-        // resolve reference field.
-        beanFieldMap.values().stream()
-                .filter(FieldDescriptor::isReferenceField)
-                .forEach(descriptor -> {
-                    try {
-                        setObjReferenceFieldValue(instance, descriptor);
-                    } catch (Exception e) {
-                        throw new StructTransformException(e.getMessage(), e);
-                    }
-                });
-    }
-
     protected ArrayKey getFieldValueArray(Object src, String[] refKeys) throws RuntimeException {
         Object[] ary = new Object[refKeys.length];
         for (int i = 0; i < refKeys.length; i++) {
             FieldDescriptor descriptor = beanFieldMap.get(refKeys[i]);
-            if (descriptor == null) {
+            if (!(descriptor instanceof SingleFieldDescriptor)) {
                 throw new RuntimeException("No such field: [" + refKeys[i] + "] in source obj:"
                         + src.getClass());
             }
-            ary[i] = descriptor.getFieldValue(src);
+            ary[i] = ((SingleFieldDescriptor) descriptor).getFieldValue(src);
         }
         return new ArrayKey(ary);
-    }
-
-    public StructDescriptor getDescriptor() {
-        return descriptor;
     }
 
     /// </editor-fold>
@@ -341,6 +351,40 @@ public class StructWorker<T> {
     }
 
     /// </editor-fold>
+
+    /**
+     * Create a new {@link #clzOfStruct} instance.
+     *
+     * @param struct the struct data.
+     * @return new instance.
+     */
+    public Optional<T> createInstance(StructImpl struct) {
+        if (struct.isEmpty())
+            return Optional.empty();
+        return this.createInstance((Object) struct);
+    }
+
+    public Optional<T> createInstance(Object structImpl) {
+        if (null == structImpl)
+            return Optional.empty();
+        T instance = Reflects.newInstance(clzOfStruct);
+        this.beanFieldsList.forEach(d -> {
+            if (d instanceof OptionalDescriptor) {
+                for (SingleFieldDescriptor fd : ((OptionalDescriptor) d).getDescriptors()) {
+                    if (this.setObjFieldValue(instance, fd, this.resolveObjFieldValue(structImpl, fd))) {
+                        break;
+                    }
+                }
+            } else if (d instanceof SingleFieldDescriptor) {
+                this.setObjFieldValue(instance, (SingleFieldDescriptor) d, this.resolveObjFieldValue(structImpl, (SingleFieldDescriptor) d));
+            }
+        });
+        return Optional.ofNullable(instance);
+    }
+
+    public StructDescriptor getDescriptor() {
+        return descriptor;
+    }
 
     public void handleDataFile(Consumer<T> cellHandler) {
         String filePath = WorkerUtil.resolveFilePath(this.workspace, this.descriptor.getFileName());
