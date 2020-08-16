@@ -119,6 +119,10 @@ public class StructWorker<T> {
             if (!anSmf.name().isEmpty()) {
                 descriptor.setName(anSmf.name());
             }
+            String n;
+            if (null == (n = descriptor.getName()) || n.isEmpty()) {
+                descriptor.setName(field.getName());
+            }
             ((OptionalDescriptor) descriptor).setDescriptors(Stream.of(anSmf.value()).map(sf -> resolveSingleFieldDescriptor(field, sf)).toArray(SingleFieldDescriptor[]::new));
         } else {
             descriptor = this.resolveSingleFieldDescriptor(field, AnnotationUtils.findAnnotation(StructField.class, field));

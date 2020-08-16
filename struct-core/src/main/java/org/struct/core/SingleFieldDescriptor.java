@@ -160,7 +160,7 @@ public class SingleFieldDescriptor extends FieldDescriptor {
 
     @Override
     public String toString() {
-        return "FieldDescriptor{" +
+        return "SingleFieldDescriptor{" +
                 "name='" + name + '\'' +
                 ", field=" + field +
                 ", ref=" + reference +

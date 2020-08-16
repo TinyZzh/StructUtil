@@ -39,7 +39,7 @@ public class OptionalDescriptor extends FieldDescriptor {
 
     @Override
     public String toString() {
-        return "MutableFieldDescriptor{" +
+        return "OptionalDescriptor{" +
                 "name='" + name + '\'' +
                 ", descriptors=" + Arrays.toString(descriptors) +
                 '}';
