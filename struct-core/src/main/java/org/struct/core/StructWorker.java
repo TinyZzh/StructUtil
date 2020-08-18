@@ -33,6 +33,7 @@ import org.struct.util.Reflects;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -191,18 +192,17 @@ public class StructWorker<T> {
     }
 
     protected Object resolveObjFieldValue(Object structImpl, SingleFieldDescriptor sfd) {
-        //  TODO: 优化逻辑 - 反射支持字段的访问
         if (structImpl instanceof StructImpl) {
             return ((StructImpl) structImpl).get(sfd);
         } else {
-            try {
-                Field field = structImpl.getClass().getField(sfd.getName());
-                field.setAccessible(true);
-                return field.get(structImpl);
-            } catch (Exception e) {
-
-            }
-            return null;
+            Optional<MethodHandle> optional = Reflects.lookupFieldGetter(structImpl.getClass(), sfd.getName(), sfd.getFieldType());
+            return optional.map(mh -> {
+                try {
+                    return mh.invoke(structImpl);
+                } catch (Throwable throwable) {
+                    throw new RuntimeException(throwable.getMessage());
+                }
+            }).orElse(null);
         }
     }
 
