@@ -30,6 +30,7 @@ public class FileExtensionMatcher implements WorkerMatcher {
     public static final String FILE_JSON = ".json";
     public static final String FILE_XML = ".xml";
     public static final String FILE_BINARY = ".binary";
+    public static final String FILE_CSV = ".csv";
 
     /**
      * 可处理的文件大小的阀值
