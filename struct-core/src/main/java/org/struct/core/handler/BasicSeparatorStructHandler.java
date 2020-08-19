@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -54,7 +55,7 @@ public abstract class BasicSeparatorStructHandler implements StructHandler {
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructDescriptor descriptor = worker.getDescriptor();
         try (FileInputStream fis = new FileInputStream(file);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+             BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
             //  column name. read the first line.
             String[] columns = Stream.of(reader.readLine().split(separator)).map(String::trim).toArray(String[]::new);
             //  start load data
