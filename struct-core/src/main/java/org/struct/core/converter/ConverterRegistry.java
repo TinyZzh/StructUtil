@@ -21,6 +21,7 @@ package org.struct.core.converter;
 import org.struct.spi.ServiceLoader;
 import org.struct.util.Reflects;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +108,8 @@ public final class ConverterRegistry {
         Converter converter;
         if (requiredType.isEnum()) {
             converter = lookup(Enum.class);
+        } else if (requiredType.isArray()) {
+            converter = lookup(Array.class);
         } else {
             converter = lookup(requiredType);
         }

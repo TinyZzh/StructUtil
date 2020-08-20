@@ -22,12 +22,12 @@ import org.struct.exception.UnSupportConvertOperationException;
 import org.struct.spi.SPI;
 import org.struct.util.ConverterUtil;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 /**
  * 内置的基础的转换器.
@@ -51,19 +51,8 @@ public class EmbeddedConverters implements Converters {
 
         register(new EnumConverter(), Enum.class);
         register(new StringConverter(), String.class);
-
-        ArrayConverter converter = new ArrayConverter();
-        Stream.of(String[].class,
-                byte[].class, Byte[].class,
-                boolean[].class, Boolean[].class,
-                short[].class, Short[].class,
-                int[].class, Integer[].class,
-                long[].class, Long[].class,
-                float[].class, Float[].class,
-                double[].class, Double[].class)
-                .forEach(targetType -> {
-                    register(converter, targetType);
-                });
+        //  basic array converter.
+        register(new ArrayConverter(), Array.class);
     }
 
     @Override

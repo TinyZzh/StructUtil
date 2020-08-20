@@ -19,7 +19,6 @@
 package org.struct.core.converter;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 
 /**
  * @author TinyZ.
@@ -71,15 +70,10 @@ public class ArrayConverter implements Converter {
         String content = (String) originValue;
         Class<?> componentType = targetType.getComponentType();
         String[] data = content.split(separator);
-        if (strTrim) {
-            data = Arrays.stream(data)
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .toArray(String[]::new);
-        }
         Object array = Array.newInstance(componentType, data.length);
         for (int i = 0; i < data.length; i++) {
-            Array.set(array, i, ConverterRegistry.convert(data[i], componentType));
+            String str = strTrim ? data[i].trim() : data[i];
+            Array.set(array, i, ConverterRegistry.convert(str, componentType));
         }
         return array;
     }

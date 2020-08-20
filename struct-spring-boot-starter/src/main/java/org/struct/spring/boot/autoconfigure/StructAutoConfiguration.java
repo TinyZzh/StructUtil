@@ -52,6 +52,7 @@ import org.struct.support.FileWatcherService;
 import org.struct.util.WorkerUtil;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.List;
 
 
@@ -77,7 +78,7 @@ public class StructAutoConfiguration {
         config.setIgnoreEmptyRow(properties.isIgnoreEmptyRow());
 
         //  set array converter's properties
-        Converter arrayConverter = ConverterRegistry.lookup(int[].class);
+        Converter arrayConverter = ConverterRegistry.lookup(Array.class);
         if (arrayConverter instanceof ArrayConverter) {
             ((ArrayConverter) arrayConverter).setSeparator(config.getArrayConverterStringSeparator());
             ((ArrayConverter) arrayConverter).setStrTrim(config.isArrayConverterStringTrim());

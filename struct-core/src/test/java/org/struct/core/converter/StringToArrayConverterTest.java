@@ -55,7 +55,7 @@ public class StringToArrayConverterTest {
     @Test
     public void convert2IntegerArrayWithBlank() {
         ArrayConverter converter = new ArrayConverter("\\|", false);
-        Integer[] data = (Integer[]) converter.convert("11 |22|333 |4444", Integer[].class);
+        Integer[] data = (Integer[]) converter.convert("11|22|333|4444", Integer[].class);
         Assertions.assertEquals((Integer) 11, data[0]);
         Assertions.assertEquals((Integer) 22, data[1]);
         Assertions.assertEquals((Integer) 333, data[2]);
