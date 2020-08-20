@@ -13,7 +13,7 @@ ext.version_options = [
 ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
-version = '3.0.4.beta-SNAPSHOT'
+version = '3.0.5.beta-SNAPSHOT'
 description = 'Light Flexible And Generic Struct Data File Loader. Convert Struct Data To Java Bean'
 
 ext.struct_jvm_projects = [
@@ -186,6 +186,14 @@ Closure init_publish_module = {
                 credentials {
                     username = 'admin'
                     password = 'admin123'
+                }
+            }
+            maven {
+                name "GithubPackages"
+                url "https://maven.pkg.github.com/TinyZzh/StructUtil"
+                credentials {
+                    username = 'TinyZzh'
+                    password = '780352c0c33b1e4d66a9bbfa91fa9f4f3833766a'
                 }
             }
         }
