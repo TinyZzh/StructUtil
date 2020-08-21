@@ -29,7 +29,7 @@ import org.struct.spi.SPI;
  * @date 2020-08-19.
  */
 @SPI(name = "csv", order = 0)
-public class CsvStructHandler extends BasicSeparatorStructHandler {
+public class CsvStructHandler extends RowWithSeparatorStructHandler {
 
     /**
      * Csv use "," separator.
