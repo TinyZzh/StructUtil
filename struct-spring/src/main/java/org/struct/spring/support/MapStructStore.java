@@ -71,9 +71,9 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     }
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void afterPropertiesSet() throws Exception {
         resolveKeyResolver();
-        super.afterSingletonsInstantiated();
+        super.afterPropertiesSet();
     }
 
     private void resolveKeyResolver() {

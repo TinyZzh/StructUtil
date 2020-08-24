@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  * @version 2020.07.12
  */
 public abstract class AbstractStructStore<K, B>
-        implements StructStore<K, B>, ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
+        implements StructStore<K, B>, ApplicationContextAware, InitializingBean, DisposableBean {
 
     private static final int NORMAL = 0;
     private static final int INITIALIZING = 1;
@@ -79,7 +79,7 @@ public abstract class AbstractStructStore<K, B>
     }
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void afterPropertiesSet() throws Exception {
         if (null == this.config) {
             this.config = this.applicationContext.getBean(StructStoreConfig.class);
         }
