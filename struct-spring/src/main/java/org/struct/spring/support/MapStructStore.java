@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -60,7 +59,7 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     /**
      * the cached struct data map.
      */
-    private ConcurrentHashMap<K, B> cached = new ConcurrentHashMap<>();
+    private HashMap<K, B> cached = new HashMap<>();
 
     public MapStructStore() {
         //  spring bean definition
@@ -121,7 +120,8 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
                     .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
             this.cached.clear();
             this.cached.putAll(collected);
-            LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), collected.size());
+            this.size = collected.size();
+            LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
         } catch (Exception e) {
             LOGGER.info("initialize [{} - {}] store failure.", this.clzOfBean.getName(), this.identify(), e);
         } finally {

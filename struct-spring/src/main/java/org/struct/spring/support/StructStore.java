@@ -50,6 +50,13 @@ public interface StructStore<K, B> {
 
     void dispose();
 
+    /**
+     * the store element's amount.
+     *
+     * @return store element's amount.
+     */
+    int size();
+
     List<B> getAll();
 
     B get(K key);

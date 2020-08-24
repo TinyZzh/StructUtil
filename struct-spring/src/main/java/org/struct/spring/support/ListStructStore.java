@@ -63,7 +63,8 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
                     .toList(ArrayList::new);
             this.cached.clear();
             this.cached.addAll(collected);
-            LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), collected.size());
+            this.size = collected.size();
+            LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
         } catch (Exception e) {
             LOGGER.info("initialize [{} - {}] store failure.", this.clzOfBean.getName(), this.identify(), e);
         } finally {

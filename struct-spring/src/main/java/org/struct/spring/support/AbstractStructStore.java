@@ -60,6 +60,10 @@ public abstract class AbstractStructStore<K, B>
      * @see StructConstant#CONFIG
      */
     protected StructStoreConfig config;
+    /**
+     * store element's amount.
+     */
+    protected int size;
 
     protected ApplicationContext applicationContext;
 
@@ -123,6 +127,11 @@ public abstract class AbstractStructStore<K, B>
             return;
         casStatusReset();
         this.initialize();
+    }
+
+    @Override
+    public int size() {
+        return size;
     }
 
     @Override
