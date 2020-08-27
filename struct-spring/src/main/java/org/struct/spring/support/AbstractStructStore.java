@@ -63,7 +63,7 @@ public abstract class AbstractStructStore<K, B>
     /**
      * store element's amount.
      */
-    protected int size;
+    protected volatile int size;
 
     protected ApplicationContext applicationContext;
 
@@ -157,6 +157,22 @@ public abstract class AbstractStructStore<K, B>
 
     protected boolean casStatusDone() {
         return STATUS_UPDATER.compareAndSet(this, INITIALIZING, DONE);
+    }
+
+    /**
+     * Wait for {@link #status} value change until the value equals {@link #DONE}.
+     * Avoid multiple threads read {@link StructStore} data's operation, before {@link StructStore} initialize done.
+     */
+    protected void waitForDone() {
+        this.waitForStatus(DONE);
+    }
+
+    private void waitForStatus(int expect) {
+        for (; ; ) {
+            if (expect == STATUS_UPDATER.get(this)) {
+                break;
+            }
+        }
     }
 
     protected void casStatusReset() {

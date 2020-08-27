@@ -59,7 +59,7 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     /**
      * the cached struct data map.
      */
-    private HashMap<K, B> cached = new HashMap<>();
+    private volatile Map<K, B> cached = Collections.EMPTY_MAP;
 
     public MapStructStore() {
         //  spring bean definition
@@ -113,13 +113,14 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     @Override
     public void initialize() {
         if (!casStatusInit()) {
+            if (this.config.isSyncWaitForInit())
+                this.waitForDone();
             return;
         }
         try {
             Map<K, B> collected = WorkerUtil.newWorker(this.config.getWorkspace(), this.clzOfBean())
                     .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
-            this.cached.clear();
-            this.cached.putAll(collected);
+            this.cached = collected;
             this.size = collected.size();
             LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
         } catch (Exception e) {

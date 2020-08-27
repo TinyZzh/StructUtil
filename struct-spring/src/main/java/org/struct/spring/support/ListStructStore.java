@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.util.WorkerUtil;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +42,7 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
     /**
      * the cached struct data map.
      */
-    private List<B> cached = new LinkedList<>();
+    private volatile List<B> cached = Collections.EMPTY_LIST;
 
     public ListStructStore() {
         //  spring bean definition
@@ -56,13 +55,14 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
     @Override
     public void initialize() {
         if (!casStatusInit()) {
+            if (this.config.isSyncWaitForInit())
+                this.waitForDone();
             return;
         }
         try {
             List<B> collected = WorkerUtil.newWorker(this.config.getWorkspace(), this.clzOfBean())
-                    .toList(ArrayList::new);
-            this.cached.clear();
-            this.cached.addAll(collected);
+                    .toList(LinkedList::new);
+            this.cached = collected;
             this.size = collected.size();
             LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
         } catch (Exception e) {

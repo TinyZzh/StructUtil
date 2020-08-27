@@ -52,6 +52,10 @@ public class StructStoreConfig {
      * Set schedule job's {@link TimeUnit}
      */
     private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
+    /**
+     * When the {@link #lazyLoad} is true, is user should sync wait for {@link StructStore} init done.
+     */
+    private boolean syncWaitForInit = true;
 
 
     public String getWorkspace() {
@@ -106,5 +110,13 @@ public class StructStoreConfig {
     public StructStoreConfig setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
         this.scheduleTimeUnit = scheduleTimeUnit;
         return this;
+    }
+
+    public boolean isSyncWaitForInit() {
+        return syncWaitForInit;
+    }
+
+    public void setSyncWaitForInit(boolean syncWaitForInit) {
+        this.syncWaitForInit = syncWaitForInit;
     }
 }
