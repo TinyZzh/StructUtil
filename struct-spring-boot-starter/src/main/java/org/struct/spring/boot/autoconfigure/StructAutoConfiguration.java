@@ -30,13 +30,14 @@ import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
 import org.struct.core.StructConfig;
@@ -105,10 +106,8 @@ public class StructAutoConfiguration {
     @ConditionalOnProperty(prefix = StarterConstant.SERVICE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    @Order(Ordered.HIGHEST_PRECEDENCE + 1000)
-    public StructStoreService structMapperService(StructStoreConfig config) {
-        StructStoreService service = new StructStoreService(config);
-        return service;
+    public StructStoreService structStoreService(StructStoreConfig config) {
+        return new StructStoreService(config);
     }
 
     @ConditionalOnMissingBean()
@@ -130,20 +129,25 @@ public class StructAutoConfiguration {
         return fws;
     }
 
-    public static class AutoConfiguredMapperScannerRegistrar implements BeanFactoryAware, ImportBeanDefinitionRegistrar {
+    public static class AutoConfiguredMapperScannerRegistrar implements BeanFactoryAware, ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
         private BeanFactory beanFactory;
+
+        private ResourceLoader resourceLoader;
 
         @Override
         public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
             if (!AutoConfigurationPackages.has(this.beanFactory)) {
-                LOGGER.debug("Could not determine auto-configuration package, automatic struct store scanning disabled.");
+                LOGGER.info("Could not determine auto-configuration package, automatic struct store scanning disabled.");
                 return;
             }
             LOGGER.debug("Searching for struct store");
             List<String> packages = AutoConfigurationPackages.get(this.beanFactory);
 
             ClassPathStructScanner scanner = new ClassPathStructScanner(registry, false);
+            if (this.resourceLoader != null) {
+                scanner.setResourceLoader(this.resourceLoader);
+            }
             scanner.registerFilters();
             scanner.doScan(StringUtils.toStringArray(packages));
         }
@@ -151,6 +155,11 @@ public class StructAutoConfiguration {
         @Override
         public void setBeanFactory(BeanFactory beanFactory) {
             this.beanFactory = beanFactory;
+        }
+
+        @Override
+        public void setResourceLoader(ResourceLoader resourceLoader) {
+            this.resourceLoader = resourceLoader;
         }
     }
 
