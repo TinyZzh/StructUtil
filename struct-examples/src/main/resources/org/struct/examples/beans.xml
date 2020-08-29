@@ -5,18 +5,18 @@
 
 <!--    Use keyResolverBeanName    -->
     <bean id="store_1" class="org.struct.spring.support.MapStructStore">
-        <property name="clzOfBean" value="org.struct.examples.DataInfo"/>
+        <property name="clzOfBean" value="org.struct.examples.BasicDataInfo"/>
         <property name="keyResolverBeanName" value="dataStructKeyResolver"/>
     </bean>
 <!--    Use keyResolverBeanClass    -->
     <bean id="store_2" class="org.struct.spring.support.MapStructStore">
-        <property name="clzOfBean" value="org.struct.examples.DataInfo"/>
+        <property name="clzOfBean" value="org.struct.examples.BasicDataInfo"/>
         <property name="keyResolverBeanClass" value="org.struct.examples.DataStructKeyResolver"/>
     </bean>
     <!--  User keyResolver  -->
     <bean id="store_3_keyResolver" class="org.struct.examples.DataStructKeyResolver"/>
     <bean id="store_3" class="org.struct.spring.support.MapStructStore">
-        <property name="clzOfBean" value="org.struct.examples.DataInfo"/>
+        <property name="clzOfBean" value="org.struct.examples.BasicDataInfo"/>
         <property name="keyResolver" ref="store_3_keyResolver"/>
     </bean>
 

@@ -18,40 +18,13 @@
 
 package org.struct.examples;
 
+import org.struct.annotation.StructSheet;
+import org.struct.spring.annotation.AutoStruct;
+
 /**
  * @author TinyZ.
- * @date 2020-07-22.
+ * @date 2020-08-29.
  */
-public class DataInfo {
-
-    private int id;
-    private String name;
-    private Double weight;
-
-    public int getId() {
-        return id;
-    }
-
-    public DataInfo setId(int id) {
-        this.id = id;
-        return this;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public DataInfo setName(String name) {
-        this.name = name;
-        return this;
-    }
-
-    public Double getWeight() {
-        return weight;
-    }
-
-    public DataInfo setWeight(Double weight) {
-        this.weight = weight;
-        return this;
-    }
+@StructSheet(fileName = "t_example_data.xlsx", sheetName = "Sheet1")
+public class BasicDataInfo extends DataInfo {
 }
