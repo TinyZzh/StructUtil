@@ -36,6 +36,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
 import org.struct.core.StructConfig;
@@ -104,6 +105,7 @@ public class StructAutoConfiguration {
     @ConditionalOnProperty(prefix = StarterConstant.SERVICE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
+    @Order(Ordered.HIGHEST_PRECEDENCE + 1000)
     public StructStoreService structMapperService(StructStoreConfig config) {
         StructStoreService service = new StructStoreService(config);
         return service;
