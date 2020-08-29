@@ -56,6 +56,10 @@ public class StructStoreConfig {
      * When the {@link #lazyLoad} is true, is user should sync wait for {@link StructStore} init done.
      */
     private boolean syncWaitForInit = true;
+    /**
+     * Print {@link StructStoreService}'s banner.
+     */
+    private boolean banner = true;
 
 
     public String getWorkspace() {
@@ -118,5 +122,13 @@ public class StructStoreConfig {
 
     public void setSyncWaitForInit(boolean syncWaitForInit) {
         this.syncWaitForInit = syncWaitForInit;
+    }
+
+    public boolean isBanner() {
+        return banner;
+    }
+
+    public void setBanner(boolean banner) {
+        this.banner = banner;
     }
 }

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import java.util.Collections;
@@ -37,7 +38,7 @@ import java.util.function.Predicate;
  * @author TinyZ.
  * @version 2020.07.15
  */
-public class StructStoreService implements BeanPostProcessor, DisposableBean {
+public class StructStoreService implements BeanPostProcessor, SmartInitializingSingleton, DisposableBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StructStoreService.class);
 
@@ -68,6 +69,14 @@ public class StructStoreService implements BeanPostProcessor, DisposableBean {
             }
         }
         return bean;
+    }
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        //  print struct store service banner.
+        if (this.config.isBanner()) {
+            StructBanner.INSTANCE.print();
+        }
     }
 
     @Override
