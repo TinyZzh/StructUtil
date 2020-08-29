@@ -20,6 +20,7 @@ package org.struct.spring.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -53,9 +54,11 @@ public class StructStoreService implements BeanPostProcessor, DisposableBean {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (bean instanceof StructStoreConfig && null == this.config) {
+        //  resolve bean's real type.
+        Class<?> targetClass = AopUtils.isAopProxy(bean) ? AopUtils.getTargetClass(bean) : bean.getClass();
+        if (StructStoreConfig.class.isAssignableFrom(targetClass) && null == this.config) {
             this.config = (StructStoreConfig) bean;
-        } else if (bean instanceof StructStore) {
+        } else if (StructStore.class.isAssignableFrom(targetClass)) {
             StructStore store = (StructStore) bean;
             StructStore prev = structMap.putIfAbsent(store.clzOfBean(), store);
             if (null != prev) {
