@@ -22,13 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.SmartInitializingSingleton;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -39,13 +36,11 @@ import java.util.function.Predicate;
  * @author TinyZ.
  * @version 2020.07.15
  */
-public class StructStoreService implements SmartInitializingSingleton, DisposableBean, ApplicationContextAware {
+public class StructStoreService implements BeanPostProcessor, DisposableBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StructStoreService.class);
 
     private StructStoreConfig config;
-
-    private ApplicationContext applicationContext;
 
     private final ConcurrentHashMap<Class<?>, StructStore> structMap = new ConcurrentHashMap<>();
 
@@ -57,28 +52,28 @@ public class StructStoreService implements SmartInitializingSingleton, Disposabl
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
-
-    @Override
-    public void afterSingletonsInstantiated() {
-        if (null == this.config) {
-            this.config = this.applicationContext.getBean(StructStoreConfig.class);
-        }
-        Map<String, StructStore> beansMap = this.applicationContext.getBeansOfType(StructStore.class);
-        beansMap.values().forEach(ss -> {
-            StructStore prev = structMap.putIfAbsent(ss.clzOfBean(), ss);
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        if (bean instanceof StructStoreConfig && null == this.config) {
+            this.config = (StructStoreConfig) bean;
+        } else if (bean instanceof StructStore) {
+            StructStore store = (StructStore) bean;
+            StructStore prev = structMap.putIfAbsent(store.clzOfBean(), store);
             if (null != prev) {
-                LOGGER.debug("struct:{} has bean registered  by {}.", ss.clzOfBean().getName(), prev);
+                LOGGER.debug("struct:{} has bean registered by {}.", store.clzOfBean().getName(), prev);
+            } else {
+                LOGGER.info("struct:{} register success.", store.clzOfBean().getName());
             }
-        });
-        LOGGER.info("struct store service initialize completed. total @StructStore size:{}", structMap.size());
+        }
+        return bean;
     }
 
     @Override
     public void destroy() throws Exception {
         this.structMap.clear();
+    }
+
+    public void setConfig(StructStoreConfig config) {
+        this.config = config;
     }
 
     private <K, B> Optional<StructStore<K, B>> lookup(Class<B> clzOfBean) {
