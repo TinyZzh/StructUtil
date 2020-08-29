@@ -43,7 +43,7 @@ public class StructDescriptor implements Serializable {
     public StructDescriptor(Class<?> clzOfStruct) {
         StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
         if (null == annotation) {
-            throw new IllegalArgumentException("clazz must be annotated by @StructSheet");
+            throw new IllegalArgumentException("clazz:" + clzOfStruct.getName() + " must be annotated by @StructSheet");
         }
         this.fileName = annotation.fileName();
         this.sheetName = annotation.sheetName();
