@@ -27,6 +27,6 @@ import org.struct.spring.support.ListStructStore;
  * @author TinyZ.
  * @date 2020-07-22.
  */
-public class DataListStructStoreImpl extends ListStructStore<DataInfo> {
+public class DataListStructStoreImpl extends ListStructStore<BasicDataInfo> {
 
 }

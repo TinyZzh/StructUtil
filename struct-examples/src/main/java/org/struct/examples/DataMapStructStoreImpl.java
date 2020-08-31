@@ -26,6 +26,6 @@ import org.struct.spring.support.MapStructStore;
  * @date 2020-07-22.
  */
 @AutoStruct(keyResolverBeanClass = DataStructKeyResolver.class)
-public class DataMapStructStoreImpl extends MapStructStore<Integer, DataInfo> {
+public class DataMapStructStoreImpl extends MapStructStore<Integer, BasicDataInfo> {
 
 }
