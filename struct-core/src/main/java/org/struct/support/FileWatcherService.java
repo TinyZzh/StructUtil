@@ -33,6 +33,9 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,7 +68,7 @@ public class FileWatcherService implements Runnable {
     /**
      * the file change event hook map.
      */
-    private final ConcurrentHashMap<Path, Runnable> hookMap;
+    private final ConcurrentHashMap<Path, List<Runnable>> hooksMap;
     /**
      * Set the scheduled job's initial delay.
      */
@@ -91,7 +94,7 @@ public class FileWatcherService implements Runnable {
 
     public FileWatcherService() throws IOException {
         this.ws = FileSystems.getDefault().newWatchService();
-        this.hookMap = new ConcurrentHashMap<>();
+        this.hooksMap = new ConcurrentHashMap<>();
     }
 
     /**
@@ -162,10 +165,9 @@ public class FileWatcherService implements Runnable {
     }
 
     public FileWatcherService registerHook(Path path, Runnable hook) {
-        Runnable r = this.hookMap.putIfAbsent(path, hook);
-        if (null == r) {
-            LOGGER.info("Register file hook. path: {}", path.toAbsolutePath());
-        }
+        List<Runnable> list = this.hooksMap.computeIfAbsent(path, p -> Collections.synchronizedList(new ArrayList<>()));
+        list.add(hook);
+        LOGGER.info("Register file hook. path: {}", path.toAbsolutePath());
         return this;
     }
 
@@ -174,8 +176,8 @@ public class FileWatcherService implements Runnable {
     }
 
     public FileWatcherService deregisterHook(Path path) {
-        Runnable r = this.hookMap.remove(path);
-        if (null != r) {
+        List<Runnable> l = this.hooksMap.remove(path);
+        if (null != l) {
             LOGGER.info("Deregister file hook. path: {}", path.toAbsolutePath());
         }
         return this;
@@ -221,14 +223,14 @@ public class FileWatcherService implements Runnable {
                 WatchEvent<Path> ev = (WatchEvent<Path>) event;
                 Path name = ev.context();
                 Path child = dir.resolve(name);
-                try {
-                    Runnable runnable = hookMap.get(child);
-                    if (runnable != null) {
-                        runnable.run();
+                List<Runnable> l = hooksMap.get(child);
+                if (l != null) {
+                    try {
+                        l.forEach(Runnable::run);
+                    } catch (Exception e) {
+                        LOGGER.error("process data file failure. file:{}", child.toAbsolutePath(), e);
+                        throw e;
                     }
-                } catch (Exception e) {
-                    LOGGER.error("process data file failure. file:{}", child.toAbsolutePath(), e);
-                    throw e;
                 }
             }
             boolean valid = key.reset();
