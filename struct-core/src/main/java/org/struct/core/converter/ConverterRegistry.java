@@ -105,13 +105,14 @@ public final class ConverterRegistry {
                 || requiredType.isInstance(originValue)) {
             return originValue;
         }
-        Converter converter;
-        if (requiredType.isEnum()) {
-            converter = lookup(Enum.class);
-        } else if (requiredType.isArray()) {
-            converter = lookup(Array.class);
-        } else {
-            converter = lookup(requiredType);
+        //  try lookup user's converter first.
+        Converter converter = lookup(requiredType);
+        if (null == converter) {
+            if (requiredType.isEnum()) {
+                converter = lookup(Enum.class);
+            } else if (requiredType.isArray()) {
+                converter = lookup(Array.class);
+            }
         }
         if (null != converter) {
             return converter.convert(originValue, requiredType);
