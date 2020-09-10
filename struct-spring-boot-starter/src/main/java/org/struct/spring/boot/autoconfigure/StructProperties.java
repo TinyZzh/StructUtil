@@ -31,6 +31,7 @@ public class StructProperties {
 
     private String arrayConverterStringSeparator = "\\|";
     private boolean arrayConverterStringTrim = true;
+    private boolean arrayConverterIgnoreBlank = false;
     private boolean structRequiredDefault = false;
     private boolean ignoreEmptyRow = true;
 
@@ -48,6 +49,14 @@ public class StructProperties {
 
     public void setArrayConverterStringTrim(boolean arrayConverterStringTrim) {
         this.arrayConverterStringTrim = arrayConverterStringTrim;
+    }
+
+    public boolean isArrayConverterIgnoreBlank() {
+        return arrayConverterIgnoreBlank;
+    }
+
+    public void setArrayConverterIgnoreBlank(boolean arrayConverterIgnoreBlank) {
+        this.arrayConverterIgnoreBlank = arrayConverterIgnoreBlank;
     }
 
     public boolean isStructRequiredDefault() {
@@ -71,6 +80,7 @@ public class StructProperties {
         return "StructProperties{" +
                 "arrayConverterStringSeparator='" + arrayConverterStringSeparator + '\'' +
                 ", arrayConverterStringTrim=" + arrayConverterStringTrim +
+                ", arrayConverterIgnoreBlank=" + arrayConverterIgnoreBlank +
                 ", structRequiredDefault=" + structRequiredDefault +
                 ", ignoreEmptyRow=" + ignoreEmptyRow +
                 '}';
@@ -82,6 +92,7 @@ public class StructProperties {
         if (o == null || getClass() != o.getClass()) return false;
         StructProperties that = (StructProperties) o;
         return arrayConverterStringTrim == that.arrayConverterStringTrim &&
+                arrayConverterIgnoreBlank == that.arrayConverterIgnoreBlank &&
                 structRequiredDefault == that.structRequiredDefault &&
                 ignoreEmptyRow == that.ignoreEmptyRow &&
                 Objects.equals(arrayConverterStringSeparator, that.arrayConverterStringSeparator);
@@ -89,7 +100,7 @@ public class StructProperties {
 
     @Override
     public int hashCode() {
-        return Objects.hash(arrayConverterStringSeparator, arrayConverterStringTrim, structRequiredDefault, ignoreEmptyRow);
+        return Objects.hash(arrayConverterStringSeparator, arrayConverterStringTrim, arrayConverterIgnoreBlank, structRequiredDefault, ignoreEmptyRow);
     }
 
 }

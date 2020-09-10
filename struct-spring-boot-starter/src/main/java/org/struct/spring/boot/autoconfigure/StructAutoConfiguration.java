@@ -76,6 +76,7 @@ public class StructAutoConfiguration {
         StructConfig config = new StructConfig();
         config.setArrayConverterStringSeparator(properties.getArrayConverterStringSeparator());
         config.setArrayConverterStringTrim(properties.isArrayConverterStringTrim());
+        config.setArrayConverterIgnoreBlank(properties.isArrayConverterIgnoreBlank());
         config.setStructRequiredDefault(properties.isStructRequiredDefault());
         config.setIgnoreEmptyRow(properties.isIgnoreEmptyRow());
 
@@ -84,6 +85,7 @@ public class StructAutoConfiguration {
         if (arrayConverter instanceof ArrayConverter) {
             ((ArrayConverter) arrayConverter).setSeparator(config.getArrayConverterStringSeparator());
             ((ArrayConverter) arrayConverter).setStrTrim(config.isArrayConverterStringTrim());
+            ((ArrayConverter) arrayConverter).setIgnoreBlank(config.isArrayConverterIgnoreBlank());
         }
 
         return config;

@@ -25,6 +25,7 @@ public class StringToArrayConverterTest {
     @Test
     public void convert2StringArray() {
         ArrayConverter converter = new ArrayConverter();
+        converter.setIgnoreBlank(true);
         String[] data = (String[]) converter.convert("|11|22|333|4444", String[].class);
         Assertions.assertEquals("11", data[0]);
         Assertions.assertEquals("22", data[1]);
@@ -35,6 +36,7 @@ public class StringToArrayConverterTest {
     @Test
     public void convert2longArray() {
         ArrayConverter converter = new ArrayConverter();
+        converter.setIgnoreBlank(true);
         long[] data = (long[]) converter.convert("|11|22|333|4444", long[].class);
         Assertions.assertEquals(11L, data[0]);
         Assertions.assertEquals(22L, data[1]);
@@ -45,6 +47,7 @@ public class StringToArrayConverterTest {
     @Test
     public void convert2IntegerArray() {
         ArrayConverter converter = new ArrayConverter();
+        converter.setIgnoreBlank(true);
         Integer[] data = (Integer[]) converter.convert("|11|22|333|4444", Integer[].class);
         Assertions.assertEquals((Integer) 11, data[0]);
         Assertions.assertEquals((Integer) 22, data[1]);

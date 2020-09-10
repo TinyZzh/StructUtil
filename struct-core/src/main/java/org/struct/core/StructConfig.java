@@ -33,6 +33,10 @@ public class StructConfig {
      *
      */
     private boolean arrayConverterStringTrim = true;
+    /**
+     * ignore blank string.
+     */
+    private boolean arrayConverterIgnoreBlank = false;
 
     /**
      * The default {@link StructField#required()}'s value.
@@ -75,5 +79,13 @@ public class StructConfig {
 
     public void setArrayConverterStringTrim(boolean arrayConverterStringTrim) {
         this.arrayConverterStringTrim = arrayConverterStringTrim;
+    }
+
+    public boolean isArrayConverterIgnoreBlank() {
+        return arrayConverterIgnoreBlank;
+    }
+
+    public void setArrayConverterIgnoreBlank(boolean arrayConverterIgnoreBlank) {
+        this.arrayConverterIgnoreBlank = arrayConverterIgnoreBlank;
     }
 }
