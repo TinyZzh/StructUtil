@@ -27,7 +27,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = StarterConstant.STRUCT_STORE)
 public class StructStoreProperties {
 
-    private String workspace = "./data/";
+    public static final String DEFAULT_WORKSPACE = "./data/";
+
+    private String workspace = DEFAULT_WORKSPACE;
 
     public String getWorkspace() {
         return workspace;

@@ -53,6 +53,7 @@ import org.struct.spring.support.StructStoreService;
 import org.struct.support.FileWatcherService;
 import org.struct.util.WorkerUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.List;
@@ -116,8 +117,15 @@ public class StructAutoConfiguration {
     @ConditionalOnProperty(prefix = StarterConstant.MONITOR_FILE_CHANGE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     public FileWatcherService fileWatcherService(StructStoreConfig config, List<StructStore> storeList) throws IOException {
+        File file = new File(config.getWorkspace());
+        if (!file.exists() && !file.mkdir()) {
+            throw new IllegalArgumentException("the file watcher service mkdir failure. path:{}" + config.getWorkspace());
+        }
+        if (!file.isDirectory()) {
+            throw new IllegalArgumentException("the workspace must be directory. workspace:" + config.getWorkspace());
+        }
         FileWatcherService fws = new FileWatcherService();
-        fws.registerAll(config.getWorkspace())
+        fws.registerAll(file.toPath())
                 .setScheduleInitialDelay(config.getScheduleInitialDelay())
                 .setScheduleDelay(config.getScheduleDelay())
                 .setScheduleTimeUnit(config.getScheduleTimeUnit());
