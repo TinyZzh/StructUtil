@@ -34,6 +34,7 @@ public class StructServiceProperties {
     private long scheduleInitialDelay = 10000L;
     private long scheduleDelay = 5000L;
     private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
+    private boolean banner = true;
 
     public boolean isLazyLoad() {
         return lazyLoad;
@@ -73,5 +74,13 @@ public class StructServiceProperties {
 
     public void setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
         this.scheduleTimeUnit = scheduleTimeUnit;
+    }
+
+    public boolean isBanner() {
+        return banner;
+    }
+
+    public void setBanner(boolean banner) {
+        this.banner = banner;
     }
 }

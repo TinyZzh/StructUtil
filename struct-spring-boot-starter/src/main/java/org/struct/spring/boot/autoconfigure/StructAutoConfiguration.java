@@ -102,6 +102,7 @@ public class StructAutoConfiguration {
         config.setScheduleInitialDelay(serviceProperties.getScheduleInitialDelay());
         config.setScheduleDelay(serviceProperties.getScheduleDelay());
         config.setScheduleTimeUnit(serviceProperties.getScheduleTimeUnit());
+        config.setBanner(serviceProperties.isBanner());
         return config;
     }
 
