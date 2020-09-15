@@ -25,7 +25,10 @@ import org.struct.util.ConverterUtil;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,6 +56,11 @@ public class EmbeddedConverters implements Converters {
         register(new StringConverter(), String.class);
         //  basic array converter.
         register(new ArrayConverter(), Array.class);
+
+        //  date, datetime
+        register(new DateConverter(), Date.class);
+        register(new LocalDateConverter(), LocalDate.class);
+        register(new LocalDateTimeConverter(), LocalDateTime.class);
     }
 
     @Override

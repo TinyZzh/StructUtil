@@ -6,6 +6,10 @@ package org.struct.util;
  */
 public class Strings {
 
+    public static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd";
+
+    public static final String DATE_TIME_FORMAT_PATTERN = "yyyy-MM-dd HH:mm:ss";
+
     private Strings() {
         //  no-op
     }
