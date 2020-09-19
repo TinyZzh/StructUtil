@@ -27,6 +27,7 @@ import org.struct.util.WorkerUtil;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -102,6 +103,14 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
                 }
             } catch (Exception e) {
                 LOGGER.debug("resolve KeyResolver failure. identify:{}, clz:{}, keyResolverBeanClass:{}", this.identify(), this.clzOfBean, this.keyResolverBeanClass, e);
+            }
+        }
+        if (null == this.keyResolver) {
+            //  if only one StructKeyResolver in spring context. just autowire it.
+            //  If StructKeyResolver not defined in @Configuration class, user must be notice the spring load order.
+            Collection<StructKeyResolver> resolvers = this.applicationContext.getBeansOfType(StructKeyResolver.class).values();
+            if (resolvers.size() == 1) {
+                this.keyResolver = resolvers.stream().findFirst().orElse(null);
             }
         }
         if (null == this.keyResolver) {
