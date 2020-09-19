@@ -49,12 +49,4 @@ public @interface AutoStruct {
      */
     Class<? extends StructKeyResolver> keyResolverBeanClass() default StructKeyResolver.class;
 
-    /**
-     * Struct store's options. **only the first element is valid.**
-     * if this is empty use the {@link org.struct.spring.support.StructStoreConfig}'s global configuration.
-     *
-     * @return struct store's options.
-     */
-    StructStoreOptions[] options() default {};
-
 }

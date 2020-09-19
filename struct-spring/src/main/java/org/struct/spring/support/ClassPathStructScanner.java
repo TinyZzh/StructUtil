@@ -35,6 +35,7 @@ import org.springframework.core.type.ClassMetadata;
 import org.springframework.util.ClassUtils;
 import org.struct.annotation.StructSheet;
 import org.struct.spring.annotation.AutoStruct;
+import org.struct.spring.annotation.StructStoreOptions;
 
 import java.lang.reflect.Modifier;
 import java.util.Set;
@@ -135,9 +136,10 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                     if ((StructKeyResolver.class != anno.keyResolverBeanClass() && !Modifier.isAbstract(anno.keyResolverBeanClass().getModifiers()))) {
                         bd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_CLASS, anno.keyResolverBeanClass());
                     }
-                    if (anno.options().length > 0) {
-                        bd.getPropertyValues().add(StructConstant.KEY_OPTIONS, StructStoreOptions.generate(anno.options()[0]));
-                    }
+                }
+                StructStoreOptions annoOptions = AnnotationUtils.findAnnotation(gbd.getBeanClass(), StructStoreOptions.class);
+                if (annoOptions != null) {
+                    bd.getPropertyValues().add(StructConstant.KEY_OPTIONS, Options.generate(annoOptions));
                 }
             }
 
@@ -174,8 +176,9 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                     mbd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_CLASS, resolverBeanClass);
                 }
             }
-            if (anno != null && anno.options().length > 0) {
-                mbd.getPropertyValues().add(StructConstant.KEY_OPTIONS, StructStoreOptions.generate(anno.options()[0]));
+            StructStoreOptions annoOptions = AnnotationUtils.findAnnotation(gbd.getBeanClass(), StructStoreOptions.class);
+            if (annoOptions != null) {
+                mbd.getPropertyValues().add(StructConstant.KEY_OPTIONS, Options.generate(annoOptions));
             }
 
             AnnotationConfigUtils.processCommonDefinitionAnnotations(mbd);
