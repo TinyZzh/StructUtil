@@ -55,12 +55,12 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
     @Override
     public void initialize() {
         if (!casStatusInit()) {
-            if (this.config.isSyncWaitForInit())
+            if (this.options.isWaitForInit())
                 this.waitForDone();
             return;
         }
         try {
-            List<B> collected = WorkerUtil.newWorker(this.config.getWorkspace(), this.clzOfBean())
+            List<B> collected = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
                     .toList(LinkedList::new);
             this.cached = collected;
             this.size = collected.size();

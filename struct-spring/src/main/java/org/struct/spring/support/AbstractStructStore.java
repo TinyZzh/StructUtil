@@ -25,6 +25,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.struct.spring.annotation.AutoStruct;
 
 import java.util.List;
 import java.util.Objects;
@@ -55,11 +56,15 @@ public abstract class AbstractStructStore<K, B>
      */
     protected Class<B> clzOfBean;
     /**
-     * Struct util configuration.
+     * Struct util options.
+     * <p>
+     * Options priority:
+     * 1. {@link AutoStruct#options()}
+     * 2. {@link StructStoreConfig}'s global configuration
      *
-     * @see StructConstant#CONFIG
+     * @see StructConstant#KEY_OPTIONS
      */
-    protected StructStoreConfig config;
+    protected StructStoreOptions options;
     /**
      * store element's amount.
      */
@@ -68,6 +73,8 @@ public abstract class AbstractStructStore<K, B>
     protected ApplicationContext applicationContext;
 
     private volatile int status;
+
+    /// --------------- constructor ------------------
 
     public AbstractStructStore() {
         //  spring bean definition
@@ -84,11 +91,13 @@ public abstract class AbstractStructStore<K, B>
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (null == this.config) {
-            this.config = this.applicationContext.getBean(StructStoreConfig.class);
+        if (null == this.options) {
+            StructStoreConfig config = this.applicationContext.getBean(StructStoreConfig.class);
+            Objects.requireNonNull(config, "config");
+            this.options = StructStoreOptions.generate(config);
         }
         LOGGER.debug("struct:{} store autowired properties completed.", clzOfBean());
-        if (!this.config.isLazyLoad()) {
+        if (!this.options.isLazyLoad()) {
             this.initialize();
         }
     }

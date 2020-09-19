@@ -19,6 +19,7 @@
 package org.struct.spring.boot.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.struct.spring.support.StructConstant;
 
 /**
  * @author TinyZ.
@@ -27,9 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = StarterConstant.STRUCT_STORE)
 public class StructStoreProperties {
 
-    public static final String DEFAULT_WORKSPACE = "./data/";
-
-    private String workspace = DEFAULT_WORKSPACE;
+    private String workspace = StructConstant.STRUCT_WORKSPACE;
 
     public String getWorkspace() {
         return workspace;

@@ -18,7 +18,8 @@
 
 package org.struct.spring.annotation;
 
-import org.struct.spring.support.StructKeyResolver;
+import org.struct.spring.support.StructConstant;
+import org.struct.spring.support.StructStore;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -28,33 +29,34 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Either {@link #keyResolverBeanName()} or {@link #keyResolverBeanClass()} must be set.
- *
  * @author TinyZ.
- * @version 2020.07.12
+ * @version 2020.09.18
  */
 @Inherited
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented()
-public @interface AutoStruct {
+public @interface StructStoreOptions {
 
     /**
-     * @return {@link org.struct.spring.support.MapStructStore}'s {@link StructKeyResolver}'s bean name.
-     */
-    String keyResolverBeanName() default "";
-
-    /**
-     * @return {@link org.struct.spring.support.MapStructStore}'s {@link StructKeyResolver}'s bean class.
-     */
-    Class<? extends StructKeyResolver> keyResolverBeanClass() default StructKeyResolver.class;
-
-    /**
-     * Struct store's options. **only the first element is valid.**
-     * if this is empty use the {@link org.struct.spring.support.StructStoreConfig}'s global configuration.
+     * the struct store's workspace directory.
      *
-     * @return struct store's options.
+     * @return struct store's workspace directory.
      */
-    StructStoreOptions[] options() default {};
+    String workspace() default StructConstant.STRUCT_WORKSPACE;
+
+    /**
+     * Lazy load struct data. default: false.
+     *
+     * @return true if load struct data before user get it, otherwise false.
+     */
+    boolean lazyLoad() default false;
+
+    /**
+     * When the {@link #lazyLoad} is true, is user should sync wait for {@link StructStore} init done.
+     *
+     * @return true wait for {@link StructStore} initialize completed.
+     */
+    boolean waitForInit() default false;
 
 }

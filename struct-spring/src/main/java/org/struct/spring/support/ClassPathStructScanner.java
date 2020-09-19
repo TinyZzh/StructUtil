@@ -135,6 +135,9 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                     if ((StructKeyResolver.class != anno.keyResolverBeanClass() && !Modifier.isAbstract(anno.keyResolverBeanClass().getModifiers()))) {
                         bd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_CLASS, anno.keyResolverBeanClass());
                     }
+                    if (anno.options().length > 0) {
+                        bd.getPropertyValues().add(StructConstant.KEY_OPTIONS, StructStoreOptions.generate(anno.options()[0]));
+                    }
                 }
             }
 
@@ -170,6 +173,9 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                 if (null != resolverBeanClass) {
                     mbd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_CLASS, resolverBeanClass);
                 }
+            }
+            if (anno != null && anno.options().length > 0) {
+                mbd.getPropertyValues().add(StructConstant.KEY_OPTIONS, StructStoreOptions.generate(anno.options()[0]));
             }
 
             AnnotationConfigUtils.processCommonDefinitionAnnotations(mbd);

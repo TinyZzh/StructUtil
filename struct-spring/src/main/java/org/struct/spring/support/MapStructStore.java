@@ -122,12 +122,12 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     @Override
     public void initialize() {
         if (!casStatusInit()) {
-            if (this.config.isSyncWaitForInit())
+            if (this.options.isWaitForInit())
                 this.waitForDone();
             return;
         }
         try {
-            Map<K, B> collected = WorkerUtil.newWorker(this.config.getWorkspace(), this.clzOfBean())
+            Map<K, B> collected = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
                     .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
             this.cached = collected;
             this.size = collected.size();
