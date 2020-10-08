@@ -120,7 +120,7 @@ public class StructAutoConfiguration {
     public FileWatcherService fileWatcherService(StructStoreConfig config, List<StructStore> storeList) throws IOException {
         File file = new File(config.getWorkspace());
         if (!file.exists() && !file.mkdir()) {
-            throw new IllegalArgumentException("the file watcher service mkdir failure. path:{}" + config.getWorkspace());
+            throw new IllegalArgumentException("the file watcher service mkdir failure. path:" + config.getWorkspace());
         }
         if (!file.isDirectory()) {
             throw new IllegalArgumentException("the workspace must be directory. workspace:" + config.getWorkspace());
