@@ -13,7 +13,7 @@ ext.version_options = [
 ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
-version = '3.0.7.beta-SNAPSHOT'
+version = '3.0.9.beta-SNAPSHOT'
 description = 'Light Flexible And Generic Struct Data File Loader. Convert Struct Data To Java Bean'
 
 ext.struct_jvm_projects = [
