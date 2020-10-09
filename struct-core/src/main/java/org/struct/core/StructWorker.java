@@ -242,7 +242,7 @@ public class StructWorker<T> {
             String[] refKeys = descriptor.getRefGroupBy().length > 0
                     ? descriptor.getRefGroupBy()
                     : descriptor.getRefUniqueKey();
-            ArrayKey keys = getFieldValueArray(obj, refKeys);
+            Object keys = getFieldValueArray(obj, refKeys);
             Object val = map.get(keys);
             if (descriptor.isRequired() && val == null) {
                 throw new NoSuchFieldReferenceException("unknown dependent field. make sure field's type and name is right. "
@@ -260,7 +260,7 @@ public class StructWorker<T> {
         }
     }
 
-    protected ArrayKey getFieldValueArray(Object src, String[] refKeys) throws RuntimeException {
+    protected Object getFieldValueArray(Object src, String[] refKeys) throws RuntimeException {
         Object[] ary = new Object[refKeys.length];
         for (int i = 0; i < refKeys.length; i++) {
             FieldDescriptor descriptor = beanFieldMap.get(refKeys[i]);
@@ -270,7 +270,7 @@ public class StructWorker<T> {
             }
             ary[i] = ((SingleFieldDescriptor) descriptor).getFieldValue(src);
         }
-        return new ArrayKey(ary);
+        return ary.length == 1 ? ary[0] : new ArrayKey(ary);
     }
 
     /// </editor-fold>
