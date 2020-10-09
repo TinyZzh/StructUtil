@@ -341,7 +341,7 @@ public class StructWorker<T> {
     }
 
     public <M extends Map<Object, T>> Map<Object, M> toMapWithGroup(final TypeRefFactory<M> factory, final String[] uniqueKey, final String[] groupByKey) throws RuntimeException {
-        return this.toMapWithGroup(factory, obj -> getFieldValueArray(obj, groupByKey), obj -> getFieldValueArray(obj, uniqueKey));
+        return this.toMapWithGroup(factory, obj -> getFieldValueArray(obj, uniqueKey), obj -> getFieldValueArray(obj, groupByKey));
     }
 
     public Map<Object, Map<Object, T>> toMapWithGroup(Class<?> clzOfCollection, String[] uniqueKey, String[] groupByKey) throws RuntimeException {
