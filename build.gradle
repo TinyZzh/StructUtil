@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'jacoco'
 }
 
 ext.version_options = [
@@ -23,18 +22,12 @@ ext.struct_jvm_projects = [
         ':struct-spring-boot-starter'
 ]
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'idea'
+allprojects {
     apply plugin: 'jacoco'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-    compileJava.options.setEncoding("UTF-8")
-    compileTestJava.options.setEncoding("UTF-8")
-
-    group = "${rootProject.group}"
-    version = "${rootProject.version}"
+    jacoco {
+        toolVersion = "0.8.6"
+    }
 
     repositories {
         mavenLocal()
@@ -45,6 +38,19 @@ subprojects {
         maven { url "http://repo.typesafe.com/typesafe/repo" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    compileJava.options.setEncoding("UTF-8")
+    compileTestJava.options.setEncoding("UTF-8")
+
+    group = "${rootProject.group}"
+    version = "${rootProject.version}"
 
     dependencies {
         //  slf4j
@@ -61,16 +67,27 @@ subprojects {
 
     test {
         ignoreFailures = true
+        useJUnitPlatform()
     }
 }
 
 
-/// <editor-fold desc="codecov">
+/// <editor-fold desc="  Code Coverage  ">
 
+ext.codecovProjects = subprojects.findAll {
+    return ["struct-core", "struct-spring", "struct-spring-boot-starter"].contains(it.name)
+}
+configure(codecovProjects) {
+    apply plugin: 'jacoco'
+
+    jacoco {
+        toolVersion = "0.8.6"
+    }
+}
 task codeCoverageReport(type: JacocoReport) {
-    executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
+    getExecutionData().setFrom(fileTree(dir: project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
 
-    subprojects.each {
+    project.ext.codecovProjects.each {
         sourceSets it.sourceSets.main
     }
 
@@ -83,17 +100,19 @@ task codeCoverageReport(type: JacocoReport) {
     }
 
     afterEvaluate {
-        classDirectories = files(classDirectories.files.collect {
+        getClassDirectories().setFrom(files(classDirectories.files.collect {
             fileTree(dir: it,
                     exclude: [
                             '**/bootstrap/**'
                     ])
-        })
+        }))
     }
-}
 
+    //  jacocoRootReport doesn't work if some subprojects don't have any tests at all because this causes the onlyIf of JacocoReport to be false.
+    onlyIf = { true }
+}
 codeCoverageReport.dependsOn {
-    subprojects*.test
+    ext.codecovProjects*.test
 }
 /// </editor-fold>
 
@@ -106,16 +125,16 @@ Closure init_publish_module = {
     apply plugin: 'maven-publish'
 
     task generatePomPropertiesFile {
-        inputs.properties ([
-                'version': "${ -> project.version }",
-                'groupId': "${ -> project.group }",
-                'artifactId': "${ -> project.name }"
+        inputs.properties([
+                'version'   : "${-> project.version}",
+                'groupId'   : "${-> project.group}",
+                'artifactId': "${-> project.name}"
         ])
         outputs.file "$project.buildDir/generatePomPropertiesFile/pom.properties"
         doLast {
             File file = outputs.files.singleFile
             file.parentFile.mkdirs()
-            file << inputs.properties.collect{ key, value -> "$key: $value" }.join('\n')
+            file << inputs.properties.collect { key, value -> "$key: $value" }.join('\n')
         }
     }
 
@@ -146,7 +165,7 @@ Closure init_publish_module = {
     task javadocJar(type: Jar) {
         from javadoc {
             options.encoding = 'UTF-8'
-            options.tags = [ "date" ]
+            options.tags = ["date"]
             failOnError = false
         }
         archiveClassifier.set('javadoc')
