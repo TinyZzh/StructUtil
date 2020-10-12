@@ -45,14 +45,15 @@ public class DateConverter implements Converter {
         if (Date.class != targetType
                 || Date.class == originValue.getClass()) {
             return originValue;
-        } else if (Integer.class == originValue.getClass()) {
-            return new Date((long) originValue * 1000L);
-        } else if (Long.class == originValue.getClass()) {
-            return new Date((long) originValue);
+        } else if (originValue instanceof Number) {
+            long mills = ((Number) originValue).longValue();
+            if (originValue instanceof Integer)
+                mills *= 1000L;
+            return new Date(mills);
         } else {
             String str = String.valueOf(originValue);
             try {
-                return Date.parse(str);
+                return new Date(Date.parse(str));
             } catch (IllegalArgumentException e) {
                 //  no-op
             }

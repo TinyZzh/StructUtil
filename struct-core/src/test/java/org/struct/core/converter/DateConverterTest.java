@@ -23,13 +23,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.struct.util.Strings;
+import sun.util.calendar.BaseCalendar;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.lang.reflect.Method;
 import java.util.Date;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author TinyZ.
@@ -39,61 +37,68 @@ class DateConverterTest {
 
     private DateConverter converter = new DateConverter();
 
+    private Method method;
+
     @BeforeEach
-    private void beforeAll() {
-        converter.setZoneId(ZoneId.systemDefault());
-        converter.setFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        Assertions.assertNotNull(converter.getZoneId());
-        Assertions.assertNotNull(converter.getFormatter());
+    private void beforeAll() throws Exception {
+        converter.setFormatPattern(Strings.DATE_TIME_FORMAT_PATTERN);
+        Assertions.assertNotNull(converter.getFormatPattern());
+        Assertions.assertEquals(Strings.DATE_TIME_FORMAT_PATTERN, converter.getFormatPattern());
+        method = Date.class.getDeclaredMethod("normalize");
+        method.setAccessible(true);
     }
 
     @ParameterizedTest()
     @ValueSource(strings = {"2020-09-15 01:02:03", "1600102923", "1600102923000"})
     public void testStr(String str) {
         Object c = converter.convert(str, Date.class);
-        Assertions.assertTrue(c instanceof Date);
-        Assertions.assertEquals(2020, ((Date) c).getYear());
-        Assertions.assertEquals(9, ((Date) c).getYear());
-        Assertions.assertEquals(15, ((Date) c).getMonth());
-        Assertions.assertEquals(1, ((Date) c).getHours());
-        Assertions.assertEquals(2, ((Date) c).getMinutes());
-        Assertions.assertEquals(3, ((Date) c).getSeconds());
+        c = this.getDate(c);
+        Assertions.assertTrue(c instanceof BaseCalendar.Date);
+        Assertions.assertEquals(2020, ((BaseCalendar.Date) c).getYear());
+        Assertions.assertEquals(9, ((BaseCalendar.Date) c).getMonth());
+        Assertions.assertEquals(15, ((BaseCalendar.Date) c).getDayOfMonth());
+        Assertions.assertEquals(1, ((BaseCalendar.Date) c).getHours());
+        Assertions.assertEquals(2, ((BaseCalendar.Date) c).getMinutes());
+        Assertions.assertEquals(3, ((BaseCalendar.Date) c).getSeconds());
     }
 
     @Test
     public void testTimestamp() {
         Object c = converter.convert(1600102923, Date.class);
-        Assertions.assertTrue(c instanceof Date);
-        Assertions.assertEquals(2020, ((Date) c).getYear());
-        Assertions.assertEquals(9, ((Date) c).getYear());
-        Assertions.assertEquals(15, ((Date) c).getMonth());
-        Assertions.assertEquals(1, ((Date) c).getHours());
-        Assertions.assertEquals(2, ((Date) c).getMinutes());
-        Assertions.assertEquals(3, ((Date) c).getSeconds());
+        c = this.getDate(c);
+        Assertions.assertTrue(c instanceof BaseCalendar.Date);
+        Assertions.assertEquals(2020, ((BaseCalendar.Date) c).getYear());
+        Assertions.assertEquals(9, ((BaseCalendar.Date) c).getMonth());
+        Assertions.assertEquals(15, ((BaseCalendar.Date) c).getDayOfMonth());
+        Assertions.assertEquals(1, ((BaseCalendar.Date) c).getHours());
+        Assertions.assertEquals(2, ((BaseCalendar.Date) c).getMinutes());
+        Assertions.assertEquals(3, ((BaseCalendar.Date) c).getSeconds());
     }
 
     @Test
     public void testMills() {
         Object c = converter.convert(1600102923000L, Date.class);
-        Assertions.assertTrue(c instanceof Date);
-        Assertions.assertEquals(2020, ((Date) c).getYear());
-        Assertions.assertEquals(9, ((Date) c).getYear());
-        Assertions.assertEquals(15, ((Date) c).getMonth());
-        Assertions.assertEquals(1, ((Date) c).getHours());
-        Assertions.assertEquals(2, ((Date) c).getMinutes());
-        Assertions.assertEquals(3, ((Date) c).getSeconds());
+        c = this.getDate(c);
+        Assertions.assertTrue(c instanceof BaseCalendar.Date);
+        Assertions.assertEquals(2020, ((BaseCalendar.Date) c).getYear());
+        Assertions.assertEquals(9, ((BaseCalendar.Date) c).getMonth());
+        Assertions.assertEquals(15, ((BaseCalendar.Date) c).getDayOfMonth());
+        Assertions.assertEquals(1, ((BaseCalendar.Date) c).getHours());
+        Assertions.assertEquals(2, ((BaseCalendar.Date) c).getMinutes());
+        Assertions.assertEquals(3, ((BaseCalendar.Date) c).getSeconds());
     }
 
     @Test
     public void testOriginIsLocalDateTime() {
         Object c = converter.convert(new Date(2020, 9, 15, 1, 2, 3), Date.class);
-        Assertions.assertTrue(c instanceof Date);
-        Assertions.assertEquals(2020, ((Date) c).getYear());
-        Assertions.assertEquals(9, ((Date) c).getYear());
-        Assertions.assertEquals(15, ((Date) c).getMonth());
-        Assertions.assertEquals(1, ((Date) c).getHours());
-        Assertions.assertEquals(2, ((Date) c).getMinutes());
-        Assertions.assertEquals(3, ((Date) c).getSeconds());
+        c = this.getDate(c);
+        Assertions.assertTrue(c instanceof BaseCalendar.Date);
+        Assertions.assertEquals(2020, ((BaseCalendar.Date) c).getYear());
+        Assertions.assertEquals(9, ((BaseCalendar.Date) c).getMonth());
+        Assertions.assertEquals(15, ((BaseCalendar.Date) c).getDayOfMonth());
+        Assertions.assertEquals(1, ((BaseCalendar.Date) c).getHours());
+        Assertions.assertEquals(2, ((BaseCalendar.Date) c).getMinutes());
+        Assertions.assertEquals(3, ((BaseCalendar.Date) c).getSeconds());
     }
 
     @Test
@@ -108,5 +113,14 @@ class DateConverterTest {
         Object c = converter.convert(str, Date.class);
         Assertions.assertFalse(c instanceof Date);
         Assertions.assertEquals(str, c);
+    }
+
+    private BaseCalendar.Date getDate(Object c) {
+        try {
+            return (BaseCalendar.Date) method.invoke(c);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
