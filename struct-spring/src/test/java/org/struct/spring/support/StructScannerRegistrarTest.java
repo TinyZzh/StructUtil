@@ -18,16 +18,18 @@ import org.struct.spring.annotation.StructScan;
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = StructScannerRegistrarTest.class)
-@Configuration
 @ComponentScan(basePackages = "org.struct.spring.support")
+@Configuration
 @StructScan(basePackages = "org.struct.spring.support")
 public class StructScannerRegistrarTest implements ApplicationContextAware {
 
     private ApplicationContext ctx;
 
+
+
     @Test
     public void test() {
-        Object bean = ctx.getBean("myStructStructMapper");
+        Object bean = ctx.getBean(SpringTestDataMapStructStoreImpl.class);
         System.out.println();
     }
 

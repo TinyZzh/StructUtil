@@ -98,7 +98,6 @@ public class FileExtensionMatcher implements WorkerMatcher {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
         FileExtensionMatcher that = (FileExtensionMatcher) o;
         return fileLengthThreshold == that.fileLengthThreshold &&
                 Arrays.equals(fileExtensionAry, that.fileExtensionAry);
@@ -106,7 +105,7 @@ public class FileExtensionMatcher implements WorkerMatcher {
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(super.hashCode(), fileLengthThreshold);
+        int result = Objects.hash(fileLengthThreshold);
         result = 31 * result + Arrays.hashCode(fileExtensionAry);
         return result;
     }

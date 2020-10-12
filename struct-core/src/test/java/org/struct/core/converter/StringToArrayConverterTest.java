@@ -9,6 +9,20 @@ import java.util.List;
 public class StringToArrayConverterTest {
 
     @Test
+    public void test() {
+        ArrayConverter converter = new ArrayConverter("xx", false, false);
+        Assertions.assertEquals("xx", converter.getSeparator());
+        Assertions.assertFalse(converter.isStrTrim());
+        Assertions.assertFalse(converter.isIgnoreBlank());
+        converter.setSeparator("yy");
+        converter.setStrTrim(true);
+        converter.setIgnoreBlank(true);
+        Assertions.assertEquals("yy", converter.getSeparator());
+        Assertions.assertTrue(converter.isStrTrim());
+        Assertions.assertTrue(converter.isIgnoreBlank());
+    }
+
+    @Test
     public void convertParamNotString() {
         ArrayConverter converter = new ArrayConverter();
         Object result = converter.convert(11, List.class);
