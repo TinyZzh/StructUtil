@@ -127,8 +127,7 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
             return;
         }
         try {
-            Map<K, B> collected = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
-                    .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
+            Map<K, B> collected = this.loadStructData();
             this.cached = collected;
             this.size = collected.size();
             LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
@@ -137,6 +136,11 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
         } finally {
             casStatusDone();
         }
+    }
+
+    protected Map<K, B> loadStructData() {
+        return WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
+                .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
     }
 
     @Override

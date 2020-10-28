@@ -60,8 +60,7 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
             return;
         }
         try {
-            List<B> collected = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
-                    .toList(LinkedList::new);
+            List<B> collected = this.loadStructData();
             this.cached = collected;
             this.size = collected.size();
             LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
@@ -70,6 +69,11 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
         } finally {
             casStatusDone();
         }
+    }
+
+    protected List<B> loadStructData() {
+        return WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
+                .toList(LinkedList::new);
     }
 
     @Override
