@@ -65,5 +65,5 @@ public @interface StructField {
     /**
      * @return use custom converter replace the default system converter to convert this field value.
      */
-    Class<Converter> converter() default Converter.class;
+    Class<? extends Converter> converter() default Converter.class;
 }
