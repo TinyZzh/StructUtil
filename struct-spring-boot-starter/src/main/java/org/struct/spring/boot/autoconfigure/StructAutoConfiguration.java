@@ -106,12 +106,16 @@ public class StructAutoConfiguration {
         return config;
     }
 
+    /**
+     * {@link StructStoreService} implement the {@link org.springframework.beans.factory.config.BeanPostProcessor} interface.
+     * the method must be <strong>static</strong> method to ignore the exception warning in {@link org.springframework.context.support.PostProcessorRegistrationDelegate.BeanPostProcessorChecker}
+     */
     @ConditionalOnMissingBean()
     @ConditionalOnProperty(prefix = StarterConstant.SERVICE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
-    public StructStoreService structStoreService(StructStoreConfig config) {
-        return new StructStoreService(config);
+    public static StructStoreService structStoreService() {
+        return new StructStoreService();
     }
 
     @ConditionalOnMissingBean()
