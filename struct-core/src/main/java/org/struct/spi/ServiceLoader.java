@@ -170,8 +170,9 @@ public final class ServiceLoader {
         for (Class clazz : allClazzs) {
             try {
                 allInstances.add(createInstance(service, clazz, argsType, args));
-            } catch (Throwable t) {
-                LOGGER.warn("Load @SPI:{} failure. clazz:{}, argsType:{}, args:{}", service.getSimpleName(), clazz.getName(), Arrays.toString(argsType), Arrays.toString(args), t);
+            } catch (Exception e) {
+                LOGGER.warn("Create @SPI:{} failure. service won't able to work. clazz:{}, argsType:{}, args:{}. " +
+                        "reason:{}", service.getSimpleName(), clazz.getName(), Arrays.toString(argsType), Arrays.toString(args), e.getMessage());
             }
         }
         return allInstances;
@@ -341,7 +342,7 @@ public final class ServiceLoader {
                 }
                 return s;
             } catch (Throwable e) {
-                throw new RuntimeException(e);
+                throw new ServiceNotFoundException("create class:" + implClazz + "'s instance failure. reason:" + e.getMessage(), e);
             }
         });
         return (S) ins;
