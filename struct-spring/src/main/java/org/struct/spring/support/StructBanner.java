@@ -57,4 +57,13 @@ public enum StructBanner {
         ps.println(STRUCT_STORE_SERVICE + "    (" + VERSION + ")");
     }
 
+    /**
+     * Get struct library version.
+     *
+     * @return Struct library version.
+     */
+    public String getVersion() {
+        return VERSION;
+    }
+
 }

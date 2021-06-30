@@ -24,4 +24,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter:${version_options.SPRING_BOOT_VERSION}") {
         exclude module: 'spring-boot-starter-logging'
     }
+    implementation("org.springframework.boot:spring-boot-starter-actuator:${version_options.SPRING_BOOT_VERSION}")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${version_options.SPRING_BOOT_VERSION}")
 }

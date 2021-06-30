@@ -88,6 +88,10 @@ public class StructStoreService implements BeanPostProcessor, SmartInitializingS
         this.config = config;
     }
 
+    public boolean isEmpty() {
+        return this.structMap.isEmpty();
+    }
+
     private <K, B> Optional<StructStore<K, B>> lookup(Class<B> clzOfBean) {
         Optional<StructStore<K, B>> optional = Optional.ofNullable(structMap.get(clzOfBean));
         if (config.isLazyLoad()) {
