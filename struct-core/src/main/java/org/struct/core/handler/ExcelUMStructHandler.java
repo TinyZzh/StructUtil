@@ -106,6 +106,10 @@ public class ExcelUMStructHandler implements StructHandler {
 
     private <T> void handleObjField(StructWorker<T> worker, Class<T> clzOfBean, Row row, Map<Integer, String> columnFieldMap,
                                     FormulaEvaluator evaluator, Consumer<T> cellHandler) {
+        if (row.getFirstCellNum() < 0 || row.getLastCellNum() < 0) {
+            //  this row is empty row. the row does not contain any cells
+            return;
+        }
         try {
             StructImpl rowStruct = new StructImpl();
             IntStream.rangeClosed(row.getFirstCellNum(), row.getLastCellNum())
