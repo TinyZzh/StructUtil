@@ -53,6 +53,16 @@ public class StructDescriptor implements Serializable {
         this.filter = annotation.filter();
     }
 
+    public StructDescriptor(String fileName, String sheetName, int startOrder, int endOrder,
+                            Class<? extends WorkerMatcher> matcher, Class<? extends StructBeanFilter> filter) {
+        this.fileName = fileName;
+        this.sheetName = sheetName;
+        this.startOrder = startOrder;
+        this.endOrder = endOrder;
+        this.matcher = matcher;
+        this.filter = filter;
+    }
+
     public String getFileName() {
         return fileName;
     }
