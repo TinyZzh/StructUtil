@@ -52,7 +52,20 @@ import java.util.stream.IntStream;
 @SPI(name = "excel-user", order = 0)
 public class ExcelUMStructHandler implements StructHandler {
 
-    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(524288L, WorkerMatcher.HIGHEST,
+    /**
+     * Disable excel usermode if the file length greater than 1.5MB, otherwise false.
+     * default : 1.5mb
+     */
+    private static long EXCEL_USER_MODE_FILE_LENGTH_THRESHOLD = 1_572_864L;
+
+    static {
+        String property = System.getProperty("struct.excel.usermode.threshold");
+        if (property != null) {
+            EXCEL_USER_MODE_FILE_LENGTH_THRESHOLD = Long.parseLong(property);
+        }
+    }
+
+    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(EXCEL_USER_MODE_FILE_LENGTH_THRESHOLD, WorkerMatcher.HIGHEST,
             FileExtensionMatcher.FILE_XLSX, FileExtensionMatcher.FILE_XLS);
 
     @Override
@@ -126,7 +139,7 @@ public class ExcelUMStructHandler implements StructHandler {
                     });
             worker.createInstance(rowStruct).ifPresent(cellHandler);
         } catch (Exception e) {
-            throw new StructTransformException("clz:" + clzOfBean.getName() + ", row:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
+            throw new StructTransformException("clz:" + clzOfBean.getName() + ", the row number:" + row.getRowNum() + ", msg:" + e.getMessage(), e);
         }
     }
 
