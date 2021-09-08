@@ -29,6 +29,26 @@
         <type>1</type>
         <discountedItems>10520</discountedItems>
         <coinLimit>0</coinLimit>
+        <subList>
+            <sub>
+                <lv>1</lv>
+                <name>n1</name>
+            </sub>
+            <sub>
+                <lv>2</lv>
+                <name>n2</name>
+            </sub>
+        </subList>
+        <subMap>
+            <sub>
+                <lv>3</lv>
+                <name>n3</name>
+            </sub>
+            <sub>
+                <lv>4</lv>
+                <name>n4</name>
+            </sub>
+        </subMap>
     </child>
     <child>
         <id>2</id>
