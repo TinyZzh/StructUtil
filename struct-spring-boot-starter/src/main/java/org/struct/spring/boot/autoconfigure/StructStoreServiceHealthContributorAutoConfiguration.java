@@ -21,6 +21,7 @@ package org.struct.spring.boot.autoconfigure;
 import org.springframework.boot.actuate.autoconfigure.health.CompositeHealthContributorConfiguration;
 import org.springframework.boot.actuate.autoconfigure.health.ConditionalOnEnabledHealthIndicator;
 import org.springframework.boot.actuate.health.HealthContributor;
+import org.springframework.boot.actuate.health.HealthEndpoint;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -36,7 +37,7 @@ import java.util.Map;
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(StructStoreService.class)
-@ConditionalOnBean(StructStoreService.class)
+@ConditionalOnBean({StructStoreService.class, HealthEndpoint.class})
 @ConditionalOnEnabledHealthIndicator("struct")
 public class StructStoreServiceHealthContributorAutoConfiguration extends
         CompositeHealthContributorConfiguration<StructStoreServiceHealthIndicator, StructStoreService> {

@@ -20,7 +20,7 @@ package org.struct.core.handler;
 
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.openxml4j.opc.PackageAccess;
-import org.apache.poi.util.SAXHelper;
+ import org.apache.poi.util.XMLHelper;
 import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
 import org.apache.poi.xssf.eventusermodel.XSSFReader;
 import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
@@ -81,7 +81,7 @@ public class XlsxSaxStructHandler implements StructHandler {
             ReadOnlySharedStringsTable sharedStrings = new ReadOnlySharedStringsTable(pkg);
             ContentHandler handler = new XSSFSheetXMLHandler(styles, sharedStrings, contentHandler, true);
 
-            XMLReader parser = SAXHelper.newXMLReader();
+            XMLReader parser = XMLHelper.newXMLReader();
             parser.setContentHandler(handler);
             Iterator<InputStream> it = reader.getSheetsData();
             if (it instanceof XSSFReader.SheetIterator) {

@@ -190,7 +190,7 @@ public final class WorkerUtil {
             case FORMULA:
                 if (cell instanceof Cell) {
                     CellValue val = evaluator.evaluate((Cell) cell);
-                    return getExcelCellValue(val.getCellTypeEnum(), cell, evaluator);
+                    return getExcelCellValue(val.getCellType(), cell, evaluator);
                 } else {
                     return null;
                 }

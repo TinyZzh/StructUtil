@@ -24,12 +24,13 @@ ext.version_options = [
         SPRING_VERSION     : "5.2.4.RELEASE",
         JETTY_VERSION      : "9.4.16.v20140903",
         JUNIT_VERSION      : "9.4.16.v20140903",
+        POI_VERSION        : "5.1.0",
         MOCKITO_VERSION    : "2.2.22"
 ]
 ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
-version = '3.0.13.beta-SNAPSHOT'
+version = '3.0.14.beta-SNAPSHOT'
 description = 'Light Flexible And Generic Struct Data File Loader. Convert Struct Data To Java Bean'
 
 ext.struct_jvm_projects = [
@@ -76,9 +77,9 @@ subprojects {
         testImplementation("org.mockito:mockito-core:2.25.0")
         testImplementation('org.junit.jupiter:junit-jupiter:5.6.2')
         //  log4j 2.x
-        testImplementation('org.apache.logging.log4j:log4j-slf4j-impl:2.12.1')
-        testImplementation('org.apache.logging.log4j:log4j-api:2.12.1')
-        testImplementation('org.apache.logging.log4j:log4j-core:2.12.1')
+        testImplementation('org.apache.logging.log4j:log4j-slf4j-impl:2.14.1')
+        testImplementation('org.apache.logging.log4j:log4j-api:2.14.1')
+        testImplementation('org.apache.logging.log4j:log4j-core:2.14.1')
         testImplementation('org.slf4j:jcl-over-slf4j:1.7.30')
     }
 

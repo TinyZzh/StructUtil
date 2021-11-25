@@ -131,7 +131,7 @@ public class ExcelUMStructHandler implements StructHandler {
                     .forEach(cell -> {
                         Object value = null;
                         try {
-                            value = WorkerUtil.getExcelCellValue(cell.getCellTypeEnum(), cell, evaluator);
+                            value = WorkerUtil.getExcelCellValue(cell.getCellType(), cell, evaluator);
                         } catch (Exception e) {
                             //  no-op
                         }
