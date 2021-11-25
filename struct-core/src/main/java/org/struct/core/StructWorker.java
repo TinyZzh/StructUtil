@@ -100,6 +100,9 @@ public class StructWorker<T> {
         final Map<String, FieldDescriptor> map = new HashMap<>();
         List<Field> fields = Reflects.resolveAllFields(clzBean, true);
         for (Field field : fields) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
             field.setAccessible(true);
             FieldDescriptor descriptor = this.resolveFieldDescriptor(field);
             FieldDescriptor prevFd = map.putIfAbsent(descriptor.getName(), descriptor);
