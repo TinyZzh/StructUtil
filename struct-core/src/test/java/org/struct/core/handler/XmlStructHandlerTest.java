@@ -25,10 +25,20 @@ import org.struct.core.StructWorker;
 import org.struct.core.filter.StructBeanFilter;
 import org.struct.util.WorkerUtil;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class XmlStructHandlerTest {
 
@@ -40,6 +50,7 @@ public class XmlStructHandlerTest {
     }
 
     @XmlRootElement(name = "child")
+    @XmlAccessorType(XmlAccessType.FIELD)
     @StructSheet(fileName = "tpl_vip.xml", startOrder = 1)
     public static class VipConfigSyncBean {
         public int gold;
@@ -66,6 +77,40 @@ public class XmlStructHandlerTest {
          * 王者祝福使用次数加成百分比
          */
         public int addKingScuffleNum;
+
+        @XmlElementWrapper(name = "subList")
+        @XmlElement(name = "sub")
+        public List<Sub> subList;
+
+        @XmlJavaTypeAdapter(value = SubMapXmlAdapter.class)
+        @XmlElement(name = "subMap")
+        public Map<Integer, Sub> subMap;
+    }
+
+    public static class Sub {
+        public int lv;
+        public String name;
+    }
+
+    @XmlType
+    public static class SubListClz {
+        @XmlElement(name = "sub")
+        public List<Sub> list = new ArrayList<>();
+    }
+
+    public static class SubMapXmlAdapter extends XmlAdapter<SubListClz, Map<Integer, Sub>> {
+
+        @Override
+        public Map<Integer, Sub> unmarshal(SubListClz v) throws Exception {
+            return v.list.stream().collect(Collectors.toMap(b -> b.lv, b -> b));
+        }
+
+        @Override
+        public SubListClz marshal(Map<Integer, Sub> v) throws Exception {
+            SubListClz obj = new SubListClz();
+            obj.list = new ArrayList<>(v.values());
+            return obj;
+        }
     }
 
 
