@@ -3,7 +3,9 @@
 
 name: StructUtil Build And Report Codecov
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
   release:
     types: [created]
 
@@ -26,7 +28,7 @@ jobs:
     - name: Validate Gradle wrapper
       uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew build -x test
 
     # 编译成功. 上报代码覆盖率结果
     - name: Report Codecov Result
