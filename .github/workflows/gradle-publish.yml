@@ -31,9 +31,18 @@ jobs:
       run: ./gradlew --no-daemon build -x test
 
     # 编译成功. 上报代码覆盖率结果
-    - name: Report Codecov Result
+    - name: Generate Codecov Report
 #      if: ${{ failure() }}
       if: ${{ success() }}
       env:
         CODECOV_TOKEN: 28627f9d-cc37-4651-a0c7-731a3370d5c1
-      run: ./gradlew codeCoverageReport | bash <(curl -s https://codecov.io/bash)
+      run: ./gradlew codeCoverageReport
+#      https://github.com/codecov/codecov-action
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        files: ./coverage1.xml,./coverage2.xml # optional
+        flags: unittests
+        name: codecov-struct-util
+        fail_ci_if_error: true
+        verbose: true
