@@ -68,7 +68,7 @@ public class FileWatcherService implements Runnable {
     /**
      * the file change event hook map.
      */
-    private final ConcurrentHashMap<Path, List<Runnable>> hooksMap;
+    private final ConcurrentHashMap<Path, List<Runnable>> hooksMap = new ConcurrentHashMap<>();
     /**
      * Set the scheduled job's initial delay.
      */
@@ -93,8 +93,11 @@ public class FileWatcherService implements Runnable {
     }
 
     public FileWatcherService() throws IOException {
-        this.ws = FileSystems.getDefault().newWatchService();
-        this.hooksMap = new ConcurrentHashMap<>();
+        this(FileSystems.getDefault().newWatchService());
+    }
+
+    public FileWatcherService(WatchService ws) {
+        this.ws = ws;
     }
 
     /**
