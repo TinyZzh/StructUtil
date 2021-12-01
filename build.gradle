@@ -19,14 +19,6 @@ plugins {
     id 'java'
 }
 
-ext.version_options = [
-        SPRING_BOOT_VERSION: "2.2.5.RELEASE",
-        SPRING_VERSION     : "5.2.4.RELEASE",
-        JETTY_VERSION      : "9.4.16.v20140903",
-        JUNIT_VERSION      : "9.4.16.v20140903",
-        POI_VERSION        : "5.1.0",
-        MOCKITO_VERSION    : "2.2.22"
-]
 ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
@@ -42,6 +34,15 @@ ext.struct_jvm_projects = [
 
 allprojects {
     apply plugin: 'jacoco'
+
+    ext.version_options = [
+            SPRING_BOOT_VERSION: "2.2.5.RELEASE",
+            SPRING_VERSION     : "5.2.4.RELEASE",
+            JETTY_VERSION      : "9.4.16.v20140903",
+            JUNIT_VERSION      : "5.6.2",
+            POI_VERSION        : "5.1.0",
+            MOCKITO_VERSION    : "2.2.22"
+    ]
 
     jacoco {
         toolVersion = "0.8.6"
@@ -74,12 +75,12 @@ subprojects {
         //  slf4j
         implementation('org.slf4j:slf4j-api:1.7.30')
         //  junit 5.x and mockito
-        testImplementation("org.mockito:mockito-core:2.25.0")
+        testImplementation("org.mockito:mockito-core:3.1.0")
         testImplementation('org.junit.jupiter:junit-jupiter:5.6.2')
         //  log4j 2.x
-        testImplementation('org.apache.logging.log4j:log4j-slf4j-impl:2.14.1')
-        testImplementation('org.apache.logging.log4j:log4j-api:2.14.1')
-        testImplementation('org.apache.logging.log4j:log4j-core:2.14.1')
+        testImplementation('org.apache.logging.log4j:log4j-slf4j-impl:2.12.1')
+        testImplementation('org.apache.logging.log4j:log4j-api:2.12.1')
+        testImplementation('org.apache.logging.log4j:log4j-core:2.12.1')
         testImplementation('org.slf4j:jcl-over-slf4j:1.7.30')
     }
 
