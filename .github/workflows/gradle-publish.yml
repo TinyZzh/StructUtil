@@ -18,17 +18,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Set up JDK 8
       uses: actions/setup-java@v2
       with:
-        java-version: '11'
+        java-version: '8'
         distribution: 'adopt'
         cache: gradle
 
     - name: Validate Gradle wrapper
       uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
     - name: Build with Gradle
-      run: ./gradlew build -x test
+      run: ./gradlew --no-daemon build -x test
 
     # 编译成功. 上报代码覆盖率结果
     - name: Report Codecov Result
