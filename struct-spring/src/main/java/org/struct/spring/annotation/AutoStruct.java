@@ -19,6 +19,7 @@
 package org.struct.spring.annotation;
 
 import org.struct.spring.support.StructKeyResolver;
+import org.struct.spring.support.StructStore;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -38,6 +39,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented()
 public @interface AutoStruct {
+
+    /**
+     * The {@link StructStore} instance's class.
+     *
+     * @return {@link StructStore} instance's class.
+     */
+    Class<? extends StructStore> clzOfStore() default StructStore.class;
 
     /**
      * @return {@link org.struct.spring.support.MapStructStore}'s {@link StructKeyResolver}'s bean name.

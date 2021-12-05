@@ -35,6 +35,10 @@ public interface StructStore<K, B> {
      */
     String identify();
 
+    void initialize();
+
+    boolean isInitialized();
+
     /**
      * Get class of the store bean instances.
      *
@@ -42,9 +46,7 @@ public interface StructStore<K, B> {
      */
     Class<B> clzOfBean();
 
-    void initialize();
-
-    boolean isInitialized();
+    void setClzOfBean(Class<B> clzOfBean);
 
     void reload();
 

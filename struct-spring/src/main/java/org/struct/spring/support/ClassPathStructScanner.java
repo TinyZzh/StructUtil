@@ -18,6 +18,7 @@
 
 package org.struct.spring.support;
 
+import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
@@ -85,7 +86,7 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                 ClassLoader classLoader = ClassPathStructScanner.class.getClassLoader();
                 try {
                     Class<?> clzOfBean = ClassUtils.forName(cm.getClassName(), classLoader);
-                    if (org.struct.spring.support.StructStore.class.isAssignableFrom(clzOfBean)) {
+                    if (StructStore.class.isAssignableFrom(clzOfBean)) {
                         return true;
                     }
                 } catch (ClassNotFoundException e) {
@@ -117,73 +118,90 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                 throw new IllegalStateException(e);
             }
         }
-        if (org.struct.spring.support.StructStore.class.isAssignableFrom(gbd.getBeanClass())) {
+        if (StructStore.class.isAssignableFrom(gbd.getBeanClass())) {
             int modifiers = gbd.getBeanClass().getModifiers();
             if (Modifier.isAbstract(modifiers)
                     || Modifier.isInterface(modifiers)) {
+                //  ignore abstract class and interface.
                 return;
             }
             //  register custom struct store.
-            Class<?>[] typeArguments = GenericTypeResolver.resolveTypeArguments(gbd.getBeanClass(), org.struct.spring.support.StructStore.class);
-            BeanDefinition bd = definitionHolder.getBeanDefinition();
-            bd.getPropertyValues().add(StructConstant.CLZ_OF_BEAN, typeArguments[1]);
-            if (MapStructStore.class.isAssignableFrom(gbd.getBeanClass())) {
-                AutoStruct anno = AnnotationUtils.findAnnotation(gbd.getBeanClass(), AutoStruct.class);
-                if (null != anno) {
-                    if (!anno.keyResolverBeanName().isEmpty()) {
-                        bd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_NAME, anno.keyResolverBeanName());
-                    }
-                    if ((StructKeyResolver.class != anno.keyResolverBeanClass() && !Modifier.isAbstract(anno.keyResolverBeanClass().getModifiers()))) {
-                        bd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_CLASS, anno.keyResolverBeanClass());
-                    }
-                }
-                StructStoreOptions annoOptions = AnnotationUtils.findAnnotation(gbd.getBeanClass(), StructStoreOptions.class);
-                if (annoOptions != null) {
-                    bd.getPropertyValues().add(StructConstant.KEY_OPTIONS, Options.generate(annoOptions));
-                }
-            }
-
+            Class<?>[] typeArguments = GenericTypeResolver.resolveTypeArguments(gbd.getBeanClass(), StructStore.class);
+            gbd.getPropertyValues().add(StructConstant.CLZ_OF_BEAN, typeArguments[1]);
+            this.handleStructStoreProperty(gbd,
+                    AnnotationUtils.findAnnotation(gbd.getBeanClass(), AutoStruct.class),
+                    AnnotationUtils.findAnnotation(gbd.getBeanClass(), StructStoreOptions.class)
+            );
             super.registerBeanDefinition(definitionHolder, registry);
         } else {
             //  Generate struct store by struct's bean definition
-            String mapperBeanName = definitionHolder.getBeanName() + org.struct.spring.support.StructStore.class.getSimpleName();
-
-            String resolverBeanName = null;
-            Class<?> resolverBeanClass = null;
-            AutoStruct anno = AnnotationUtils.findAnnotation(gbd.getBeanClass(), AutoStruct.class);
-            if (null != anno) {
-                if (!anno.keyResolverBeanName().isEmpty()) {
-                    resolverBeanName = anno.keyResolverBeanName();
-                }
-                if ((StructKeyResolver.class != anno.keyResolverBeanClass() && !Modifier.isAbstract(anno.keyResolverBeanClass().getModifiers()))) {
-                    resolverBeanClass = anno.keyResolverBeanClass();
-                }
-            }
-            boolean isMapCache = null != resolverBeanName || null != resolverBeanClass;
-            Class<?> clzOfStructStore = isMapCache ? MapStructStore.class : ListStructStore.class;
-            AnnotatedGenericBeanDefinition mbd = new AnnotatedGenericBeanDefinition(clzOfStructStore);
-            mbd.setRole(BeanDefinition.ROLE_APPLICATION);
-            mbd.setScope(BeanDefinition.SCOPE_SINGLETON);
-            mbd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_NAME);
-            ConstructorArgumentValues cavs = new ConstructorArgumentValues();
-            cavs.addIndexedArgumentValue(0, gbd.getBeanClass());
-            mbd.getConstructorArgumentValues().addArgumentValues(cavs);
-            if (isMapCache) {
-                if (null != resolverBeanName) {
-                    mbd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_NAME, resolverBeanName);
-                }
-                if (null != resolverBeanClass) {
-                    mbd.getPropertyValues().add(StructConstant.KEY_RESOLVER_BEAN_CLASS, resolverBeanClass);
-                }
-            }
-            StructStoreOptions annoOptions = AnnotationUtils.findAnnotation(gbd.getBeanClass(), StructStoreOptions.class);
-            if (annoOptions != null) {
-                mbd.getPropertyValues().add(StructConstant.KEY_OPTIONS, Options.generate(annoOptions));
-            }
-
+            String mapperBeanName = definitionHolder.getBeanName() + StructStore.class.getSimpleName();
+            AnnotatedGenericBeanDefinition mbd = this.generateStructStoreBeanDefinition(gbd);
             AnnotationConfigUtils.processCommonDefinitionAnnotations(mbd);
             BeanDefinitionHolder mapperDefinitionHolder = new BeanDefinitionHolder(mbd, mapperBeanName);
             super.registerBeanDefinition(mapperDefinitionHolder, registry);
         }
     }
+
+    AnnotatedGenericBeanDefinition generateStructStoreBeanDefinition(GenericBeanDefinition gbd) {
+        Class<?> clzOfStore = null;
+        AutoStruct anno = AnnotationUtils.findAnnotation(gbd.getBeanClass(), AutoStruct.class);
+        if (anno != null) {
+            int modifiers;
+            if (anno.clzOfStore() != StructStore.class) {
+                //  custom struct store
+                modifiers = anno.clzOfStore().getModifiers();
+                if (Modifier.isAbstract(modifiers) || Modifier.isInterface(modifiers)) {
+                    throw new IllegalArgumentException("the struct store class:{" + anno.clzOfStore() + "} is illegal. holder:"
+                            + gbd.getBeanClassName());
+                }
+                clzOfStore = anno.clzOfStore();
+            } else {
+                //  nested MapStructStore or ListStructStore
+                if (!anno.keyResolverBeanName().isEmpty()) {
+                    clzOfStore = MapStructStore.class;
+                }
+                if (StructKeyResolver.class != anno.keyResolverBeanClass()) {
+                    modifiers = anno.keyResolverBeanClass().getModifiers();
+                    if (Modifier.isAbstract(modifiers) || Modifier.isInterface(modifiers)) {
+                        throw new IllegalArgumentException("the key resolver class:{" + anno.clzOfStore() + "} is illegal. holder:"
+                                + gbd.getBeanClassName());
+                    }
+                    clzOfStore = MapStructStore.class;
+                }
+            }
+        }
+        if (clzOfStore == null) {
+            clzOfStore = ListStructStore.class;
+        }
+        AnnotatedGenericBeanDefinition mbd = new AnnotatedGenericBeanDefinition(clzOfStore);
+        mbd.setRole(BeanDefinition.ROLE_APPLICATION);
+        mbd.setScope(BeanDefinition.SCOPE_SINGLETON);
+        mbd.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_NAME);
+        //  notice: the one param clzOfBean's constructor must be existed.
+        ConstructorArgumentValues cavs = new ConstructorArgumentValues();
+        cavs.addIndexedArgumentValue(0, gbd.getBeanClass());
+        mbd.getConstructorArgumentValues().addArgumentValues(cavs);
+        this.handleStructStoreProperty(mbd, anno, AnnotationUtils.findAnnotation(gbd.getBeanClass(), StructStoreOptions.class));
+        return mbd;
+    }
+
+    void handleStructStoreProperty(GenericBeanDefinition gbd, AutoStruct anno, StructStoreOptions annoOptions) {
+        MutablePropertyValues propertyValues = gbd.getPropertyValues();
+        if (null != anno && MapStructStore.class.isAssignableFrom(gbd.getBeanClass())) {
+            if (!anno.keyResolverBeanName().isEmpty()) {
+                propertyValues.add(StructConstant.KEY_RESOLVER_BEAN_NAME, anno.keyResolverBeanName());
+            }
+            Class<? extends StructKeyResolver> clzOfKrb = anno.keyResolverBeanClass();
+            if ((StructKeyResolver.class != clzOfKrb
+                    && !Modifier.isAbstract(clzOfKrb.getModifiers())
+                    && !Modifier.isInterface(clzOfKrb.getModifiers()))) {
+                propertyValues.add(StructConstant.KEY_RESOLVER_BEAN_CLASS, clzOfKrb);
+            }
+        }
+        if (annoOptions != null) {
+            propertyValues.add(StructConstant.KEY_OPTIONS, Options.generate(annoOptions));
+        }
+    }
+
 }

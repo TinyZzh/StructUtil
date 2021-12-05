@@ -112,19 +112,20 @@ public abstract class AbstractStructStore<K, B>
     }
 
     @Override
-    public Class<B> clzOfBean() {
-        return this.clzOfBean;
+    public boolean isInitialized() {
+        return DONE == STATUS_UPDATER.get(this);
     }
 
     @Override
-    public boolean isInitialized() {
-        return DONE == STATUS_UPDATER.get(this);
+    public Class<B> clzOfBean() {
+        return this.clzOfBean;
     }
 
     public Class<B> getClzOfBean() {
         return clzOfBean;
     }
 
+    @Override
     public void setClzOfBean(Class<B> clzOfBean) {
         this.clzOfBean = clzOfBean;
     }
