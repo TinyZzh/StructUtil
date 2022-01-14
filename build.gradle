@@ -23,7 +23,7 @@ ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : ver
 
 group = 'org.structutil'
 version = '3.0.14.beta-SNAPSHOT'
-description = 'Light Flexible And High Performance Jaba Bean Struct Data Mapper.'
+description = 'Light Flexible And High Performance Java Bean Struct Data Mapper.'
 
 ext.struct_jvm_projects = [
         ':struct-all',
