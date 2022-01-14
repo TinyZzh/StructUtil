@@ -1,79 +1,10 @@
-/*
- *
- *
- *          Copyright (c) 2021. - TinyZ.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
-plugins {
-    id 'distribution'
-    id 'java'
+description("Struct Util All In One")
+dependencies {
+    implementation(project(":struct-core"))
+    implementation(project(":struct-spring"))
+    implementation(project(":struct-spring-boot-starter"))
 }
-
-def subprojects = [
-        project(':struct-core'),
-        project(':struct-spring'),
-        project(':struct-spring-boot-starter')
-]
-for (subproject in rootProject.subprojects) {
-    if (subproject == project) {
-        continue
-    }
-    evaluationDependsOn(subproject.path)
+generatePomFileForMavenPublication {
+    pom.packaging = "pom"
 }
-
-jar {
-    subprojects.each {
-        from fileTree("${it.buildDir}/classes/java/main") {
-            include '**/*.class'
-        }
-        from fileTree("${it.buildDir}/resources/main") {
-            include '**/*'
-            exclude '**/log4j2.xml'
-        }
-    }
-}
-jar.dependsOn {
-    subprojects*.build
-}
-
-sourcesJar {
-    //  collect sources
-    subprojects.each {
-        from it.sourceSets.main.allSource
-    }
-}
-
-javadocJar {
-
-}
-
-distTar {
-    archiveBaseName = "${rootProject.name}-all"
-    compression = Compression.GZIP
-    extension = 'tar.gz'
-}
-
-distributions {
-    main {
-        contents {
-            //  collect sources
-            subprojects.each {
-                from("${it.projectDir}/src/")
-            }
-
-            from project.tasks.withType(Jar)
-        }
-    }
-}
+//jar.enabled = false

@@ -63,6 +63,7 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
+    apply plugin: 'distribution'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -88,6 +89,20 @@ subprojects {
     test {
         ignoreFailures = true
         useJUnitPlatform()
+    }
+
+    distTar {
+        setArchivesBaseName("${rootProject.name}-all")
+        compression = Compression.GZIP
+        getArchiveExtension().set('tar.gz')
+    }
+
+    distributions {
+        main {
+            contents {
+                from project.tasks.withType(Jar)
+            }
+        }
     }
 }
 
