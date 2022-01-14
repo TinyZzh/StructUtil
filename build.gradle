@@ -23,7 +23,7 @@ ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : ver
 
 group = 'org.structutil'
 version = '3.0.14.beta-SNAPSHOT'
-description = 'Light Flexible And Generic Struct Data File Loader. Convert Struct Data To Java Bean'
+description = 'Light Flexible And High Performance Jaba Bean Struct Data Mapper.'
 
 ext.struct_jvm_projects = [
         ':struct-all',
@@ -214,7 +214,7 @@ Closure init_publish_module = {
 
                 pom {
                     name = "$project.name"
-                    description = "$project.description"
+                    description = "${project.description ?: rootProject.description}"
                     url = "https://github.com/TinyZzh/StructUtil"
                     licenses {
                         license {
