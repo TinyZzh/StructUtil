@@ -4,7 +4,7 @@ dependencies {
     implementation(project(":struct-spring"))
     implementation(project(":struct-spring-boot-starter"))
 }
+//  模块没有source. 仅打包pom.xml
 generatePomFileForMavenPublication {
     pom.packaging = "pom"
 }
-//jar.enabled = false
