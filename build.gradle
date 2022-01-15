@@ -55,7 +55,7 @@ allprojects {
         maven { url "https://maven.aliyun.com/repository/spring" }
         maven { url "https://repo1.maven.org/maven2/" }
         maven { url "https://repo.maven.apache.org/maven2/" }
-        maven { url "http://repo.typesafe.com/typesafe/repo" }
+        maven { url "https://repo.typesafe.com/typesafe/repo" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
 }
@@ -222,12 +222,20 @@ Closure init_publish_module = {
                             url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
                         }
                     }
+                    issueManagement {
+                        url = 'https://github.com/TinyZzh/StructUtil/issues'
+                    }
                     developers {
                         developer {
                             id = "TinyZ"
                             name = "TinyZzh"
                             email = "tinyzzh815@gmail.com"
                         }
+                    }
+                    withXml {
+//                        asNode().appendNode('dependencies')
+//                                .appendNode('dependency')
+//                                .appendNode('scope', 'compile')
                     }
                 }
             }
