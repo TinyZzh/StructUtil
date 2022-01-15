@@ -1,8 +1,8 @@
 description("Struct Util All In One")
 dependencies {
-    implementation(project(":struct-core"))
-    implementation(project(":struct-spring"))
-    implementation(project(":struct-spring-boot-starter"))
+    compile(project(":struct-core"))
+    compile(project(":struct-spring"))
+    compile(project(":struct-spring-boot-starter"))
 }
 //  模块没有source. 仅打包pom.xml
 generatePomFileForMavenPublication {
