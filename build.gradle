@@ -22,7 +22,7 @@ plugins {
 ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
-version = '3.0.15.beta-SNAPSHOT'
+version = '3.5.1.beta-SNAPSHOT'
 description = 'Light Flexible And High Performance Java Bean Struct Data Mapper.'
 
 ext.struct_jvm_projects = [
@@ -36,13 +36,13 @@ allprojects {
     apply plugin: 'jacoco'
 
     ext.version_options = [
-            SPRING_BOOT_VERSION: "2.2.5.RELEASE",
-            SPRING_VERSION     : "5.2.4.RELEASE",
-            JETTY_VERSION      : "9.4.16.v20140903",
-            JUNIT_VERSION      : "5.6.2",
+            SPRING_BOOT_VERSION: "2.5.8",
+            SPRING_VERSION     : "5.3.14",
+            JETTY_VERSION      : "9.4.44.v20210927",
+            MOCKITO_VERSION    : "3.9.0",
+            JUNIT_VERSION      : "5.7.2",
             POI_VERSION        : "5.1.0",
-            LOG4J2_VERSION     : "2.17.0",
-            MOCKITO_VERSION    : "2.2.22"
+            LOG4J2_VERSION     : "2.17.1",
     ]
 
     jacoco {
@@ -75,10 +75,10 @@ subprojects {
 
     dependencies {
         //  slf4j
-        implementation('org.slf4j:slf4j-api:1.7.30')
+        implementation('org.slf4j:slf4j-api:1.7.32')
         //  junit 5.x and mockito
-        testImplementation("org.mockito:mockito-core:3.1.0")
-        testImplementation('org.junit.jupiter:junit-jupiter:5.6.2')
+        testImplementation("org.mockito:mockito-core:${version_options.MOCKITO_VERSION}")
+        testImplementation("org.junit.jupiter:junit-jupiter:${version_options.JUNIT_VERSION}")
         //  log4j 2.x
         testImplementation("org.apache.logging.log4j:log4j-api:${version_options.LOG4J2_VERSION}")
         testImplementation("org.apache.logging.log4j:log4j-core:${version_options.LOG4J2_VERSION}")
