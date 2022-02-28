@@ -52,7 +52,7 @@ public @interface StructSheet {
     /**
      * @return the first row's order of struct. {@link StructWorker} will load
      * from startOrder to endOrder. default 1.
-     * it is means from the second row in excel(0-based) or first line in other data file.
+     * it is means from the second row in Excel(0-based) or first line in other data file.
      */
     int startOrder() default 1;
 

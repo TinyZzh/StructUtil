@@ -47,7 +47,7 @@ public @interface StructOptional {
 
     /**
      * define reference field's probably {@link StructField} array.
-     * **the array's index is execute order**.
+     * <strong>the array's index is execute order</strong>.
      * foreach all {@link StructField[]} element until resolve reference field's and break this iteration.
      *
      * @return {@link StructField} array.

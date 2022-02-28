@@ -28,6 +28,27 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Define non-primitive type field struct and handle special converter behavior.
+ * <p>
+ * e.g.
+ * <pre>
+ *     {@code
+ *     class B {
+ *
+ *          //  Convert A struct file to Map&lt;id, A>
+ *          @StructField(ref = A.class, refUniqueKey = "A.id")
+ *          private A obj;
+ *
+ *          //  Convert A struct file to Map&lt;Tag, List&lt;A>>
+ *          @StructField(ref = A.class, refGroupBy = "A.tag") //
+ *          private List&lt;A> list;
+ *
+ *          //  Convert A struct file to Map&lt;Tag, Map&lt;id, A>>>
+ *          @StructField(ref = A.class, refGroupBy = "A.tag", refUniqueKey = "A.id")
+ *          private Map&lt;Integer, A> map;
+ *     }
+ * </pre>
+ *
  * @author TinyZ.
  * @version 2019.03.23
  */
@@ -38,32 +59,38 @@ import java.lang.annotation.Target;
 public @interface StructField {
 
     /**
+     * the property's field name.
+     *
      * @return the property's field name.
      */
     String name() default "";
 
     /**
-     * reference {@link StructSheet} class.
+     * the reference {@link StructSheet} class.
      */
     Class<?> ref() default Object.class;
 
     /**
-     * @return define the target bean's field which collection result will be group by.
+     * @return define the target bean's field which collection result will be grouping by.
      */
     String[] refGroupBy() default {};
 
     /**
-     * the ref unique key.
+     * @return the ref unique key.
      */
     String[] refUniqueKey() default {};
 
     /**
-     * is this field required.
+     * Is this field required.
+     *
+     * @return true if the field is requirement, otherwise false.
      */
     boolean required() default false;
 
     /**
-     * @return use custom converter replace the default system converter to convert this field value.
+     * Use the custom converter replace the default system converter to convert this field value.
+     *
+     * @return the converter class.
      */
     Class<? extends Converter> converter() default Converter.class;
 }
