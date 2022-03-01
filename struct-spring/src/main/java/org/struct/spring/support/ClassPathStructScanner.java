@@ -189,6 +189,9 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
     void handleStructStoreProperty(GenericBeanDefinition gbd, AutoStruct anno, StructStoreOptions annoOptions) {
         MutablePropertyValues propertyValues = gbd.getPropertyValues();
         if (null != anno && MapStructStore.class.isAssignableFrom(gbd.getBeanClass())) {
+            if (!anno.mapKey().isEmpty()) {
+                propertyValues.add(StructConstant.KEY_RESOLVER, new MapKeyFieldResolver(anno.mapKey()));
+            }
             if (!anno.keyResolverBeanName().isEmpty()) {
                 propertyValues.add(StructConstant.KEY_RESOLVER_BEAN_NAME, anno.keyResolverBeanName());
             }

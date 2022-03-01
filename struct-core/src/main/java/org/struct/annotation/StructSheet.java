@@ -57,7 +57,7 @@ public @interface StructSheet {
     int startOrder() default 1;
 
     /**
-     * @return last last row or line order of struct. {@link StructWorker} will load
+     * @return the last row or line order of struct. {@link StructWorker} will load
      * from startOrder to endOrder. default -1. it's means load data until the EOF.
      * if user set the other large than zero's numeric means the data file's last row or last line.
      */

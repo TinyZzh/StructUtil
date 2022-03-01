@@ -25,6 +25,7 @@ package org.struct.spring.support;
 public final class StructConstant {
 
     public static final String CLZ_OF_BEAN = "clzOfBean";
+    public static final String KEY_RESOLVER = "keyResolver";
     public static final String KEY_RESOLVER_BEAN_NAME = "keyResolverBeanName";
     public static final String KEY_RESOLVER_BEAN_CLASS = "keyResolverBeanClass";
     public static final String KEY_OPTIONS = "options";

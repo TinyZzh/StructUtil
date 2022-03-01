@@ -48,6 +48,15 @@ public @interface AutoStruct {
     Class<? extends StructStore> clzOfStore() default StructStore.class;
 
     /**
+     * Set {@link org.struct.spring.support.MapKeyFieldResolver} for bean's field.
+     *
+     * @return key field resolver.
+     * @see org.struct.spring.support.MapKeyFieldResolver
+     * @since 3.5
+     */
+    String mapKey() default "";
+
+    /**
      * @return {@link org.struct.spring.support.MapStructStore}'s {@link StructKeyResolver}'s bean name.
      */
     String keyResolverBeanName() default "";
