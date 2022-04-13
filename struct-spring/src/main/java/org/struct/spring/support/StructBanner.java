@@ -44,7 +44,7 @@ public enum StructBanner {
     };
 
     private static final String STRUCT_STORE_SERVICE = " :: Struct Store Service :: ";
-    private static final String VERSION = "3.5.1.beta-SNAPSHOT";
+    private static final String VERSION = "3.5.3.beta-SNAPSHOT";
 
     /**
      * Print struct store service banner.

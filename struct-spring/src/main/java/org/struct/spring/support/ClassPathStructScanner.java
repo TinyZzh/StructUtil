@@ -99,8 +99,7 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
 
     @Override
     public Set<BeanDefinitionHolder> doScan(String... basePackages) {
-        Set<BeanDefinitionHolder> holders = super.doScan(basePackages);
-        return holders;
+        return super.doScan(basePackages);
     }
 
     @Override
@@ -134,7 +133,7 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
             );
             super.registerBeanDefinition(definitionHolder, registry);
         } else {
-            //  Generate struct store by struct's bean definition
+            //  Generate struct store by struct bean's definition
             String mapperBeanName = definitionHolder.getBeanName() + StructStore.class.getSimpleName();
             AnnotatedGenericBeanDefinition mbd = this.generateStructStoreBeanDefinition(gbd);
             AnnotationConfigUtils.processCommonDefinitionAnnotations(mbd);
@@ -158,7 +157,7 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                 clzOfStore = anno.clzOfStore();
             } else {
                 //  nested MapStructStore or ListStructStore
-                if (!anno.keyResolverBeanName().isEmpty()) {
+                if (!anno.mapKey().isEmpty() || !anno.keyResolverBeanName().isEmpty()) {
                     clzOfStore = MapStructStore.class;
                 }
                 if (StructKeyResolver.class != anno.keyResolverBeanClass()) {
