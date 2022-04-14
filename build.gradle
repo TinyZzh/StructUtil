@@ -34,6 +34,7 @@ ext.struct_jvm_projects = [
 
 allprojects {
     apply plugin: 'jacoco'
+    apply plugin: 'java-library'
 
     ext.version_options = [
             SPRING_BOOT_VERSION: "2.5.8",
