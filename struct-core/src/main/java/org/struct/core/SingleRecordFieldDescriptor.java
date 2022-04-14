@@ -20,67 +20,36 @@ package org.struct.core;
 
 import org.struct.annotation.StructField;
 import org.struct.core.converter.Converter;
-import org.struct.core.converter.ConverterRegistry;
 import org.struct.exception.IllegalAccessPropertyException;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
+import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class SingleFieldDescriptor extends FieldDescriptor {
+public class SingleRecordFieldDescriptor extends SingleFieldDescriptor {
     private static final long serialVersionUID = 8949543119635057452L;
 
-    private Field field;
-    private Class<?> fieldType;
+    private RecordComponent rc;
     private Class<?> reference;
     private String[] refGroupBy;
     private String[] refUniqueKey;
     private boolean required;
     private Converter converter;
 
-    public SingleFieldDescriptor() {
+    public SingleRecordFieldDescriptor() {
     }
 
-    public SingleFieldDescriptor(String name, Field field, Class<?> reference, String[] refGroupBy, String[] refUniqueKey, boolean required, Converter converter) {
-        this.name = name;
-        this.field = field;
-        this.reference = reference;
-        this.refGroupBy = refGroupBy;
-        this.refUniqueKey = refUniqueKey;
-        this.required = required;
-        this.converter = converter;
+    public SingleRecordFieldDescriptor(StructField annotation, boolean globalStructRequiredValue) {
+        super(annotation, globalStructRequiredValue);
     }
 
-    public SingleFieldDescriptor(StructField annotation, boolean globalStructRequiredValue) {
-        if (annotation != null) {
-            this.setRequired(annotation.required());
-            if (!annotation.name().isEmpty()) {
-                this.setName(annotation.name());
-            }
-            if (Object.class != annotation.ref()) {
-                this.setReference(annotation.ref());
-                this.setRefGroupBy(annotation.refGroupBy());
-                this.setRefUniqueKey(annotation.refUniqueKey());
-            }
-            Class<? extends Converter> c = annotation.converter();
-            if (Converter.class != c
-                    && !Modifier.isInterface(c.getModifiers())
-                    && !Modifier.isAbstract(c.getModifiers())
-            ) {
-                this.setConverter(ConverterRegistry.lookupOrDefault(c, c));
-            }
-        } else {
-            this.setRequired(globalStructRequiredValue);
-        }
+    public RecordComponent getRc() {
+        return rc;
     }
 
-    public Field getField() {
-        return field;
-    }
-
-    public void setField(Field field) {
-        this.field = field;
+    public void setRc(RecordComponent rc) {
+        this.rc = rc;
     }
 
     public Class<?> getReference() {
@@ -140,11 +109,8 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     }
 
     public Class<?> getFieldType() {
-        Field field = getField();
-        if (field != null) {
-            return field.getType();
-        } else if (this.fieldType != null) {
-            return this.fieldType;
+        if (rc != null) {
+            return rc.getType();
         }
         return Object.class;
     }
@@ -158,13 +124,15 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     public Object getFieldValue(Object instance) {
         if (instance instanceof StructImpl si) {
             return si.get(this);
-        }
-        Field field = getField();
-        if (field != null) {
+        } else if (rc != null) {
             try {
-                return field.get(instance);
-            } catch (IllegalAccessException e) {
-                throw new IllegalAccessPropertyException("get field value failure. field:" + field.getName(), e);
+                Method accessor = rc.getAccessor();
+                if (!accessor.canAccess(instance)) {
+                    accessor.setAccessible(true);
+                }
+                return accessor.invoke(instance);
+            } catch (Exception e) {
+                throw new IllegalAccessPropertyException("get field value failure. field:" + rc.getName(), e);
             }
         }
         return null;
@@ -177,22 +145,14 @@ public class SingleFieldDescriptor extends FieldDescriptor {
      * @param value    the field's value.
      */
     public void setFieldValue(Object instance, Object value) {
-        Field field = getField();
-        if (field != null) {
-            try {
-                field.set(instance, value);
-            } catch (IllegalAccessException e) {
-                throw new IllegalAccessPropertyException("set field value failure. field:" + field.getName() + ", val:" + value, e);
-            }
-        }
+        throw new UnsupportedOperationException("JDK record class not support setter. clz:" + instance.getClass());
     }
 
     @Override
     public String toString() {
-        return "SingleFieldDescriptor{" +
-                "name='" + name + '\'' +
-                ", field=" + field +
-                ", ref=" + reference +
+        return "SingleRecordFieldDescriptor{" +
+                "rc=" + rc +
+                ", reference=" + reference +
                 ", refGroupBy=" + Arrays.toString(refGroupBy) +
                 ", refUniqueKey=" + Arrays.toString(refUniqueKey) +
                 ", required=" + required +
@@ -204,21 +164,17 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        SingleFieldDescriptor that = (SingleFieldDescriptor) o;
-        return required == that.required &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(field, that.field) &&
-                Objects.equals(reference, that.reference) &&
-                Arrays.equals(refGroupBy, that.refGroupBy) &&
-                Arrays.equals(refUniqueKey, that.refUniqueKey) &&
-                Objects.equals(converter, that.converter);
+        if (!super.equals(o)) return false;
+        SingleRecordFieldDescriptor that = (SingleRecordFieldDescriptor) o;
+        return required == that.required && Objects.equals(rc, that.rc) && Objects.equals(reference, that.reference) && Arrays.equals(refGroupBy, that.refGroupBy) && Arrays.equals(refUniqueKey, that.refUniqueKey) && Objects.equals(converter, that.converter);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(name, field, reference, required, converter);
+        int result = Objects.hash(super.hashCode(), rc, reference, required, converter);
         result = 31 * result + Arrays.hashCode(refGroupBy);
         result = 31 * result + Arrays.hashCode(refUniqueKey);
         return result;
     }
+
 }

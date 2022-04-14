@@ -66,8 +66,8 @@ subprojects {
     apply plugin: 'idea'
     apply plugin: 'distribution'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 17
+    targetCompatibility = 17
     compileJava.options.setEncoding("UTF-8")
     compileTestJava.options.setEncoding("UTF-8")
 

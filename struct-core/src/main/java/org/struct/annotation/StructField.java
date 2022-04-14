@@ -54,7 +54,7 @@ import java.lang.annotation.Target;
  */
 @Inherited
 @Documented()
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface StructField {
 
