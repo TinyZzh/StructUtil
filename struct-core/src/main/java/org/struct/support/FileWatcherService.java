@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  * Simple file watcher service implement.
  * <p>
  * Monitor registered dir or file change event and invoke custom hook to handle it.
- * <strong>Only {@link StandardWatchEventKinds#ENTRY_MODIFY} event<strong/>
+ * <strong>Only {@link StandardWatchEventKinds#ENTRY_MODIFY} event</strong>
  */
 public class FileWatcherService implements Runnable {
 

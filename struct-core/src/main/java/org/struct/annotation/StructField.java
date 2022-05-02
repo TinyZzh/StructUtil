@@ -31,8 +31,7 @@ import java.lang.annotation.Target;
  * Define non-primitive type field struct and handle special converter behavior.
  * <p>
  * e.g.
- * <pre>
- *     {@code
+ * <pre> {@code
  *     class B {
  *
  *          //  Convert A struct file to Map&lt;id, A>
