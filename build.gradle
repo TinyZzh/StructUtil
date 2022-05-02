@@ -33,6 +33,7 @@ ext.struct_jvm_projects = [
 ]
 
 allprojects {
+    apply plugin: 'jacoco'
     apply plugin: 'java-library'
 
     ext.version_options = [
@@ -44,6 +45,10 @@ allprojects {
             POI_VERSION        : "5.2.2",
             LOG4J2_VERSION     : "2.17.2",
     ]
+
+    jacoco {
+        toolVersion = "0.8.8"
+    }
 
     repositories {
         mavenLocal()
@@ -105,13 +110,6 @@ subprojects {
 
 ext.codecovProjects = subprojects.findAll {
     return ["struct-core", "struct-spring", "struct-spring-boot-starter"].contains(it.name)
-}
-configure(codecovProjects) {
-    apply plugin: 'jacoco'
-
-    jacoco {
-        toolVersion = "0.8.8"
-    }
 }
 task codeCoverageReport(type: JacocoReport) {
     getExecutionData().setFrom(fileTree(dir: project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))
