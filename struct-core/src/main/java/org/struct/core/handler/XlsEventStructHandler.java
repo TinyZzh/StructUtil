@@ -29,6 +29,7 @@ import org.apache.poi.hssf.record.BOFRecord;
 import org.apache.poi.hssf.record.BlankRecord;
 import org.apache.poi.hssf.record.BoolErrRecord;
 import org.apache.poi.hssf.record.BoundSheetRecord;
+import org.apache.poi.hssf.record.CellValueRecordInterface;
 import org.apache.poi.hssf.record.FormulaRecord;
 import org.apache.poi.hssf.record.LabelRecord;
 import org.apache.poi.hssf.record.LabelSSTRecord;
@@ -185,17 +186,13 @@ public class XlsEventStructHandler implements StructHandler {
                     sstRecord = (SSTRecord) record;
                     break;
                 case BlankRecord.sid:
-                    BlankRecord brec = (BlankRecord) record;
-
-                    thisRow = brec.getRow();
-                    thisColumn = brec.getColumn();
-                    thisStr = "";
-                    break;
                 case BoolErrRecord.sid:
-                    BoolErrRecord berec = (BoolErrRecord) record;
-
-                    thisRow = berec.getRow();
-                    thisColumn = berec.getColumn();
+                case NoteRecord.sid:
+                case RKRecord.sid:
+                    //  invalid excel cell value.
+                    CellValueRecordInterface rc = (CellValueRecordInterface) record;
+                    thisRow = rc.getRow();
+                    thisColumn = rc.getColumn();
                     thisStr = "";
                     break;
                 case FormulaRecord.sid:
@@ -241,14 +238,7 @@ public class XlsEventStructHandler implements StructHandler {
                         thisStr = sstRecord.getString(lsrec.getSSTIndex()).toString();
                     }
                     break;
-                case NoteRecord.sid:
-                    NoteRecord nrec = (NoteRecord) record;
 
-                    thisRow = nrec.getRow();
-                    thisColumn = nrec.getColumn();
-                    // TODO: Find object to match nrec.getShapeId()
-                    thisStr = '"' + "(TODO)" + '"';
-                    break;
                 case NumberRecord.sid:
                     NumberRecord numrec = (NumberRecord) record;
 
@@ -257,13 +247,6 @@ public class XlsEventStructHandler implements StructHandler {
 
                     // Format
                     thisStr = formatListener.formatNumberDateCell(numrec);
-                    break;
-                case RKRecord.sid:
-                    RKRecord rkrec = (RKRecord) record;
-
-                    thisRow = rkrec.getRow();
-                    thisColumn = rkrec.getColumn();
-                    thisStr = "";
                     break;
                 default:
                     break;

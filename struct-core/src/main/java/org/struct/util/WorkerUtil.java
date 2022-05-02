@@ -111,22 +111,6 @@ public final class WorkerUtil {
         }
     }
 
-    private static <T, C extends Collection<T>> C newList(Class<C> clzOfList) throws Exception {
-        C list;
-        if (!(Collection.class.isAssignableFrom(clzOfList))) {
-            throw new IllegalArgumentException("class " + clzOfList + " is not Collection.");
-        }
-        if (clzOfList.isInterface()
-                || Modifier.isAbstract(clzOfList.getModifiers())
-                || Modifier.isInterface(clzOfList.getModifiers())) {
-            list = (C) new ArrayList<T>();
-        } else {
-            Constructor<C> constructor = clzOfList.getConstructor();
-            list = constructor.newInstance();
-        }
-        return list;
-    }
-
     public static <T> Collection<T> newListOnly(Class<?> clzOfList) throws Exception {
         Collection<T> list;
         if (!(Collection.class.isAssignableFrom(clzOfList))) {
@@ -150,9 +134,8 @@ public final class WorkerUtil {
     public static <T> Map<Object, T> newMap(Class<?> clzOfMap) throws Exception {
         Map<Object, T> map;
         if (clzOfMap == null
-                || clzOfMap.isInterface()
-                || Modifier.isInterface(clzOfMap.getModifiers())
                 || Modifier.isAbstract(clzOfMap.getModifiers())
+                || Modifier.isInterface(clzOfMap.getModifiers())
         ) {
             map = new HashMap<>();
         } else {
