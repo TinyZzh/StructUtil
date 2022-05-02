@@ -21,5 +21,9 @@ dependencies {
     implementation("org.springframework:spring-context:${version_options.SPRING_VERSION}")
     implementation("org.springframework:spring-beans:${version_options.SPRING_VERSION}")
     implementation("org.springframework:spring-core:${version_options.SPRING_VERSION}")
+    implementation("org.springframework:spring-oxm:${version_options.SPRING_VERSION}")
+
+    implementation("jakarta.xml.bind:jakarta.xml.bind-api:2.3.3")
+
     testImplementation("org.springframework:spring-test:${version_options.SPRING_VERSION}")
 }
