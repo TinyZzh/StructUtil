@@ -54,7 +54,7 @@ public enum StructBanner {
         for (String line : BANNER) {
             ps.println(line);
         }
-        ps.println(STRUCT_STORE_SERVICE + "    (" + VERSION + ")");
+        ps.println(STRUCT_STORE_SERVICE + "    (" + getVersion() + ")");
     }
 
     /**

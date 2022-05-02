@@ -27,8 +27,10 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.ReflectionUtils;
 import org.struct.spring.annotation.StructScan;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.mockito.Mockito.doReturn;
@@ -51,13 +53,14 @@ class ListStructStoreTest {
 
     @Test
     public void test() {
-        ListStructStore<String> lss = spy(new ListStructStore<>());
+        ListStructStore<String> lss = spy(new ListStructStore<>(String.class));
         doReturn(Collections.singletonList("xx")).when(lss).loadStructData();
         Assertions.assertThrows(UnsupportedOperationException.class, () -> {
             lss.get("xx");
         });
+        lss.initialize();
         System.out.println(lss.toString());
-        Assertions.assertEquals("xx", lss.lookup(x -> x.equals("xx")));
+        Assertions.assertEquals(Collections.singletonList("xx"), lss.lookup(x -> x.equals("xx")));
         Assertions.assertEquals(1, lss.getAll().size());
         Assertions.assertEquals("xx", lss.getAll().get(0));
     }
@@ -67,6 +70,27 @@ class ListStructStoreTest {
         ListStructStore<String> lss = spy(new ListStructStore<>(String.class));
         doReturn(Collections.singletonList("xx")).when(lss).loadStructData();
         lss.dispose();
+    }
+
+    @Test
+    public void testInitSuc() {
+        ListStructStore<Object> store = spy(new ListStructStore<>(Object.class));
+        doReturn(new ArrayList<>()).when(store).loadStructData();
+        store.initialize();
+        Assertions.assertTrue(store.isInitialized());
+    }
+
+    @Test
+    public void testInitFailure() {
+        ListStructStore<Object> store = spy(new ListStructStore<>(Object.class));
+        doReturn(new ArrayList<>()).when(store).loadStructData();
+        store.casStatusInit();
+        store.casStatusDone();
+        Options options = new Options();
+        options.setWaitForInit(true);
+        store.setOptions(options);
+        store.initialize();
+        Assertions.assertTrue(store.isInitialized());
     }
 
 

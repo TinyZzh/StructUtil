@@ -138,6 +138,10 @@ public abstract class AbstractStructStore<K, B>
         this.clzOfBean = clzOfBean;
     }
 
+    public void setOptions(Options options) {
+        this.options = options;
+    }
+
     @Override
     public void reload() {
         if (!isInitialized())

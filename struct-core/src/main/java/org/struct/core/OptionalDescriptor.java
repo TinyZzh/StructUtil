@@ -18,10 +18,11 @@
 
 package org.struct.core;
 
+import java.io.Serial;
 import java.util.Arrays;
-import java.util.Objects;
 
 public class OptionalDescriptor extends FieldDescriptor {
+    @Serial
     private static final long serialVersionUID = 8949543119635057452L;
 
     private SingleFieldDescriptor[] descriptors;
@@ -40,8 +41,8 @@ public class OptionalDescriptor extends FieldDescriptor {
     @Override
     public String toString() {
         return "OptionalDescriptor{" +
-                "name='" + name + '\'' +
-                ", descriptors=" + Arrays.toString(descriptors) +
+                "descriptors=" + Arrays.toString(descriptors) +
+                ", name='" + name + '\'' +
                 '}';
     }
 
@@ -49,16 +50,15 @@ public class OptionalDescriptor extends FieldDescriptor {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         OptionalDescriptor that = (OptionalDescriptor) o;
-        return Objects.equals(name, that.name) &&
-                Arrays.equals(descriptors, that.descriptors);
+        return Arrays.equals(descriptors, that.descriptors);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(name);
+        int result = super.hashCode();
         result = 31 * result + Arrays.hashCode(descriptors);
         return result;
     }
-
 }

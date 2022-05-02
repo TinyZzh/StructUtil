@@ -16,19 +16,21 @@
  *  limitations under the License.
  */
 
-package org.struct.spring.support;
+package org.struct.util;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author TinyZ.
- * @date 2020-10-12.
+ * @version 2022.05.02
  */
-class StructBannerTest {
+class StringsTest {
 
     @Test
     public void test() {
-        StructBanner.INSTANCE.print();
-        StructBanner.INSTANCE.getVersion();
+        Assertions.assertEquals("Xyz", Strings.capitalize("xyz"));
+        Assertions.assertEquals("X1", Strings.capitalize("x1"));
+        Assertions.assertEquals("123", Strings.capitalize("123"));
     }
 }

@@ -32,12 +32,9 @@ public class Strings {
         //  no-op
     }
 
-    public static String toUpperCaseFirstChar(String name) {
-        if (name == null || name.length() == 0) {
+    public static String capitalize(String name) {
+        if (name == null || name.length() == 0)
             return name;
-        }
-        char chars[] = name.toCharArray();
-        chars[0] = Character.toUpperCase(chars[0]);
-        return new String(chars);
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 }
