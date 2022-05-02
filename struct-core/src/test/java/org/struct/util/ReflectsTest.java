@@ -22,8 +22,10 @@ package org.struct.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Objects;
 
 public class ReflectsTest {
 
@@ -133,4 +135,33 @@ public class ReflectsTest {
         List<Field> fields3 = Reflects.resolveAllFields(Apple2.class, true);
         Assertions.assertEquals(4, fields3.size());
     }
+
+    @Test
+    public void testLookupAccessor() throws Throwable {
+        Object[] values = new Object[]{1, "2"};
+        BeanClz bean = new BeanClz(1, "2");
+        Assertions.assertEquals(values[0], Reflects.lookupAccessor(BeanClz.class, "id").invoke(bean));
+        Assertions.assertEquals(values[1], Reflects.lookupAccessor(BeanClz.class, "name").invoke(bean));
+        Assertions.assertNull(Reflects.lookupAccessor(BeanClz.class, "nameX"));
+
+        RecordClz record = new RecordClz(1, "2");
+        Assertions.assertEquals(values[0], Reflects.lookupAccessor(RecordClz.class, "id").invoke(record));
+        Assertions.assertEquals(values[1], Reflects.lookupAccessor(RecordClz.class, "name").invoke(record));
+        Assertions.assertNull(Reflects.lookupAccessor(RecordClz.class, "nameX"));
+
+    }
+
+    static class BeanClz {
+        private int id;
+        private String name;
+
+        public BeanClz(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
+
+    record RecordClz(int id, String name) {
+    }
+
 }

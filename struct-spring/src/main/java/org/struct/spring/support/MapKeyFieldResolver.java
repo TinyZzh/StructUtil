@@ -1,8 +1,9 @@
 package org.struct.spring.support;
 
-import org.springframework.util.ReflectionUtils;
+import org.struct.util.Reflects;
 
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandle;
+import java.util.Optional;
 
 /**
  * bean's{#id} field's key resolver.
@@ -20,13 +21,13 @@ public class MapKeyFieldResolver implements StructKeyResolver<Object, Object> {
 
     @Override
     public Object resolve(Object bean) throws RuntimeException {
-        Field field = ReflectionUtils.findField(bean.getClass(), fieldName);
-        if (field != null) {
-            if (!field.isAccessible()) {
-                field.setAccessible(true);
+        Optional<MethodHandle> mh = Reflects.lookupFieldGetter(bean.getClass(), this.fieldName);
+        return mh.map(m -> {
+            try {
+                return m.invoke(bean);
+            } catch (Throwable e) {
+                throw new RuntimeException("unknown bean field:" + fieldName + ".");
             }
-            return ReflectionUtils.getField(field, bean);
-        }
-        throw new RuntimeException("unknown bean field:" + fieldName + ".");
+        }).orElse(null);
     }
 }
