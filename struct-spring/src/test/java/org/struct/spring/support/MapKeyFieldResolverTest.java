@@ -43,6 +43,25 @@ class MapKeyFieldResolverTest {
 
     public static class Key {
         private int k;
+
+        public Key() {
+        }
+
+        public Key(int k) {
+            this.k = k;
+        }
+    }
+
+    @Test
+    public void testRecord() {
+        RecordData rc = new RecordData(1, "b", new Key(2));
+        Assertions.assertEquals(rc.a, new MapKeyFieldResolver("a").resolve(rc));
+        Assertions.assertEquals(rc.b, new MapKeyFieldResolver("b").resolve(rc));
+        Assertions.assertEquals(rc.c, new MapKeyFieldResolver("c").resolve(rc));
+        Assertions.assertNull(new MapKeyFieldResolver("d").resolve(rc));
+    }
+
+    record RecordData(int a, String b, Key c) {
     }
 
 }
