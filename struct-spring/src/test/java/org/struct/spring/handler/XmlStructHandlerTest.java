@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.struct.core.handler;
+package org.struct.spring.handler;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
