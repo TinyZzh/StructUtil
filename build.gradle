@@ -42,7 +42,7 @@ allprojects {
             JETTY_VERSION      : "9.4.44.v20210927",
             MOCKITO_VERSION    : "3.9.0",
             JUNIT_VERSION      : "5.7.2",
-            POI_VERSION        : "5.1.0",
+            POI_VERSION        : "5.2.2",
             LOG4J2_VERSION     : "2.17.2",
     ]
 
