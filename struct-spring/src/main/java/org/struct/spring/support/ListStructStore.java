@@ -44,6 +44,9 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
      */
     private volatile List<B> cached = Collections.EMPTY_LIST;
 
+    /**
+     * Only for spring framework bean definition.
+     */
     public ListStructStore() {
         //  spring bean definition
     }

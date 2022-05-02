@@ -35,8 +35,17 @@ public interface StructStore<K, B> {
      */
     String identify();
 
+    /**
+     * Load and initialize {@link StructStore} data.
+     * Update store status `NORMAL` -> `INITIALIZING` -> `DONE`
+     */
     void initialize();
 
+    /**
+     * Is struct store initialized.
+     *
+     * @return true if struct store has been initialized, otherwise false.
+     */
     boolean isInitialized();
 
     /**
@@ -48,8 +57,14 @@ public interface StructStore<K, B> {
 
     void setClzOfBean(Class<B> clzOfBean);
 
+    /**
+     * Reload struct store data.
+     */
     void reload();
 
+    /**
+     * Reset status to `NORMAL` and clear struct store data.
+     */
     void dispose();
 
     /**
@@ -59,16 +74,44 @@ public interface StructStore<K, B> {
      */
     int size();
 
+    /**
+     * Get struct store all element.
+     *
+     * @return struct store all element.
+     */
     List<B> getAll();
 
+    /**
+     * Get struct store element by the key.
+     *
+     * @return the element by the key.
+     */
     B get(K key);
 
     B getOrDefault(K key, B dv);
 
+    /**
+     * Try get struct store element by the key.
+     *
+     * @return optional with the element by the key.
+     * @see Optional
+     */
     Optional<B> tryGet(K key);
 
+    /**
+     * Get multiple element by keys array.
+     *
+     * @param keys multiple element key array.
+     * @return element list.
+     */
     List<B> lookup(K... keys);
 
+    /**
+     * Get elements by the filter.
+     *
+     * @param filter the element filter.
+     * @return element list.
+     */
     List<B> lookup(Predicate<B> filter);
 
 }

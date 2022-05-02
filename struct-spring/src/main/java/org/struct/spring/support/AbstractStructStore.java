@@ -68,9 +68,17 @@ public abstract class AbstractStructStore<K, B>
      * store element's amount.
      */
     protected volatile int size;
-
+    /**
+     * Spring application context.
+     */
     protected ApplicationContext applicationContext;
-
+    /**
+     * Store's status.
+     *
+     * @see #NORMAL
+     * @see #INITIALIZING
+     * @see #DONE
+     */
     private volatile int status;
 
     /// --------------- constructor ------------------

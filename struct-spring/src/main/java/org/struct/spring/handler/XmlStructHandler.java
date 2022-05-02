@@ -81,9 +81,9 @@ public class XmlStructHandler implements StructHandler {
     }
 
     /**
-     * JXAB bean's wrapper.
+     * Jaxb bean's wrapper.
      *
-     * @param <T>
+     * @param <T> the java bean type.
      * @author TinyZ.
      */
     public static class JaxbCollectionWrapper<T> {
@@ -91,7 +91,7 @@ public class XmlStructHandler implements StructHandler {
         private Collection<T> root;
 
         /**
-         * @return jxab bean's collection.
+         * @return jaxb bean's collection.
          */
         @XmlAnyElement(lax = true)
         public Collection<T> getRoot() {

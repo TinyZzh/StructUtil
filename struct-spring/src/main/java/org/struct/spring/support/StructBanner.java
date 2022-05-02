@@ -21,7 +21,7 @@ package org.struct.spring.support;
 import java.io.PrintStream;
 
 /**
- * Banner.
+ * Struct Banner.
  *
  * @author TinyZ.
  * @date 2020-08-29.
