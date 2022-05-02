@@ -43,7 +43,7 @@ allprojects {
             MOCKITO_VERSION    : "3.9.0",
             JUNIT_VERSION      : "5.7.2",
             POI_VERSION        : "5.1.0",
-            LOG4J2_VERSION     : "2.17.1",
+            LOG4J2_VERSION     : "2.17.2",
     ]
 
     jacoco {
