@@ -42,13 +42,17 @@ public class DateConverter implements Converter {
 
     @Override
     public Object convert(Object originValue, Class<?> targetType) {
-        if (Date.class != targetType
+        if (null == originValue) {
+            return null;
+        } else if (Date.class != targetType
                 || Date.class == originValue.getClass()) {
             return originValue;
         } else if (originValue instanceof Number) {
             long mills = ((Number) originValue).longValue();
-            if (originValue instanceof Integer)
+            if (originValue instanceof Integer
+                    || (originValue instanceof Long l0 && l0 <= (long) Integer.MAX_VALUE)) {
                 mills *= 1000L;
+            }
             return new Date(mills);
         } else {
             String str = String.valueOf(originValue);

@@ -162,7 +162,7 @@ public class EmbeddedConverters implements Converters {
         @Override
         public Object convert(Object originValue, Class<?> targetType) {
             if (null == originValue) {
-                return 0x00;
+                return (byte) 0x00;
             } else if (originValue instanceof String) {
                 String s = (String) originValue;
                 return ConverterUtil.isHexNumber(s) ? Byte.decode(s) : Byte.valueOf(s);
