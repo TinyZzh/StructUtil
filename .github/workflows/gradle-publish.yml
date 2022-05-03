@@ -17,12 +17,12 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 8
-      uses: actions/setup-java@v2
+    - uses: actions/checkout@v3
+    - name: Set up JDK 17(Eclipse Temurin)
+      uses: actions/setup-java@v3
       with:
-        java-version: '8'
-        distribution: 'adopt'
+        java-version: '17'
+        distribution: 'temurin'
         cache: gradle
 
     - name: Validate Gradle wrapper

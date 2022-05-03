@@ -21,7 +21,7 @@ package org.struct.spring.support;
 import java.io.PrintStream;
 
 /**
- * Banner.
+ * Struct Banner.
  *
  * @author TinyZ.
  * @date 2020-08-29.
@@ -44,7 +44,7 @@ public enum StructBanner {
     };
 
     private static final String STRUCT_STORE_SERVICE = " :: Struct Store Service :: ";
-    private static final String VERSION = "3.5.3.beta-SNAPSHOT";
+    private static final String VERSION = "4.0.0.beta-SNAPSHOT";
 
     /**
      * Print struct store service banner.
@@ -54,7 +54,7 @@ public enum StructBanner {
         for (String line : BANNER) {
             ps.println(line);
         }
-        ps.println(STRUCT_STORE_SERVICE + "    (" + VERSION + ")");
+        ps.println(STRUCT_STORE_SERVICE + "    (" + getVersion() + ")");
     }
 
     /**

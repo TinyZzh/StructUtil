@@ -16,12 +16,13 @@
  *  limitations under the License.
  */
 
-package org.struct.core.handler;
+package org.struct.spring.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.core.StructDescriptor;
 import org.struct.core.StructWorker;
+import org.struct.core.handler.StructHandler;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.StructTransformException;
@@ -37,8 +38,10 @@ import java.util.function.Consumer;
 
 /**
  * Use JAXB handle xml file.
+ *
+ * @see org.springframework.oxm.jaxb.Jaxb2Marshaller
  */
-@SPI(name = "xml")
+@SPI(name = "jaxb2")
 public class XmlStructHandler implements StructHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlStructHandler.class);
@@ -78,9 +81,9 @@ public class XmlStructHandler implements StructHandler {
     }
 
     /**
-     * JXAB bean's wrapper.
+     * Jaxb bean's wrapper.
      *
-     * @param <T>
+     * @param <T> the java bean type.
      * @author TinyZ.
      */
     public static class JaxbCollectionWrapper<T> {
@@ -88,7 +91,7 @@ public class XmlStructHandler implements StructHandler {
         private Collection<T> root;
 
         /**
-         * @return jxab bean's collection.
+         * @return jaxb bean's collection.
          */
         @XmlAnyElement(lax = true)
         public Collection<T> getRoot() {

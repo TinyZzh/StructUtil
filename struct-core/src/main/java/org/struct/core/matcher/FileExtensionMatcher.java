@@ -25,6 +25,9 @@ import java.util.Objects;
 public class FileExtensionMatcher implements WorkerMatcher {
     private static final long serialVersionUID = 4620761370006132284L;
 
+    /**
+     * `*.xlsx` file.
+     */
     public static final String FILE_XLSX = ".xlsx";
     public static final String FILE_XLS = ".xls";
     public static final String FILE_JSON = ".json";

@@ -65,7 +65,7 @@ class StructStoreServiceTest {
         Assertions.assertTrue(service.getAll(String.class).isEmpty());
         Assertions.assertTrue(service.lookup(String.class, 1, 2, 3).isEmpty());
         Assertions.assertTrue(service.lookup(String.class, s -> true).isEmpty());
-
+        service.isEmpty();
         service.dispose(String.class);
         verify(store, times(1)).dispose();
         service.reload(String.class);

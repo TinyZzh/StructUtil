@@ -91,11 +91,7 @@ public class StructProperties {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StructProperties that = (StructProperties) o;
-        return arrayConverterStringTrim == that.arrayConverterStringTrim &&
-                arrayConverterIgnoreBlank == that.arrayConverterIgnoreBlank &&
-                structRequiredDefault == that.structRequiredDefault &&
-                ignoreEmptyRow == that.ignoreEmptyRow &&
-                Objects.equals(arrayConverterStringSeparator, that.arrayConverterStringSeparator);
+        return arrayConverterStringTrim == that.arrayConverterStringTrim && arrayConverterIgnoreBlank == that.arrayConverterIgnoreBlank && structRequiredDefault == that.structRequiredDefault && ignoreEmptyRow == that.ignoreEmptyRow && Objects.equals(arrayConverterStringSeparator, that.arrayConverterStringSeparator);
     }
 
     @Override

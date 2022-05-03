@@ -18,10 +18,13 @@
 
 package org.struct.core;
 
+import org.struct.annotation.StructField;
 import org.struct.core.converter.Converter;
+import org.struct.core.converter.ConverterRegistry;
 import org.struct.exception.IllegalAccessPropertyException;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -47,6 +50,29 @@ public class SingleFieldDescriptor extends FieldDescriptor {
         this.refUniqueKey = refUniqueKey;
         this.required = required;
         this.converter = converter;
+    }
+
+    public SingleFieldDescriptor(StructField annotation, boolean globalStructRequiredValue) {
+        if (annotation != null) {
+            this.setRequired(annotation.required());
+            if (!annotation.name().isEmpty()) {
+                this.setName(annotation.name());
+            }
+            if (Object.class != annotation.ref()) {
+                this.setReference(annotation.ref());
+                this.setRefGroupBy(annotation.refGroupBy());
+                this.setRefUniqueKey(annotation.refUniqueKey());
+            }
+            Class<? extends Converter> c = annotation.converter();
+            if (Converter.class != c
+                    && !Modifier.isInterface(c.getModifiers())
+                    && !Modifier.isAbstract(c.getModifiers())
+            ) {
+                this.setConverter(ConverterRegistry.lookupOrDefault(c, c));
+            }
+        } else {
+            this.setRequired(globalStructRequiredValue);
+        }
     }
 
     public Field getField() {
@@ -130,6 +156,9 @@ public class SingleFieldDescriptor extends FieldDescriptor {
      * @return field's value.
      */
     public Object getFieldValue(Object instance) {
+        if (instance instanceof StructImpl si) {
+            return si.get(this);
+        }
         Field field = getField();
         if (field != null) {
             try {

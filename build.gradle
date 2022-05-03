@@ -22,7 +22,7 @@ plugins {
 ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
-version = '3.5.3.beta-SNAPSHOT'
+version = '4.0.0.beta-SNAPSHOT'
 description = 'Light Flexible And High Performance Java Bean Struct Data Mapper.'
 
 ext.struct_jvm_projects = [
@@ -34,6 +34,7 @@ ext.struct_jvm_projects = [
 
 allprojects {
     apply plugin: 'jacoco'
+    apply plugin: 'java-library'
 
     ext.version_options = [
             SPRING_BOOT_VERSION: "2.5.8",
@@ -41,22 +42,21 @@ allprojects {
             JETTY_VERSION      : "9.4.44.v20210927",
             MOCKITO_VERSION    : "3.9.0",
             JUNIT_VERSION      : "5.7.2",
-            POI_VERSION        : "5.1.0",
-            LOG4J2_VERSION     : "2.17.1",
+            POI_VERSION        : "5.2.2",
+            LOG4J2_VERSION     : "2.17.2",
     ]
 
     jacoco {
-        toolVersion = "0.8.6"
+        toolVersion = "0.8.8"
     }
 
     repositories {
         mavenLocal()
-        maven { url "https://maven.aliyun.com/repository/central" }
-        maven { url "https://maven.aliyun.com/repository/spring" }
         maven { url "https://repo1.maven.org/maven2/" }
         maven { url "https://repo.maven.apache.org/maven2/" }
         maven { url "https://repo.typesafe.com/typesafe/repo" }
-        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://maven.aliyun.com/repository/central" }
+        maven { url "https://maven.aliyun.com/repository/spring" }
     }
 }
 
@@ -65,8 +65,8 @@ subprojects {
     apply plugin: 'idea'
     apply plugin: 'distribution'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    sourceCompatibility = 17
+    targetCompatibility = 17
     compileJava.options.setEncoding("UTF-8")
     compileTestJava.options.setEncoding("UTF-8")
 
@@ -110,13 +110,6 @@ subprojects {
 
 ext.codecovProjects = subprojects.findAll {
     return ["struct-core", "struct-spring", "struct-spring-boot-starter"].contains(it.name)
-}
-configure(codecovProjects) {
-    apply plugin: 'jacoco'
-
-    jacoco {
-        toolVersion = "0.8.6"
-    }
 }
 task codeCoverageReport(type: JacocoReport) {
     getExecutionData().setFrom(fileTree(dir: project.rootDir.absolutePath).include("**/build/jacoco/*.exec"))

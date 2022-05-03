@@ -31,8 +31,7 @@ import java.lang.annotation.Target;
  * Define non-primitive type field struct and handle special converter behavior.
  * <p>
  * e.g.
- * <pre>
- *     {@code
+ * <pre> {@code
  *     class B {
  *
  *          //  Convert A struct file to Map&lt;id, A>
@@ -54,7 +53,7 @@ import java.lang.annotation.Target;
  */
 @Inherited
 @Documented()
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface StructField {
 

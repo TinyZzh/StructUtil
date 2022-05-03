@@ -24,6 +24,8 @@ import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.struct.core.StructDescriptor;
 import org.struct.core.StructWorker;
+import org.struct.core.factory.StructFactory;
+import org.struct.core.factory.StructFactoryBean;
 import org.struct.core.handler.StructHandler;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.spi.ServiceLoader;
@@ -57,6 +59,9 @@ public final class WorkerUtil {
      */
     private static final Holder<List<StructHandler>> HANDLERS_HOLDER = new Holder<>(() ->
             ServiceLoader.loadAll(StructHandler.class).stream().filter(Objects::nonNull).collect(Collectors.toList()));
+
+    private static final Holder<List<StructFactoryBean>> FACTORY_BEAN_HOLDER = new Holder<>(() ->
+            ServiceLoader.loadAll(StructFactoryBean.class).stream().filter(Objects::nonNull).collect(Collectors.toList()));
 
     private WorkerUtil() {
         //  no-op
@@ -106,22 +111,6 @@ public final class WorkerUtil {
         }
     }
 
-    private static <T, C extends Collection<T>> C newList(Class<C> clzOfList) throws Exception {
-        C list;
-        if (!(Collection.class.isAssignableFrom(clzOfList))) {
-            throw new IllegalArgumentException("class " + clzOfList + " is not Collection.");
-        }
-        if (clzOfList.isInterface()
-                || Modifier.isAbstract(clzOfList.getModifiers())
-                || Modifier.isInterface(clzOfList.getModifiers())) {
-            list = (C) new ArrayList<T>();
-        } else {
-            Constructor<C> constructor = clzOfList.getConstructor();
-            list = constructor.newInstance();
-        }
-        return list;
-    }
-
     public static <T> Collection<T> newListOnly(Class<?> clzOfList) throws Exception {
         Collection<T> list;
         if (!(Collection.class.isAssignableFrom(clzOfList))) {
@@ -145,9 +134,8 @@ public final class WorkerUtil {
     public static <T> Map<Object, T> newMap(Class<?> clzOfMap) throws Exception {
         Map<Object, T> map;
         if (clzOfMap == null
-                || clzOfMap.isInterface()
-                || Modifier.isInterface(clzOfMap.getModifiers())
                 || Modifier.isAbstract(clzOfMap.getModifiers())
+                || Modifier.isInterface(clzOfMap.getModifiers())
         ) {
             map = new HashMap<>();
         } else {
@@ -204,6 +192,18 @@ public final class WorkerUtil {
             default:
                 throw new Exception("Unknown Cell type");
         }
+    }
+
+    public static <T> StructFactory structFactory(Class<T> clzOfStruct, StructWorker<T> worker) {
+        List<StructFactoryBean> beans = FACTORY_BEAN_HOLDER.get();
+        for (StructFactoryBean factoryBean : beans) {
+            try {
+                return factoryBean.newInstance(clzOfStruct, worker);
+            } catch (Exception e) {
+                //  no-op
+            }
+        }
+        throw new IllegalStateException("No such factory bean for struct:" + clzOfStruct);
     }
 
     static class Holder<T> {

@@ -29,5 +29,6 @@ class StructBannerTest {
     @Test
     public void test() {
         StructBanner.INSTANCE.print();
+        StructBanner.INSTANCE.getVersion();
     }
 }

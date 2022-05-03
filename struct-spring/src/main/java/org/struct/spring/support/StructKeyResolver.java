@@ -19,6 +19,8 @@
 package org.struct.spring.support;
 
 /**
+ * {@link MapStructStore} key's resolver.
+ *
  * @author TinyZ.
  * @version 2020.07.17
  */

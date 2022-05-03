@@ -20,18 +20,17 @@ package org.struct.util;
 
 import org.apache.commons.lang3.ClassUtils;
 
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -127,59 +126,63 @@ public final class Reflects {
         return result;
     }
 
-    public static Optional<MethodHandle> lookupFieldGetter(Class<?> clzOfObj, String fieldName, Class<?> valType) {
+    public static Optional<MethodHandle> lookupFieldGetter(Class<?> clzOfObj, String fieldName) {
         Map<String, Optional<MethodHandle>> methodHandleMap = METHOD_HANDLE_MAP.computeIfAbsent(clzOfObj, c -> new ConcurrentHashMap<>());
-        return methodHandleMap.computeIfAbsent(fieldName, fn -> {
-            MethodHandle var0 = null;
-            try {
-                //	public字段
-                var0 = MethodHandles.lookup().findGetter(clzOfObj, fieldName, valType);
-            } catch (Exception e) {
-                //	no-op
-            }
-            if (null == var0) {
-                try {
-                    //	根据setter方法查找
-                    for (PropertyDescriptor descriptor : Introspector.getBeanInfo(clzOfObj).getPropertyDescriptors()) {
-                        Method method = descriptor.getReadMethod();
-                        if (method != null
-                                && fieldName.equals(descriptor.getName())) {
-                            var0 = MethodHandles.lookup().unreflect(descriptor.getReadMethod());
-                        }
-                    }
-                } catch (Exception e) {
-                    //	no-op
-                }
-            }
-            return Optional.ofNullable(var0);
-        });
+        return methodHandleMap.computeIfAbsent(fieldName, fn -> Optional.ofNullable(lookupAccessor(clzOfObj, fieldName)));
     }
 
-    public static Optional<MethodHandle> lookupFieldSetter(Class<?> clzOfObj, String fieldName, Class<?> valType) {
-        Map<String, Optional<MethodHandle>> methodHandleMap = METHOD_HANDLE_MAP.computeIfAbsent(clzOfObj, c -> new ConcurrentHashMap<>());
-        return methodHandleMap.computeIfAbsent(fieldName, fn -> {
-            MethodHandle var0 = null;
-            try {
-                //	public字段
-                var0 = MethodHandles.lookup().findSetter(clzOfObj, fieldName, valType);
-            } catch (Exception e) {
-                //	no-op
-            }
-            if (null == var0) {
-                try {
-                    //	根据setter方法查找
-                    for (PropertyDescriptor descriptor : Introspector.getBeanInfo(clzOfObj).getPropertyDescriptors()) {
-                        Method method = descriptor.getWriteMethod();
-                        if (method != null
-                                && fieldName.equals(descriptor.getName())) {
-                            var0 = MethodHandles.lookup().unreflect(descriptor.getWriteMethod());
+    public static MethodHandle lookupAccessor(Class<?> clz, String fieldName) {
+        Class<?> searchType = Objects.requireNonNull(clz, "clz");
+        assert fieldName != null && fieldName.length() > 0;
+        try {
+            while (Object.class != searchType && searchType != null) {
+                if (searchType.isRecord()) {
+                    for (RecordComponent rc : searchType.getRecordComponents()) {
+                        if (Objects.equals(fieldName, rc.getName())
+                                && rc.getAccessor().trySetAccessible()) {
+                            return MethodHandles.lookup().unreflect(rc.getAccessor());
                         }
                     }
-                } catch (Exception e) {
-                    //	no-op
+                } else {
+                    Field[] fields = searchType.getDeclaredFields();
+                    for (Field field : fields) {
+                        if (Objects.equals(fieldName, field.getName())
+                                && field.trySetAccessible()) {
+                            return MethodHandles.lookup().unreflectGetter(field);
+                        }
+                    }
                 }
+                searchType = searchType.getSuperclass();
             }
-            return Optional.ofNullable(var0);
+        } catch (Exception e) {
+            //  no-op
+        }
+        return null;
+    }
+
+    public static Optional<MethodHandle> lookupFieldSetter(Class<?> clzOfObj, String fieldName) {
+        Objects.requireNonNull(clzOfObj, "clzOfObj");
+        assert fieldName != null && fieldName.length() > 0;
+        if (clzOfObj.isRecord())
+            throw new IllegalStateException("Record can not access the field's write method");
+        Map<String, Optional<MethodHandle>> methodHandleMap = METHOD_HANDLE_MAP.computeIfAbsent(clzOfObj, c -> new ConcurrentHashMap<>());
+        return methodHandleMap.computeIfAbsent(fieldName, fn -> {
+            Class<?> searchType = clzOfObj;
+            try {
+                while (Object.class != searchType && searchType != null) {
+                    Field[] fields = searchType.getDeclaredFields();
+                    for (Field field : fields) {
+                        if (Objects.equals(fieldName, field.getName())
+                                && field.trySetAccessible()) {
+                            return Optional.ofNullable(MethodHandles.lookup().unreflectSetter(field));
+                        }
+                    }
+                    searchType = searchType.getSuperclass();
+                }
+            } catch (Exception e) {
+                //  no-op
+            }
+            return Optional.empty();
         });
     }
 }

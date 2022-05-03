@@ -62,6 +62,9 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
      */
     private volatile Map<K, B> cached = Collections.EMPTY_MAP;
 
+    /**
+     * Only for spring framework bean definition.
+     */
     public MapStructStore() {
         //  spring bean definition
     }
