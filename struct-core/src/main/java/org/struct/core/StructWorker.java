@@ -97,6 +97,9 @@ public class StructWorker<T> {
             throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
         }
         Class<?> targetType = descriptor.getFieldType();
+        if (descriptor.getAggregateWith().length() > 0) {
+            targetType =  descriptor.getAggregateType();
+        }
         StructWorker<?> subWorker = WorkerUtil.newWorker(this.workspace, descriptor.getReference(), this.tempRefFieldValueMap);
         if (targetType.isArray()) {
             Map<Object, ?> map = subWorker.toListWithGroup(ArrayList::new, descriptor.getRefGroupBy());

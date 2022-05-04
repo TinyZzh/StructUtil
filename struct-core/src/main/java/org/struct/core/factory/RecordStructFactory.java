@@ -9,18 +9,22 @@ import org.struct.core.FieldDescriptor;
 import org.struct.core.OptionalDescriptor;
 import org.struct.core.SingleFieldDescriptor;
 import org.struct.core.SingleRecordFieldDescriptor;
-import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
 import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.exception.StructTransformException;
+import org.struct.exception.UnSupportConvertOperationException;
 import org.struct.util.AnnotationUtils;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.RecordComponent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -103,7 +107,7 @@ public class RecordStructFactory implements StructFactory {
             if (!(descriptor instanceof SingleFieldDescriptor sdf)) {
                 throw new RuntimeException("No such field: [" + refKeys[i] + "] in source obj:" + src.getClass());
             }
-            ary[i] = src instanceof StructImpl si ? si.get(sdf) : sdf.getFieldValue(src);
+            ary[i] = sdf.getFieldValue(src);
         }
         return ary.length == 1 ? ary[0] : new ArrayKey(ary);
     }
@@ -153,27 +157,27 @@ public class RecordStructFactory implements StructFactory {
             if (null != converter) {
                 return converter.convert(value, descriptor.getFieldType());
             } else if (descriptor.isReferenceField()) {
-                String refFieldKey = descriptor.getRefFieldUrl();
-                Map<Object, Object> map = this.worker.getRefFieldValuesMap(refFieldKey);
-                if (descriptor.isRequired() && map == null || map.isEmpty()) {
-                    throw new IllegalArgumentException("unresolved reference dependency. key:" + refFieldKey);
-                }
-                String[] refKeys = descriptor.getRefGroupBy().length > 0
-                        ? descriptor.getRefGroupBy()
-                        : descriptor.getRefUniqueKey();
-                Object keys = getFieldValuesArray(structImpl, refKeys);
-                Object val = map.get(keys);
-                if (descriptor.isRequired() && val == null) {
-                    throw new NoSuchFieldReferenceException("unknown dependent field. make sure field's type and name is right. "
-                            + " ref clazz:" + descriptor.getReference().getName()
-                            + ". map key field's name:" + Arrays.toString(refKeys)
-                            + ", actual:" + keys);
-                }
-                if (val != null
-                        && val.getClass().isArray()) {
-                    val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) descriptor.getFieldType());
-                }
-                return val;
+                // String refFieldKey = descriptor.getRefFieldUrl();
+                // Map<Object, Object> map = this.worker.getRefFieldValuesMap(refFieldKey);
+                // if (descriptor.isRequired() && map == null || map.isEmpty()) {
+                //     throw new IllegalArgumentException("unresolved reference dependency. key:" + refFieldKey);
+                // }
+                // String[] refKeys = descriptor.getRefGroupBy().length > 0
+                //         ? descriptor.getRefGroupBy()
+                //         : descriptor.getRefUniqueKey();
+                // Object keys = getFieldValuesArray(structImpl, refKeys);
+                // Object val = map.get(keys);
+                // if (descriptor.isRequired() && val == null) {
+                //     throw new NoSuchFieldReferenceException("unknown dependent field. make sure field's type and name is right. "
+                //             + " ref clazz:" + descriptor.getReference().getName()
+                //             + ". map key field's name:" + Arrays.toString(refKeys)
+                //             + ", actual:" + keys);
+                // }
+                // if (val != null
+                //         && val.getClass().isArray()) {
+                //     val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) descriptor.getFieldType());
+                // }
+                return handleReferenceFieldValue(structImpl, descriptor);
             } else {
                 return ConverterRegistry.convert(value, descriptor.getFieldType());
             }
@@ -183,4 +187,57 @@ public class RecordStructFactory implements StructFactory {
             throw new StructTransformException(msg, e);
         }
     }
+
+    Object handleReferenceFieldValue(Object structImpl, SingleFieldDescriptor fd) {
+        String refFieldKey = fd.getRefFieldUrl();
+        Map<Object, Object> map = this.worker.getRefFieldValuesMap(refFieldKey);
+        if (map == null || map.isEmpty()) {
+            if (fd.isRequired()) {
+                throw new IllegalArgumentException("unresolved reference dependency. key:" + refFieldKey);
+            } else {
+                return null;
+            }
+        }
+        String[] refKeys = fd.getRefGroupBy().length > 0
+                ? fd.getRefGroupBy()
+                : fd.getRefUniqueKey();
+        Object keys = this.getFieldValuesArray(structImpl, refKeys);
+        Object val;
+        if (keys instanceof ArrayKey) {
+            val = map.get(keys);
+        } else {
+            //  key value's type
+            Class<?> targetFieldType = fd.getFieldType();
+            if (keys.getClass().isArray()) {
+                int length = Array.getLength(keys);
+                List<Object> list = new ArrayList<>(length);
+                for (int i = 0; i < length; i++) {
+                    list.add(map.get(Array.get(keys, i)));
+                }
+                val = targetFieldType.isArray() ? list.toArray() : list;
+            } else if (keys instanceof Collection ck) {
+                List<Object> list = new ArrayList<>(ck.size());
+                for (Object key : ck) {
+                    list.add(map.get(key));
+                }
+                val = targetFieldType.isArray() ? list.toArray() : list;
+            } else if (Map.class.isAssignableFrom(keys.getClass())) {
+                throw new UnSupportConvertOperationException("Un support Map.class key yet.");
+            } else {
+                val = map.get(keys);
+            }
+        }
+        if (fd.isRequired() && val == null) {
+            throw new NoSuchFieldReferenceException("unknown dependent field. make sure field's type and name is right. "
+                    + " ref clazz:" + fd.getReference().getName()
+                    + ". map key field's name:" + Arrays.toString(refKeys)
+                    + ", actual:" + keys);
+        }
+        if (val != null
+                && val.getClass().isArray()) {
+            val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) fd.getFieldType());
+        }
+        return val;
+    }
+
 }

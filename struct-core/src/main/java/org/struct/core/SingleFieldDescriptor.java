@@ -36,6 +36,8 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     private Class<?> reference;
     private String[] refGroupBy;
     private String[] refUniqueKey;
+    private String aggregateWith;
+    private Class<?> aggregateType;
     private boolean required;
     private Converter converter;
 
@@ -62,6 +64,10 @@ public class SingleFieldDescriptor extends FieldDescriptor {
                 this.setReference(annotation.ref());
                 this.setRefGroupBy(annotation.refGroupBy());
                 this.setRefUniqueKey(annotation.refUniqueKey());
+            }
+            if (annotation.aggregateWith().length() > 0) {
+                this.setAggregateWith(annotation.aggregateWith());
+                this.setAggregateType(annotation.aggregateType());
             }
             Class<? extends Converter> c = annotation.converter();
             if (Converter.class != c
@@ -105,6 +111,22 @@ public class SingleFieldDescriptor extends FieldDescriptor {
 
     public void setRefUniqueKey(String[] refUniqueKey) {
         this.refUniqueKey = refUniqueKey;
+    }
+
+    public String getAggregateWith() {
+        return aggregateWith;
+    }
+
+    public void setAggregateWith(String aggregateWith) {
+        this.aggregateWith = aggregateWith;
+    }
+
+    public Class<?> getAggregateType() {
+        return aggregateType;
+    }
+
+    public void setAggregateType(Class<?> aggregateType) {
+        this.aggregateType = aggregateType;
     }
 
     public boolean isRequired() {

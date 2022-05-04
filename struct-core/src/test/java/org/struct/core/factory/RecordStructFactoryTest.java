@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 ;
@@ -26,7 +27,7 @@ class RecordStructFactoryTest {
     public void testNormal() {
         StructWorker<MapWithGroup1> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", MapWithGroup1.class);
         ArrayList<MapWithGroup1> list = worker.load(ArrayList::new);
-        System.out.println();
+        Assertions.assertFalse(list.isEmpty());
     }
 
     @StructSheet(fileName = "Bean.xlsx", sheetName = "MapWithGroup1")
@@ -187,4 +188,36 @@ class RecordStructFactoryTest {
         Two,
         Three;
     }
+
+    @Test
+    public void testArrayKeys() {
+        StructWorker<ArrayRefABean> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", ArrayRefABean.class);
+        List<ArrayRefABean> list = worker.load(ArrayList::new);
+        Assertions.assertFalse(list.isEmpty());
+    }
+
+    @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
+    record ArrayRefABean(int id,
+                         @StructField(name = "ids")
+                         int[] ids,
+                         @StructField(name = "ids")
+                         List<Integer> idList,
+                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id")
+                         ArrayRefBBean[] beansAry,
+                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id")
+                         List<ArrayRefBBean> beansList
+    ) {
+    }
+
+    @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet2")
+    record ArrayRefBBean(int id,
+                         String domain,
+                         String phylum,
+                         String clazz,
+                         String order,
+                         String family,
+                         String genus,
+                         String species) {
+    }
+
 }
