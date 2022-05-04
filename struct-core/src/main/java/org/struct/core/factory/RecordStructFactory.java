@@ -203,7 +203,7 @@ public class RecordStructFactory implements StructFactory {
                 : fd.getRefUniqueKey();
         Object keys = this.getFieldValuesArray(structImpl, refKeys);
         Object val;
-        if (keys instanceof ArrayKey) {
+        if (fd.getAggregateWith().isEmpty()) {
             val = map.get(keys);
         } else {
             //  key value's type
