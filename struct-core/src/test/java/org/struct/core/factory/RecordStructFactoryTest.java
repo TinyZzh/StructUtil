@@ -202,9 +202,9 @@ class RecordStructFactoryTest {
                          int[] ids,
                          @StructField(name = "ids")
                          List<Integer> idList,
-                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id")
+                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id", aggregateBy = "ids")
                          ArrayRefBBean[] beansAry,
-                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id")
+                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id", aggregateBy = "ids")
                          List<ArrayRefBBean> beansList
     ) {
     }

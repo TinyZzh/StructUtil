@@ -24,9 +24,9 @@ public class DefaultStructFactoryBean implements StructFactoryBean {
 
     @Override
     public <T> StructFactory newInstance(Class<T> clzOfStruct, StructWorker<T> worker) {
-        if (enableRecord && clzOfStruct.isRecord()) {
-            return new RecordStructFactory(clzOfStruct, worker);
-        }
+//        if (enableRecord && clzOfStruct.isRecord()) {
+//            return new RecordStructFactory(clzOfStruct, worker);
+//        }
         return new JdkStructFactory(clzOfStruct, worker);
     }
 

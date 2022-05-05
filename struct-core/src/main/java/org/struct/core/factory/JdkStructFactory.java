@@ -8,6 +8,7 @@ import org.struct.core.ArrayKey;
 import org.struct.core.FieldDescriptor;
 import org.struct.core.OptionalDescriptor;
 import org.struct.core.SingleFieldDescriptor;
+import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
@@ -123,11 +124,18 @@ public class JdkStructFactory implements StructFactory {
                         Object r = this.handleInstanceFieldValue(structImpl, sfd);
                         if (null != r) {
                             args[i] = r;
+                            if (structImpl instanceof StructImpl impl) {
+                                impl.add(sfd.getName(), r, true);
+                            }
                             break;
                         }
                     }
                 } else if (d instanceof SingleFieldDescriptor sfd) {
-                    args[i] = this.handleInstanceFieldValue(structImpl, sfd);
+                    Object r = this.handleInstanceFieldValue(structImpl, sfd);
+                    args[i] = r;
+                    if (structImpl instanceof StructImpl impl) {
+                        impl.add(sfd.getName(), r, true);
+                    }
                 }
             }
             try {
@@ -142,14 +150,14 @@ public class JdkStructFactory implements StructFactory {
                 try {
                     if (d instanceof OptionalDescriptor od) {
                         for (SingleFieldDescriptor sfd : od.getDescriptors()) {
-                            Object value = this.handleInstanceFieldValue(structImpl, sfd);
+                            Object value = this.handleInstanceFieldValue(instance, sfd);
                             if (value != null) {
                                 sfd.setFieldValue(instance, value);
                                 break;
                             }
                         }
                     } else if (d instanceof SingleFieldDescriptor sfd) {
-                        sfd.setFieldValue(instance, this.handleInstanceFieldValue(structImpl, sfd));
+                        sfd.setFieldValue(instance, this.handleInstanceFieldValue(instance, sfd));
                     }
                 } catch (Exception e) {
                     String msg = "set instance field's value failure. clz:" + this.clzOfStruct.getSimpleName() + "#field:" + d.getName() + ", msg:" + e.getMessage();
@@ -203,12 +211,11 @@ public class JdkStructFactory implements StructFactory {
                 return null;
             }
         }
-        String[] refKeys = fd.getRefGroupBy().length > 0
-                ? fd.getRefGroupBy()
-                : fd.getRefUniqueKey();
-        Object keys = this.getFieldValuesArray(structImpl, refKeys);
-        Object val;
+        String[] refKeys;
+        Object keys, val;
         if (fd.isAggregateField()) {
+            refKeys = new String[]{fd.getAggregateBy()};
+            keys = this.getFieldValuesArray(structImpl, refKeys);
             //  key value's type
             Class<?> targetFieldType = fd.getFieldType();
             if (keys.getClass().isArray()) {
@@ -230,6 +237,10 @@ public class JdkStructFactory implements StructFactory {
                 val = map.get(keys);
             }
         } else {
+            refKeys = fd.getRefGroupBy().length > 0
+                    ? fd.getRefGroupBy()
+                    : fd.getRefUniqueKey();
+            keys = this.getFieldValuesArray(structImpl, refKeys);
             val = map.get(keys);
         }
         if (fd.isRequired() && val == null) {
