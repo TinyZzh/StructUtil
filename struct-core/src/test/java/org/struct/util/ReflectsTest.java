@@ -22,10 +22,8 @@ package org.struct.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Objects;
 
 public class ReflectsTest {
 
@@ -151,6 +149,42 @@ public class ReflectsTest {
 
     }
 
+    @Test
+    public void testResolveAllFields() {
+        //  Class
+        {
+            List<Field> fields = Reflects.resolveAllFields(BeanClz.class);
+            Assertions.assertEquals(2, fields.size());
+            Assertions.assertEquals("id", fields.get(0).getName());
+            Assertions.assertEquals("name", fields.get(1).getName());
+        }
+        //  Parent Class
+        {
+            List<Field> fields = Reflects.resolveAllFields(SubBeanClz.class);
+            Assertions.assertEquals(5, fields.size());
+            Assertions.assertEquals("age", fields.get(0).getName());
+            Assertions.assertEquals("name", fields.get(1).getName());
+            Assertions.assertEquals("publicField", fields.get(2).getName());
+            //  parent fields
+            Assertions.assertEquals("id", fields.get(3).getName());
+            Assertions.assertEquals("name", fields.get(4).getName());
+        }
+        //  Record
+        {
+            List<Field> fields = Reflects.resolveAllFields(RecordClz.class);
+            Assertions.assertEquals(2, fields.size());
+            Assertions.assertEquals("id", fields.get(0).getName());
+            Assertions.assertEquals("name", fields.get(1).getName());
+        }
+    }
+
+    @Test
+    public void testResolveAllFieldsUnDeclared() {
+        Assertions.assertTrue(Reflects.resolveAllFields(BeanClz.class, false).isEmpty());
+        Assertions.assertEquals(1, Reflects.resolveAllFields(SubBeanClz.class, false).size());
+        Assertions.assertTrue(Reflects.resolveAllFields(RecordClz.class, false).isEmpty());
+    }
+
     static class BeanClz {
         private int id;
         private String name;
@@ -162,6 +196,27 @@ public class ReflectsTest {
     }
 
     record RecordClz(int id, String name) {
+    }
+
+    static class SubBeanClz extends BeanClz {
+        private int age;
+        private String name;
+
+        public float publicField;
+
+        public SubBeanClz(int id, String name, int age, String name1) {
+            super(id, name);
+            this.age = age;
+            this.name = name1;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
+        }
     }
 
 }

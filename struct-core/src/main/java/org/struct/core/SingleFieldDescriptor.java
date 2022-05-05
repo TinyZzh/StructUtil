@@ -24,6 +24,7 @@ import org.struct.core.converter.ConverterRegistry;
 import org.struct.core.factory.StructFactory;
 import org.struct.exception.IllegalAccessPropertyException;
 
+import java.io.Serial;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -32,6 +33,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class SingleFieldDescriptor extends FieldDescriptor {
+    @Serial
     private static final long serialVersionUID = 8949543119635057452L;
 
     /**
@@ -51,40 +53,13 @@ public class SingleFieldDescriptor extends FieldDescriptor {
 
     @Deprecated(since = "2022.04.29", forRemoval = true)
     public SingleFieldDescriptor(String name, Field field, Class<?> reference, String[] refGroupBy, String[] refUniqueKey, boolean required, Converter converter) {
-        this.name = name;
+        super(name);
         this.fieldOrRc = field;
         this.reference = reference;
         this.refGroupBy = refGroupBy;
         this.refUniqueKey = refUniqueKey;
         this.required = required;
         this.converter = converter;
-    }
-
-    public SingleFieldDescriptor(StructField annotation, boolean globalStructRequiredValue) {
-        if (annotation != null) {
-            this.setRequired(annotation.required());
-            if (!annotation.name().isEmpty()) {
-                this.setName(annotation.name());
-            }
-            if (Object.class != annotation.ref()) {
-                this.setReference(annotation.ref());
-                this.setRefGroupBy(annotation.refGroupBy());
-                this.setRefUniqueKey(annotation.refUniqueKey());
-            }
-            if (annotation.aggregateBy().length() > 0) {
-                this.setAggregateBy(annotation.aggregateBy());
-                this.setAggregateType(annotation.aggregateType());
-            }
-            Class<? extends Converter> c = annotation.converter();
-            if (Converter.class != c
-                    && !Modifier.isInterface(c.getModifiers())
-                    && !Modifier.isAbstract(c.getModifiers())
-            ) {
-                this.setConverter(ConverterRegistry.lookupOrDefault(c, c));
-            }
-        } else {
-            this.setRequired(globalStructRequiredValue);
-        }
     }
 
     public SingleFieldDescriptor(Object fieldOrRc, StructField annotation, boolean globalStructRequiredValue) {

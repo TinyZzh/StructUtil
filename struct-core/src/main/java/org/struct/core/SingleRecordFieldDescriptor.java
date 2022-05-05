@@ -41,7 +41,7 @@ public class SingleRecordFieldDescriptor extends SingleFieldDescriptor {
     }
 
     public SingleRecordFieldDescriptor(StructField annotation, boolean globalStructRequiredValue) {
-        super(annotation, globalStructRequiredValue);
+        // super(annotation, globalStructRequiredValue);
     }
 
     public RecordComponent getRc() {

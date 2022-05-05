@@ -18,10 +18,12 @@
 
 package org.struct.core;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
 public abstract class FieldDescriptor implements Serializable, Comparable<FieldDescriptor> {
+    @Serial
     private static final long serialVersionUID = 8949543119635057452L;
 
     protected String name;
@@ -78,7 +80,7 @@ public abstract class FieldDescriptor implements Serializable, Comparable<FieldD
             SingleFieldDescriptor fd1 = (SingleFieldDescriptor) o;
             if (fd0.isReferenceField() && fd1.isReferenceField()) {
                 if (fd0.getConverter() == null && fd1.getConverter() == null) {
-                    return 0;
+                    return this.getName().compareTo(o.getName());
                 } else {
                     return fd0.getConverter() == null ? -1 : 1;
                 }

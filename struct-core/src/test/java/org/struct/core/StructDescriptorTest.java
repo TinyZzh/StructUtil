@@ -46,9 +46,9 @@ class StructDescriptorTest {
         Assertions.assertEquals("4", sd0.getSheetName());
         Assertions.assertEquals(StructBeanFilter.class, sd0.getFilter());
         Assertions.assertEquals(WorkerMatcher.class, sd0.getMatcher());
-        System.out.println(sd0.toString());
+        Assertions.assertFalse(sd0.toString().isEmpty());
 
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        Assertions.assertThrows(NullPointerException.class, () -> {
             new StructDescriptor(SdDataWithoutAnnotation.class);
         });
     }
@@ -68,13 +68,13 @@ class StructDescriptorTest {
         Assertions.assertEquals("4", sd0.getSheetName());
         Assertions.assertEquals(StructBeanFilter.class, sd0.getFilter());
         Assertions.assertEquals(FileExtensionMatcher.class, sd0.getMatcher());
-        System.out.println(sd0.toString());
+        Assertions.assertFalse(sd0.toString().isEmpty());
     }
 
     @Test
     public void testEquals() {
-        StructDescriptor sd0 = new StructDescriptor();
-        StructDescriptor sd1 = new StructDescriptor();
+        StructDescriptor sd0 = new StructDescriptor(SdData.class);
+        StructDescriptor sd1 = new StructDescriptor(SdData.class);
         Assertions.assertEquals(sd0.hashCode(), sd1.hashCode());
         Assertions.assertEquals(sd0, sd1);
     }
