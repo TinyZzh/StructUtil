@@ -18,8 +18,16 @@
 
 package org.struct.core;
 
+import org.struct.annotation.StructField;
+import org.struct.annotation.StructOptional;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.RecordComponent;
 import java.io.Serial;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 public class OptionalDescriptor extends FieldDescriptor {
     @Serial
@@ -28,6 +36,26 @@ public class OptionalDescriptor extends FieldDescriptor {
     private SingleFieldDescriptor[] descriptors;
 
     public OptionalDescriptor() {
+    }
+
+    public OptionalDescriptor(Object fieldOrRc, StructOptional anno, BiFunction<Object, StructField, SingleFieldDescriptor> func) {
+        Objects.requireNonNull(fieldOrRc, "fieldOrRc");
+        Objects.requireNonNull(anno, "anno");
+        if (!anno.name().isEmpty()) {
+            this.setName(anno.name());
+        }
+        String name = this.getName();
+        //  handle default field name.
+        if (null == name || name.isEmpty()) {
+            if (fieldOrRc instanceof RecordComponent rc) {
+                this.setName(rc.getName());
+            } else {
+                this.setName(((Field) fieldOrRc).getName());
+            }
+        }
+        this.descriptors = Stream.of(anno.value())
+                .map(sf -> func.apply(fieldOrRc, sf))
+                .toArray(SingleFieldDescriptor[]::new);
     }
 
     public SingleFieldDescriptor[] getDescriptors() {
@@ -41,8 +69,8 @@ public class OptionalDescriptor extends FieldDescriptor {
     @Override
     public String toString() {
         return "OptionalDescriptor{" +
-                "descriptors=" + Arrays.toString(descriptors) +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
+                ", descriptors=" + Arrays.toString(descriptors) +
                 '}';
     }
 

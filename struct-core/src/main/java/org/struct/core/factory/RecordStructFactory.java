@@ -107,7 +107,7 @@ public class RecordStructFactory implements StructFactory {
             if (!(descriptor instanceof SingleFieldDescriptor sdf)) {
                 throw new RuntimeException("No such field: [" + refKeys[i] + "] in source obj:" + src.getClass());
             }
-            ary[i] = sdf.getFieldValue(src);
+            ary[i] = sdf.getFieldValueFrom(src);
         }
         return ary.length == 1 ? ary[0] : new ArrayKey(ary);
     }
@@ -144,7 +144,7 @@ public class RecordStructFactory implements StructFactory {
 
     protected Object convert(Object structImpl, SingleFieldDescriptor descriptor) {
         try {
-            Object value = descriptor.getFieldValue(structImpl);
+            Object value = descriptor.getFieldValueFrom(structImpl);
             if (descriptor.isRequired() && !descriptor.isReferenceField()) {
                 boolean invalid = value == null
                         || (value instanceof String && ((String) value).isEmpty());
@@ -203,7 +203,7 @@ public class RecordStructFactory implements StructFactory {
                 : fd.getRefUniqueKey();
         Object keys = this.getFieldValuesArray(structImpl, refKeys);
         Object val;
-        if (fd.getAggregateWith().isEmpty()) {
+        if (fd.getAggregateBy().isEmpty()) {
             val = map.get(keys);
         } else {
             //  key value's type

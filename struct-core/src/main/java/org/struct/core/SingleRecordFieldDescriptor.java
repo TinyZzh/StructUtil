@@ -121,7 +121,7 @@ public class SingleRecordFieldDescriptor extends SingleFieldDescriptor {
      * @param instance the instance object
      * @return field's value.
      */
-    public Object getFieldValue(Object instance) {
+    public Object getFieldValueFrom(Object instance) {
         if (instance instanceof StructImpl si) {
             return si.get(this);
         } else if (rc != null) {
