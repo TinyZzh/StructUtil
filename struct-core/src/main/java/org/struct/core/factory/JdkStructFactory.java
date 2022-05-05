@@ -150,14 +150,14 @@ public class JdkStructFactory implements StructFactory {
                 try {
                     if (d instanceof OptionalDescriptor od) {
                         for (SingleFieldDescriptor sfd : od.getDescriptors()) {
-                            Object value = this.handleInstanceFieldValue(instance, sfd);
+                            Object value = this.handleInstanceFieldValue(structImpl, sfd);
                             if (value != null) {
                                 sfd.setFieldValue(instance, value);
                                 break;
                             }
                         }
                     } else if (d instanceof SingleFieldDescriptor sfd) {
-                        sfd.setFieldValue(instance, this.handleInstanceFieldValue(instance, sfd));
+                        sfd.setFieldValue(instance, this.handleInstanceFieldValue(structImpl, sfd));
                     }
                 } catch (Exception e) {
                     String msg = "set instance field's value failure. clz:" + this.clzOfStruct.getSimpleName() + "#field:" + d.getName() + ", msg:" + e.getMessage();
