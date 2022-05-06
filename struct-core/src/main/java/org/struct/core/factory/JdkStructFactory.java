@@ -31,16 +31,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
- * 使用反射赋值.
+ * Struct Factory Impl.
  *
  * @author TinyZ
- * @date 2022-04-14
+ * @since 2022-04-14
  */
-public class JdkStructFactory implements StructFactory {
+public final class JdkStructFactory implements StructFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdkStructFactory.class);
 
@@ -49,9 +47,9 @@ public class JdkStructFactory implements StructFactory {
     /**
      * {@link #clzOfStruct}'s all field.
      */
-    protected Map<String, FieldDescriptor> beanFieldMap = new ConcurrentHashMap<>();
+    private final Map<String, FieldDescriptor> beanFieldMap = new HashMap<>();
 
-    private List<FieldDescriptor> beanFieldsList = new ArrayList<>();
+    private List<FieldDescriptor> beanFieldsList;
 
     public JdkStructFactory(Class<?> clzOfStruct, StructWorker<?> worker) {
         this.clzOfStruct = clzOfStruct;
@@ -65,13 +63,16 @@ public class JdkStructFactory implements StructFactory {
         final Map<String, FieldDescriptor> map = new HashMap<>();
         if (this.clzOfStruct.isRecord()) {
             RecordComponent[] components = this.clzOfStruct.getRecordComponents();
-            for (RecordComponent rc : components) {
-                FieldDescriptor descriptor = this.createFieldDescriptor(rc);
+            FieldDescriptor[] descriptors = new FieldDescriptor[components.length];
+            for (int i = 0; i < components.length; i++) {
+                FieldDescriptor descriptor = this.createFieldDescriptor(components[i]);
+                descriptors[i] = descriptor;
                 FieldDescriptor prevFd = map.putIfAbsent(descriptor.getName(), descriptor);
                 if (prevFd != null) {
                     LOGGER.warn("field descriptor new:{} conflicted with prev:{}.", descriptor, prevFd);
                 }
             }
+            this.beanFieldsList = List.of(descriptors);
         } else {
             List<Field> fields = Reflects.resolveAllFields(this.clzOfStruct, true);
             for (Field field : fields) {
@@ -85,12 +86,12 @@ public class JdkStructFactory implements StructFactory {
                     LOGGER.warn("field descriptor new:{} conflicted with prev:{}.", descriptor, prevFd);
                 }
             }
-            this.beanFieldsList = map.values().stream().sorted().collect(Collectors.toList());
+            this.beanFieldsList = map.values().stream().sorted().toList();
         }
         this.beanFieldMap.putAll(map);
     }
 
-    protected FieldDescriptor createFieldDescriptor(AnnotatedElement fieldOrRc) {
+    FieldDescriptor createFieldDescriptor(AnnotatedElement fieldOrRc) {
         StructOptional anno;
         FieldDescriptor descriptor;
         if (null != (anno = AnnotationUtils.findAnnotation(StructOptional.class, fieldOrRc))) {
@@ -101,7 +102,7 @@ public class JdkStructFactory implements StructFactory {
         return descriptor;
     }
 
-    protected SingleFieldDescriptor createSingleFieldDescriptor(Object fieldOrRc, StructField annotation) {
+    SingleFieldDescriptor createSingleFieldDescriptor(Object fieldOrRc, StructField annotation) {
         SingleFieldDescriptor descriptor = new SingleFieldDescriptor(fieldOrRc, annotation, worker.globalStructRequiredValue());
         //  try resolve field reference.
         worker.handleReferenceFieldValue(this, descriptor);
@@ -113,31 +114,16 @@ public class JdkStructFactory implements StructFactory {
         if (null == structImpl)
             return Optional.empty();
         if (this.clzOfStruct.isRecord()) {
-            RecordComponent[] components = this.clzOfStruct.getRecordComponents();
-            Object[] args = new Object[components.length];
-            Class<?>[] argTypes = new Class<?>[components.length];
-            for (int i = 0; i < components.length; i++) {
-                argTypes[i] = components[i].getType();
-                FieldDescriptor d = this.beanFieldMap.get(components[i].getName());
-                if (d instanceof OptionalDescriptor od) {
-                    for (SingleFieldDescriptor sfd : od.getDescriptors()) {
-                        Object r = this.handleInstanceFieldValue(structImpl, sfd);
-                        if (null != r) {
-                            args[i] = r;
-                            if (structImpl instanceof StructImpl impl) {
-                                impl.add(sfd.getName(), r, true);
-                            }
-                            break;
-                        }
-                    }
-                } else if (d instanceof SingleFieldDescriptor sfd) {
-                    Object r = this.handleInstanceFieldValue(structImpl, sfd);
-                    args[i] = r;
-                    if (structImpl instanceof StructImpl impl) {
-                        impl.add(sfd.getName(), r, true);
-                    }
+            int size = this.beanFieldsList.size();
+            Object[] args = new Object[size];
+            Class<?>[] argTypes = new Class<?>[size];
+            this.forEachBeanFields(structImpl, (i, sfd, v) -> {
+                args[i] = v;
+                argTypes[i] = sfd.getFieldType();
+                if (structImpl instanceof StructImpl impl) {
+                    impl.add(sfd.getName(), v, true);
                 }
-            }
+            });
             try {
                 Constructor<?> constructor = this.clzOfStruct.getDeclaredConstructor(argTypes);
                 return Optional.of(constructor.newInstance(args));
@@ -146,25 +132,31 @@ public class JdkStructFactory implements StructFactory {
             }
         } else {
             Object instance = Reflects.newInstance(this.clzOfStruct);
-            this.beanFieldsList.forEach(d -> {
-                try {
-                    if (d instanceof OptionalDescriptor od) {
-                        for (SingleFieldDescriptor sfd : od.getDescriptors()) {
-                            Object value = this.handleInstanceFieldValue(structImpl, sfd);
-                            if (value != null) {
-                                sfd.setFieldValue(instance, value);
-                                break;
-                            }
-                        }
-                    } else if (d instanceof SingleFieldDescriptor sfd) {
-                        sfd.setFieldValue(instance, this.handleInstanceFieldValue(structImpl, sfd));
-                    }
-                } catch (Exception e) {
-                    String msg = "set instance field's value failure. clz:" + this.clzOfStruct.getSimpleName() + "#field:" + d.getName() + ", msg:" + e.getMessage();
-                    throw new StructTransformException(msg, e);
-                }
-            });
+            this.forEachBeanFields(structImpl, (i, sfd, v) -> sfd.setFieldValue(instance, v));
             return Optional.ofNullable(instance);
+        }
+    }
+
+    void forEachBeanFields(Object structImpl, TriConsumer<Integer, SingleFieldDescriptor, Object> consumer) {
+        List<FieldDescriptor> list = this.beanFieldsList;
+        for (int i = 0; i < list.size(); i++) {
+            FieldDescriptor fd = list.get(i);
+            try {
+                if (fd instanceof OptionalDescriptor ofd) {
+                    for (SingleFieldDescriptor sfd : ofd.getDescriptors()) {
+                        Object value = this.handleInstanceFieldValue(structImpl, sfd);
+                        if (value != null) {
+                            consumer.accept(i, sfd, value);
+                            break;
+                        }
+                    }
+                } else if (fd instanceof SingleFieldDescriptor sfd) {
+                    consumer.accept(i, sfd, this.handleInstanceFieldValue(structImpl, sfd));
+                }
+            } catch (Exception e) {
+                String msg = "set instance field's value failure. clz:" + this.clzOfStruct.getSimpleName() + "#field:" + fd.getName() + ", msg:" + e.getMessage();
+                throw new StructTransformException(msg, e);
+            }
         }
     }
 
@@ -254,6 +246,19 @@ public class JdkStructFactory implements StructFactory {
             val = Arrays.copyOf((Object[]) val, ((Object[]) val).length, (Class) fd.getFieldType());
         }
         return val;
+    }
+
+    @FunctionalInterface
+    public interface TriConsumer<K, V, S> {
+
+        /**
+         * Performs the operation given the specified arguments.
+         *
+         * @param k the first input argument
+         * @param v the second input argument
+         * @param s the third input argument
+         */
+        void accept(K k, V v, S s);
     }
 
 }

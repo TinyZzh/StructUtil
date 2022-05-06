@@ -6,14 +6,17 @@ import org.struct.annotation.StructField;
 import org.struct.annotation.StructOptional;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
+import org.struct.core.converter.Converter;
 import org.struct.util.WorkerUtil;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 ;
 
@@ -21,7 +24,7 @@ import java.util.Objects;
  * @author TinyZ
  * @date 2022-04-14
  */
-class RecordStructFactoryTest {
+class JdkStructFactoryTest {
 
     @Test
     public void testNormal() {
@@ -190,34 +193,66 @@ class RecordStructFactoryTest {
     }
 
     @Test
-    public void testArrayKeys() {
-        StructWorker<ArrayRefABean> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", ArrayRefABean.class);
-        List<ArrayRefABean> list = worker.load(ArrayList::new);
+    public void testRecordAggregateByArrayKey() {
+        //  Record aggregate by Array key
+        StructWorker<RecordAggregateByArrayKey> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", RecordAggregateByArrayKey.class);
+        List<RecordAggregateByArrayKey> list = worker.load(ArrayList::new);
         Assertions.assertFalse(list.isEmpty());
+        Assertions.assertEquals(3, list.get(0).beansAry.length);
+        Assertions.assertEquals(3, list.get(0).beansList.size());
+    }
+
+    @Test
+    public void testRecordAggregateByListKey() {
+        StructWorker<RecordAggregateByListKey> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", RecordAggregateByListKey.class);
+        List<RecordAggregateByListKey> list = worker.load(ArrayList::new);
+        Assertions.assertFalse(list.isEmpty());
+        Assertions.assertEquals(3, list.get(0).beansAry.length);
+        Assertions.assertEquals(3, list.get(0).beansList.size());
     }
 
     @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
-    record ArrayRefABean(int id,
-                         @StructField(name = "ids")
-                         int[] ids,
-                         @StructField(name = "ids")
-                         List<Integer> idList,
-                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id", aggregateBy = "ids")
-                         ArrayRefBBean[] beansAry,
-                         @StructField(ref = ArrayRefBBean.class, refUniqueKey = "id", aggregateBy = "ids")
-                         List<ArrayRefBBean> beansList
+    record RecordAggregateByArrayKey(int id,
+                                     @StructField(name = "ids")
+                                     int[] ids,
+                                     @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+                                     RecordAggregateTargetBean[] beansAry,
+                                     @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+                                     List<RecordAggregateTargetBean> beansList
+    ) {
+    }
+
+    @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
+    record RecordAggregateByListKey(int id,
+                                    @StructField(name = "ids", converter = ListIntConverter.class)
+                                    List<Integer> idList,
+                                    @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+                                    RecordAggregateTargetBean[] beansAry,
+                                    @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+                                    List<RecordAggregateTargetBean> beansList
     ) {
     }
 
     @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet2")
-    record ArrayRefBBean(int id,
-                         String domain,
-                         String phylum,
-                         String clazz,
-                         String order,
-                         String family,
-                         String genus,
-                         String species) {
+    record RecordAggregateTargetBean(int id,
+                                     String domain,
+                                     String phylum,
+                                     String clazz,
+                                     String order,
+                                     String family,
+                                     String genus,
+                                     String species) {
+    }
+
+    static class ListIntConverter implements Converter {
+
+        @Override
+        public Object convert(Object originValue, Class<?> targetType) {
+            if (originValue instanceof String s) {
+                return Arrays.asList(s.split("\\|")).stream().map(Integer::parseInt).collect(Collectors.toList());
+            }
+            return Collections.emptyList();
+        }
     }
 
 }
