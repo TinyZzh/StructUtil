@@ -129,11 +129,12 @@ public class StructAutoConfiguration {
         if (!file.isDirectory()) {
             throw new IllegalArgumentException("the workspace must be directory. workspace:" + config.getWorkspace());
         }
-        FileWatcherService fws = new FileWatcherService();
-        fws.registerAll(file.toPath())
+        FileWatcherService fws = FileWatcherService.newBuilder()
                 .setScheduleInitialDelay(config.getScheduleInitialDelay())
                 .setScheduleDelay(config.getScheduleDelay())
-                .setScheduleTimeUnit(config.getScheduleTimeUnit());
+                .setScheduleTimeUnit(config.getScheduleTimeUnit())
+                .build();
+        fws.registerAll(file.toPath());
         storeList.parallelStream()
                 .forEach(store -> {
                     //  register reload hook

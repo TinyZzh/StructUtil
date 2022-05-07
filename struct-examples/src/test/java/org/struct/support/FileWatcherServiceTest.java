@@ -26,27 +26,20 @@ import org.struct.util.WorkerUtil;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.*;
 
 public class FileWatcherServiceTest {
 
     @Test
     public void test() throws IOException, InterruptedException {
-        FileWatcherService fws = new FileWatcherService();
+        FileWatcherService fws = FileWatcherService.newBuilder()
+                .setScheduleInitialDelay(10L)
+                .setScheduleDelay(1L)
+                .setScheduleTimeUnit(TimeUnit.MILLISECONDS)
+                .build();
         Runnable runnable = () -> {
             StructWorker<VipConfigSyncBean> worker = WorkerUtil.newWorker("./examples/", VipConfigSyncBean.class);
             List<VipConfigSyncBean> beans = worker.toList(ArrayList::new);
@@ -54,84 +47,11 @@ public class FileWatcherServiceTest {
         };
         fws.register("./examples/")
                 .registerHook("./examples/tpl_vip.xml", runnable)
-                .setScheduleInitialDelay(10L)
-                .setScheduleDelay(1L)
-                .setScheduleTimeUnit(TimeUnit.MILLISECONDS)
                 .bootstrap();
 //        while (true) {
 //            Thread.sleep(10000);
 //        }
     }
-
-    @Test
-    public void process() throws IOException, NoSuchFieldException, IllegalAccessException {
-        FileWatcherService fws = new FileWatcherService();
-
-        WatchService ws = mock(WatchService.class);
-        {
-            Field field = FileWatcherService.class.getDeclaredField("ws");
-            field.setAccessible(true);
-            field.set(fws, ws);
-        }
-        Map<WatchKey, Path> keys = spy(new ConcurrentHashMap<>());
-        {
-            Field field = FileWatcherService.class.getDeclaredField("keys");
-            field.setAccessible(true);
-            field.set(fws, keys);
-        }
-        WatchKey wk = mock(WatchKey.class);
-        Path thePath = mock(Path.class, RETURNS_DEEP_STUBS);
-        WatchEvent<Path> we = mock(WatchEvent.class, RETURNS_DEEP_STUBS);
-        doReturn(Collections.singletonList(we)).when(wk).pollEvents();
-        doReturn(wk).when(ws).poll();
-        doReturn(thePath).when(keys).get(any(WatchKey.class));
-        fws.run();
-    }
-
-    @Test
-    public void testRegisterAll() throws IOException {
-        FileWatcherService fws = new FileWatcherService();
-        String path = "./";
-        fws.registerAll(path);
-        fws.registerAll(Paths.get(path));
-    }
-
-    @Test
-    public void testRegisterHook() throws IOException {
-        FileWatcherService fws = new FileWatcherService();
-        String path = "./";
-        fws.registerHook(Paths.get(path), () -> {
-        });
-        fws.registerHook(path, () -> {
-        });
-        fws.deregisterHook(Paths.get(path));
-        fws.deregisterHook(path);
-    }
-
-    @Test()
-    public void testSetScheduleInitialDelay() throws IOException {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            FileWatcherService fws = new FileWatcherService();
-            fws.setScheduleInitialDelay(-1);
-        });
-    }
-
-    @Test()
-    public void testSetScheduleDelay() throws IOException {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            FileWatcherService fws = new FileWatcherService();
-            fws.setScheduleDelay(-1);
-        });
-    }
-
-    @Test()
-    public void testSetScheduleTimeUnit() throws IOException {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            FileWatcherService fws = new FileWatcherService();
-            fws.setScheduleTimeUnit(null);
-        });
-    }
-
 
     @XmlRootElement(name = "child")
     @StructSheet(fileName = "tpl_vip.xml", startOrder = 1)

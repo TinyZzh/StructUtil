@@ -53,14 +53,32 @@ import java.util.concurrent.TimeUnit;
 public class FileWatcherService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileWatcherService.class);
-    /**
-     * the root path.
-     */
-    private static volatile String DEFAULT_WORKSPACE_DIR;
+
+    public static Builder newBuilder() {
+        return new Builder();
+    }
+
     /**
      * Watch file changed and load template data when file modified.
      */
-    private WatchService ws;
+    private final WatchService ws;
+    /**
+     * Set the scheduled job's initial delay.
+     */
+    private final long scheduleInitialDelay;
+    /**
+     * Set the scheduled job's delay.
+     */
+    private final long scheduleDelay;
+    /**
+     * Set schedule job's {@link TimeUnit}
+     */
+    private final TimeUnit scheduleTimeUnit;
+
+    private final ScheduledExecutorService executor;
+
+    //  =============== Dynamic Fields ====================
+
     /**
      * {@link WatchKey} - {@link Path} map.
      */
@@ -69,67 +87,32 @@ public class FileWatcherService implements Runnable {
      * the file change event hook map.
      */
     private final ConcurrentHashMap<Path, List<Runnable>> hooksMap = new ConcurrentHashMap<>();
-    /**
-     * Set the scheduled job's initial delay.
-     */
-    private long scheduleInitialDelay = 10L;
-    /**
-     * Set the scheduled job's delay.
-     */
-    private long scheduleDelay = 5L;
-    /**
-     * Set schedule job's {@link TimeUnit}
-     */
-    private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
 
-    private volatile boolean isInitialized = false;
+    private volatile ScheduledFuture<?> future;
 
-    private ScheduledExecutorService executor;
-
-    private ScheduledFuture<?> future;
-
-    static {
-        DEFAULT_WORKSPACE_DIR = System.getProperty("struct.workspace.dir", "./data/");
-    }
-
-    public FileWatcherService() throws IOException {
-        this(FileSystems.getDefault().newWatchService());
-    }
-
-    public FileWatcherService(WatchService ws) {
+    FileWatcherService(WatchService ws, long scheduleInitialDelay, long scheduleDelay, TimeUnit scheduleTimeUnit, ScheduledExecutorService executor) {
         this.ws = ws;
+        this.scheduleInitialDelay = scheduleInitialDelay;
+        this.scheduleDelay = scheduleDelay;
+        this.scheduleTimeUnit = scheduleTimeUnit;
+        this.executor = executor;
     }
 
     /**
      * Bootstrap service.
      */
     public void bootstrap() {
+        if (null != this.future)
+            throw new IllegalStateException("File watcher service is running.");
         synchronized (this) {
-            if (!isInitialized) {
-                this.startScheduledThread();
-            }
-        }
-    }
-
-    public FileWatcherService startScheduledThread() {
-        return this.startScheduledThread(Executors.newScheduledThreadPool(1, r -> new Thread(r, "FileWatcherThread")));
-    }
-
-    public FileWatcherService startScheduledThread(ScheduledExecutorService scheduledExecutorService) {
-        assert null != scheduledExecutorService;
-        synchronized (this) {
-            if (this.executor == null) {
-                this.executor = scheduledExecutorService;
+            if (null == this.future) {
                 this.future = this.executor.scheduleWithFixedDelay(this, this.scheduleInitialDelay, this.scheduleDelay, this.scheduleTimeUnit);
-                this.isInitialized = true;
             }
         }
-        return this;
     }
 
     public FileWatcherService register(String dir) throws IOException {
-        Objects.requireNonNull(dir, "dir");
-        return this.register(Paths.get(dir.isEmpty() ? DEFAULT_WORKSPACE_DIR : dir));
+        return this.register(Paths.get(Objects.requireNonNull(dir, "dir")));
     }
 
     public FileWatcherService register(Path dir) throws IOException {
@@ -186,26 +169,6 @@ public class FileWatcherService implements Runnable {
         return this;
     }
 
-    public FileWatcherService setScheduleInitialDelay(long scheduleInitialDelay) {
-        if (scheduleInitialDelay <= 0)
-            throw new IllegalArgumentException("the scheduleInitialDelay must be large than zero.");
-        this.scheduleInitialDelay = scheduleInitialDelay;
-        return this;
-    }
-
-    public FileWatcherService setScheduleDelay(long scheduleDelay) {
-        if (scheduleDelay <= 0)
-            throw new IllegalArgumentException("the scheduleDelay must be large than zero.");
-        this.scheduleDelay = scheduleDelay;
-        return this;
-    }
-
-    public FileWatcherService setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
-        Objects.requireNonNull(scheduleTimeUnit, "scheduleTimeUnit");
-        this.scheduleTimeUnit = scheduleTimeUnit;
-        return this;
-    }
-
     /**
      * Schedule process the file watch events.
      */
@@ -248,5 +211,50 @@ public class FileWatcherService implements Runnable {
     @Override
     public void run() {
         this.process();
+    }
+
+    public final static class Builder {
+        private WatchService ws;
+        private long scheduleInitialDelay = 10L;
+        private long scheduleDelay = 5L;
+        private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
+        private ScheduledExecutorService executor;
+
+        public Builder setWatchService(WatchService ws) {
+            this.ws = ws;
+            return this;
+        }
+
+        public Builder setScheduleInitialDelay(long scheduleInitialDelay) {
+            if (scheduleInitialDelay <= 0)
+                throw new IllegalArgumentException("the scheduleInitialDelay must be large than zero.");
+            this.scheduleInitialDelay = scheduleInitialDelay;
+            return this;
+        }
+
+        public Builder setScheduleDelay(long scheduleDelay) {
+            if (scheduleDelay <= 0)
+                throw new IllegalArgumentException("the scheduleDelay must be large than zero.");
+            this.scheduleDelay = scheduleDelay;
+            return this;
+        }
+
+        public Builder setScheduleTimeUnit(TimeUnit scheduleTimeUnit) {
+            this.scheduleTimeUnit = Objects.requireNonNull(scheduleTimeUnit, "scheduleTimeUnit");
+            return this;
+        }
+
+        public Builder setExecutor(ScheduledExecutorService executor) {
+            this.executor = Objects.requireNonNull(executor, "executor");
+            return this;
+        }
+
+        public FileWatcherService build() throws IOException {
+            WatchService ws = this.ws == null ? FileSystems.getDefault().newWatchService() : this.ws;
+            ScheduledExecutorService executor = this.executor == null
+                    ? Executors.newScheduledThreadPool(1, r -> new Thread(r, "StructFileWatcherThread"))
+                    : this.executor;
+            return new FileWatcherService(ws, scheduleInitialDelay, scheduleDelay, scheduleTimeUnit, executor);
+        }
     }
 }
