@@ -20,6 +20,8 @@ package org.struct.core;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructOptional;
 import org.struct.annotation.StructSheet;
@@ -28,11 +30,14 @@ import org.struct.util.AnnotationUtils;
 import org.struct.util.Reflects;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class FieldDescriptorTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FieldDescriptorTest.class);
 
     @Test
     public void constructor() {
@@ -53,16 +58,19 @@ public class FieldDescriptorTest {
         List<Field> fields = Reflects.resolveAllFields(FieldDescriptorSort.class);
         List<FieldDescriptor> list = new ArrayList<>();
         for (Field field : fields) {
+            if (Modifier.isStatic(field.getModifiers()))
+                continue;
             field.setAccessible(true);
             StructOptional anno;
             if (null != (anno = AnnotationUtils.findAnnotation(StructOptional.class, field))) {
                 list.add(new OptionalDescriptor(field, anno,
-                        (f, an) -> new SingleFieldDescriptor(f, an, false))) ;
+                        (f, an) -> new SingleFieldDescriptor(f, an, false)));
             } else {
                 list.add(new SingleFieldDescriptor(field, AnnotationUtils.findAnnotation(StructField.class, field), false));
             }
         }
         Collections.sort(list);
+        LOGGER.info("field descriptor list:{}", list);
         Assertions.assertEquals(10, list.size());
         //  5,2,1,0,6,7,8,9,3,4
 
