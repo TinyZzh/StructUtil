@@ -80,6 +80,29 @@ public @interface StructField {
     String[] refUniqueKey() default {};
 
     /**
+     * the aggregate all data by the key's value.
+     * the key field's value must be {@link java.lang.reflect.Array} or {@link java.util.Collection}.
+     * Not support {@link java.util.Map} yet.
+     * <p>
+     * similar to {@link #refGroupBy()} , but the group field defined in parent's class.
+     * <p>
+     * Default: disable
+     *
+     * @return the aggregate key's values.
+     * @since 4.0
+     */
+    String aggregateBy() default "";
+
+    /**
+     * The aggregated collection's type. e.g. {@link java.lang.reflect.Array} or {@link java.util.Collection}.
+     * Default: {@link #ref()}
+     *
+     * @return the collection's type.
+     * @since 4.0
+     */
+    Class<?> aggregateType() default Object.class;
+
+    /**
      * Is this field required.
      *
      * @return true if the field is requirement, otherwise false.

@@ -23,11 +23,13 @@ import org.struct.core.filter.StructBeanFilter;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.util.AnnotationUtils;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
 public class StructDescriptor implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = -6216313967633389888L;
 
     private String fileName;
@@ -38,19 +40,16 @@ public class StructDescriptor implements Serializable {
     private Class<? extends StructBeanFilter> filter;
 
     public StructDescriptor() {
+        //  no-op
     }
 
     public StructDescriptor(Class<?> clzOfStruct) {
-        StructSheet annotation = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
-        if (null == annotation) {
-            throw new IllegalArgumentException("clazz:" + clzOfStruct.getName() + " must be annotated by @StructSheet");
-        }
-        this.fileName = annotation.fileName();
-        this.sheetName = annotation.sheetName();
-        this.startOrder = annotation.startOrder();
-        this.endOrder = annotation.endOrder();
-        this.matcher = annotation.matcher();
-        this.filter = annotation.filter();
+        this(Objects.requireNonNull(AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct),
+                "clazz:" + clzOfStruct.getName() + " must be annotated by @StructSheet"));
+    }
+
+    public StructDescriptor(StructSheet anno) {
+        this(anno.fileName(), anno.sheetName(), anno.startOrder(), anno.endOrder(), anno.matcher(), anno.filter());
     }
 
     public StructDescriptor(String fileName, String sheetName, int startOrder, int endOrder,
@@ -128,12 +127,7 @@ public class StructDescriptor implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StructDescriptor that = (StructDescriptor) o;
-        return startOrder == that.startOrder &&
-                endOrder == that.endOrder &&
-                Objects.equals(fileName, that.fileName) &&
-                Objects.equals(sheetName, that.sheetName) &&
-                Objects.equals(matcher, that.matcher) &&
-                Objects.equals(filter, that.filter);
+        return startOrder == that.startOrder && endOrder == that.endOrder && Objects.equals(fileName, that.fileName) && Objects.equals(sheetName, that.sheetName) && Objects.equals(matcher, that.matcher) && Objects.equals(filter, that.filter);
     }
 
     @Override

@@ -52,20 +52,19 @@ public final class Reflects {
             throw new IllegalArgumentException("Couldn't match any constructor. clz:" + clazz + ", params:" + Arrays.toString(params)
                     + ". make sure not nested class and all params type not primitive type");
         try {
-            if (params.length <= 0) {
+            if (null == params || params.length <= 0) {
                 return constructor.newInstance();
             } else {
                 return constructor.newInstance(params);
             }
         } catch (Exception e) {
-            //  no-op
+            throw new IllegalStateException("Instance class:" + clazz + " failure. args:" + Arrays.toString(params), e);
         }
-        return null;
     }
 
     public static <T> Constructor<T> lookupConstructor(Class<T> clazz, Object... params) {
         Constructor<T> constructor = null;
-        if (params.length <= 0) {
+        if (null == params || params.length <= 0) {
             try {
                 constructor = clazz.getConstructor();
             } catch (NoSuchMethodException e) {

@@ -80,8 +80,12 @@ public class StructWorker<T> {
     /// <editor-fold desc="   Protected Methods    "  defaultstate="collapsed">
 
     void checkStructFactory() {
-        this.structFactory = WorkerUtil.structFactory(this.clzOfStruct, this);
-        this.structFactory.parseStruct();
+        StructFactory factory = this.structFactory;
+        if (factory == null) {
+            factory = WorkerUtil.structFactory(this.clzOfStruct, this);
+            factory.parseStruct();
+            this.structFactory = factory;
+        }
     }
 
     public boolean globalStructRequiredValue() {
@@ -97,6 +101,9 @@ public class StructWorker<T> {
             throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
         }
         Class<?> targetType = descriptor.getFieldType();
+        if (descriptor.isAggregateField()) {
+            targetType = descriptor.resolveAggregateWorkerType();
+        }
         StructWorker<?> subWorker = WorkerUtil.newWorker(this.workspace, descriptor.getReference(), this.tempRefFieldValueMap);
         if (targetType.isArray()) {
             Map<Object, ?> map = subWorker.toListWithGroup(ArrayList::new, descriptor.getRefGroupBy());

@@ -29,6 +29,8 @@ class StringsTest {
 
     @Test
     public void test() {
+        Assertions.assertNull(Strings.capitalize(null));
+        Assertions.assertEquals("", Strings.capitalize(""));
         Assertions.assertEquals("Xyz", Strings.capitalize("xyz"));
         Assertions.assertEquals("X1", Strings.capitalize("x1"));
         Assertions.assertEquals("123", Strings.capitalize("123"));
