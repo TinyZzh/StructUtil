@@ -61,17 +61,15 @@ public class XmlStructHandler implements StructHandler {
             Unmarshaller unmarshaller = context.createUnmarshaller();
             StreamSource source = new StreamSource(file);
             JaxbCollectionWrapper<T> wrapper = (JaxbCollectionWrapper<T>) unmarshaller.unmarshal(source, JaxbCollectionWrapper.class).getValue();
-            if (wrapper != null) {
-                for (T objInstance : wrapper.getRoot()) {
-                    int line = ++i;
-                    if (descriptor.getStartOrder() > 0 && line < descriptor.getStartOrder()) {
-                        //  do nothing
-                    } else if (descriptor.getEndOrder() > 0 && line > descriptor.getEndOrder()) {
-                        //  end
-                        break;
-                    } else {
-                        worker.createInstance(objInstance).ifPresent(cellHandler);
-                    }
+            for (T objInstance : wrapper.getRoot()) {
+                int line = ++i;
+                if (descriptor.getStartOrder() > 0 && line < descriptor.getStartOrder()) {
+                    //  do nothing
+                } else if (descriptor.getEndOrder() > 0 && line > descriptor.getEndOrder()) {
+                    //  end
+                    break;
+                } else {
+                    worker.createInstance(objInstance).ifPresent(cellHandler);
                 }
             }
         } catch (Exception e) {

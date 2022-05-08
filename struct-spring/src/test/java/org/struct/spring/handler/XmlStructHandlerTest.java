@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.core.filter.StructBeanFilter;
+import org.struct.exception.StructTransformException;
 import org.struct.util.WorkerUtil;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -41,6 +42,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 
 public class XmlStructHandlerTest {
 
@@ -80,13 +85,18 @@ public class XmlStructHandlerTest {
     @Test
     public void testLoadWithBeanFilter() {
         XmlStructHandler handler = new XmlStructHandler();
-        StructWorker<BasicXmlBeanWithFilter> worker = WorkerUtil.newWorker(WORKSPACE, BasicXmlBeanWithFilter.class);
+        StructWorker<BasicXmlBeanWithFilter> worker = spy(WorkerUtil.newWorker(WORKSPACE, BasicXmlBeanWithFilter.class));
         worker.checkStructFactory();
         List<BasicXmlBeanWithFilter> beans = new ArrayList<>();
         handler.handle(worker, BasicXmlBeanWithFilter.class, beans::add, new File(WorkerUtil.resolveFilePath(WORKSPACE, FILE)));
         Assertions.assertFalse(beans.isEmpty());
-        Assertions.assertEquals(2, beans.size());
+        Assertions.assertEquals(1, beans.size());
         Assertions.assertEquals(2, beans.get(0).id);
+
+        doThrow(NullPointerException.class).when(worker).createInstance(any(Object.class));
+        // doThrow(NullPointerException.class).when(worker).createInstance(any(StructImpl.class));
+        Assertions.assertThrows(StructTransformException.class, () ->
+                handler.handle(worker, BasicXmlBeanWithFilter.class, beans::add, new File(WorkerUtil.resolveFilePath(WORKSPACE, FILE))));
     }
 
     private static final String FILE = "tpl_xml_struct_handler.xml";
@@ -153,7 +163,7 @@ public class XmlStructHandlerTest {
     }
 
     @XmlRootElement(name = "child")
-    @StructSheet(fileName = FILE, startOrder = 2, endOrder = 3, filter = MyFilter.class)
+    @StructSheet(fileName = FILE, startOrder = 2, endOrder = 2, filter = MyFilter.class)
     static class BasicXmlBeanWithFilter {
 
         public int id;
