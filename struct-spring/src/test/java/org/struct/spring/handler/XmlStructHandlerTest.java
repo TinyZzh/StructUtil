@@ -85,7 +85,7 @@ public class XmlStructHandlerTest {
         List<BasicXmlBeanWithFilter> beans = new ArrayList<>();
         handler.handle(worker, BasicXmlBeanWithFilter.class, beans::add, new File(WorkerUtil.resolveFilePath(WORKSPACE, FILE)));
         Assertions.assertFalse(beans.isEmpty());
-        Assertions.assertEquals(1, beans.size());
+        Assertions.assertEquals(2, beans.size());
         Assertions.assertEquals(2, beans.get(0).id);
     }
 

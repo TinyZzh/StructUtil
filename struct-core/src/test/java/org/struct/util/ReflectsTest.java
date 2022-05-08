@@ -54,20 +54,13 @@ public class ReflectsTest {
             Assertions.assertEquals(e.getClass(), IllegalArgumentException.class);
         }
         //  [suc]
-        Orange orange = Reflects.newInstance(Orange.class);
-        Assertions.assertNotNull(orange);
+        Assertions.assertNotNull(Reflects.newInstance(Orange.class));
         //  [fail]  constructor throw exception
-        try {
-            Reflects.newInstance(OnlyException.class);
-        } catch (Exception e) {
-            Assertions.assertEquals(e.getClass(), Exception.class);
-        }
+        Assertions.assertThrows(IllegalStateException.class, () -> Reflects.newInstance(OnlyException.class));
         //  [fail]  private constructor throw exception
-        try {
-            Reflects.newInstance(OnlyPriParamException.class, "xx");
-        } catch (Exception e) {
-            Assertions.assertEquals(e.getClass(), IllegalArgumentException.class);
-        }
+        Assertions.assertThrows(IllegalStateException.class, () -> Reflects.newInstance(OnlyPriParamException.class, "xx"));
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> Reflects.newInstance(OnlyPriParamException.class, new double[]{1.0D}));
     }
 
     public class Apple {
