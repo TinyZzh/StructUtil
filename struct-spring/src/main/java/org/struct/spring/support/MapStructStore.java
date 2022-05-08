@@ -20,14 +20,13 @@ package org.struct.spring.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.struct.core.TypeRefFactory;
 import org.struct.spring.exceptions.NoSuchKeyResolverException;
+import org.struct.util.Reflects;
 import org.struct.util.WorkerUtil;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -79,47 +78,42 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
         super.afterPropertiesSet();
     }
 
+    /**
+     * If {@link #keyResolver}'s value is null,
+     * try resolve the store's {@link #keyResolver} by {@link #keyResolverBeanName} or {@link #keyResolverBeanClass}.
+     */
     private void resolveKeyResolver() {
-        if (null == this.keyResolver) {
-            try {
-                String krbn = this.keyResolverBeanName;
-                if (null != krbn
-                        && !krbn.isEmpty()) {
-                    this.keyResolver = this.applicationContext.getBean(krbn, StructKeyResolver.class);
-                }
-            } catch (Exception e) {
-                LOGGER.debug("resolve KeyResolver failure. identify:{}, clz:{}, keyResolverBeanName:{}", this.identify(), this.clzOfBean, this.keyResolverBeanName, e);
+        StructKeyResolver<K, B> resolver = this.keyResolver;
+        if (null == resolver) {
+            String beanName = this.keyResolverBeanName;
+            if (beanName != null && !beanName.isEmpty()) {
+                resolver = this.applicationContext.getBean(beanName, StructKeyResolver.class);
             }
         }
-        if (null == this.keyResolver) {
-            try {
-                Class<? extends StructKeyResolver> krbs = this.keyResolverBeanClass;
-                if (null != krbs
-                        && StructKeyResolver.class != krbs) {
-                    assert !Modifier.isAbstract(krbs.getModifiers());
-                    try {
-                        this.keyResolver = this.applicationContext.getBean(krbs);
-                    } catch (NoUniqueBeanDefinitionException nubde) {
-                        //  return any of it
-                        this.keyResolver = this.applicationContext.getBeansOfType(krbs).values().stream().findFirst().orElse(null);
+        Class<? extends StructKeyResolver<K, B>> beanClass = this.keyResolverBeanClass;
+        if (null != beanClass) {
+            if (null == resolver
+                    && !Objects.equals(StructKeyResolver.class, beanClass)) {
+                Map<String, ? extends StructKeyResolver> beansOfTypeMap = this.applicationContext.getBeansOfType(beanClass);
+                if (!beansOfTypeMap.isEmpty()) {
+                    for (StructKeyResolver value : beansOfTypeMap.values()) {
+                        resolver = value;
+                        break;
                     }
                 }
-            } catch (Exception e) {
-                LOGGER.debug("resolve KeyResolver failure. identify:{}, clz:{}, keyResolverBeanClass:{}", this.identify(), this.clzOfBean, this.keyResolverBeanClass, e);
+            }
+            //  create new key resolver out of spring framework.
+            if (null == resolver
+                    && !Modifier.isAbstract(beanClass.getModifiers())
+                    && !Modifier.isInterface(beanClass.getModifiers())) {
+                resolver = Reflects.newInstance(beanClass);
             }
         }
-        if (null == this.keyResolver) {
-            //  if only one StructKeyResolver in spring context. just autowire it.
-            //  If StructKeyResolver not defined in @Configuration class, user must be notice the spring load order.
-            Collection<StructKeyResolver> resolvers = this.applicationContext.getBeansOfType(StructKeyResolver.class).values();
-            if (resolvers.size() == 1) {
-                this.keyResolver = resolvers.stream().findFirst().orElse(null);
-            }
+        if (null == resolver) {
+            throw new NoSuchKeyResolverException("No such KeyResolver. the store:" + this.getClass().getSimpleName() + ", struct:" + clzOfBean()
+                    + ", keyBeanName:" + this.keyResolverBeanName + ", keyBeanClass:" + this.keyResolverBeanClass);
         }
-        if (null == this.keyResolver) {
-            throw new NoSuchKeyResolverException("Can not resolve store:" + this.getClass().getSimpleName() + " struct:" + clzOfBean()
-                    + "'s keyResolver with beanName:" + this.keyResolverBeanName + ", beanClass:" + this.keyResolverBeanClass);
-        }
+        this.keyResolver = resolver;
     }
 
     @Override
