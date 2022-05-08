@@ -79,7 +79,7 @@ public class StructWorker<T> {
 
     /// <editor-fold desc="   Protected Methods    "  defaultstate="collapsed">
 
-    void checkStructFactory() {
+    public void checkStructFactory() {
         StructFactory factory = this.structFactory;
         if (factory == null) {
             factory = WorkerUtil.structFactory(this.clzOfStruct, this);

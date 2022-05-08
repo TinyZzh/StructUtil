@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~
+  ~
+  ~          Copyright (c) 2022. - TinyZ.
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~         http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<root>
+    <child>
+        <id>1</id>
+        <byteValue>1</byteValue>
+        <booleanValue>1</booleanValue>
+        <shortValue>1</shortValue>
+        <intValue>1</intValue>
+        <longValue>1</longValue>
+        <floatValue>1</floatValue>
+        <doubleValue>1</doubleValue>
+        <byteObj>1</byteObj>
+        <booleanObj>1</booleanObj>
+        <shortObj>1</shortObj>
+        <intObj>1</intObj>
+        <longObj>1</longObj>
+        <floatObj>1</floatObj>
+        <doubleObj>1</doubleObj>
+        <stringObj>1</stringObj>
+        <bigIntegerObj>1</bigIntegerObj>
+        <bigDecimalObj>1</bigDecimalObj>
+        <intValueAry>1</intValueAry>
+        <doubleObjAry>1</doubleObjAry>
+        <subList>
+            <sub>
+                <lv>1</lv>
+                <name>n1</name>
+            </sub>
+            <sub>
+                <lv>2</lv>
+                <name>n2</name>
+            </sub>
+        </subList>
+        <subMap>
+            <sub>
+                <lv>3</lv>
+                <name>n3</name>
+            </sub>
+            <sub>
+                <lv>4</lv>
+                <name>n4</name>
+            </sub>
+        </subMap>
+    </child>
+    <child>
+        <id>2</id>
+        <byteValue>2</byteValue>
+        <booleanValue>2</booleanValue>
+        <shortValue>2</shortValue>
+        <intValue>2</intValue>
+        <longValue>2</longValue>
+        <floatValue>2</floatValue>
+        <doubleValue>2</doubleValue>
+        <byteObj>2</byteObj>
+        <booleanObj>2</booleanObj>
+        <shortObj>2</shortObj>
+        <intObj>2</intObj>
+        <longObj>2</longObj>
+        <floatObj>2</floatObj>
+        <doubleObj>2</doubleObj>
+        <stringObj>2</stringObj>
+        <bigIntegerObj>2</bigIntegerObj>
+        <bigDecimalObj>2</bigDecimalObj>
+        <intValueAry>2</intValueAry>
+        <doubleObjAry>2</doubleObjAry>
+        <subList>
+            <sub>
+                <lv>1</lv>
+                <name>n1</name>
+            </sub>
+            <sub>
+                <lv>2</lv>
+                <name>n2</name>
+            </sub>
+        </subList>
+        <subMap>
+            <sub>
+                <lv>3</lv>
+                <name>n3</name>
+            </sub>
+            <sub>
+                <lv>4</lv>
+                <name>n4</name>
+            </sub>
+        </subMap>
+    </child>
+    <child>
+        <id>3</id>
+        <byteValue>3</byteValue>
+        <booleanValue>3</booleanValue>
+        <shortValue>3</shortValue>
+        <intValue>3</intValue>
+        <longValue>3</longValue>
+        <floatValue>3</floatValue>
+        <doubleValue>3</doubleValue>
+        <byteObj>3</byteObj>
+        <booleanObj>3</booleanObj>
+        <shortObj>3</shortObj>
+        <intObj>3</intObj>
+        <longObj>3</longObj>
+        <floatObj>3</floatObj>
+        <doubleObj>3</doubleObj>
+        <stringObj>3</stringObj>
+        <bigIntegerObj>3</bigIntegerObj>
+        <bigDecimalObj>3</bigDecimalObj>
+        <intValueAry>3</intValueAry>
+        <doubleObjAry>3</doubleObjAry>
+        <subList>
+            <sub>
+                <lv>1</lv>
+                <name>n1</name>
+            </sub>
+            <sub>
+                <lv>2</lv>
+                <name>n2</name>
+            </sub>
+        </subList>
+        <subMap>
+            <sub>
+                <lv>3</lv>
+                <name>n3</name>
+            </sub>
+            <sub>
+                <lv>4</lv>
+                <name>n4</name>
+            </sub>
+        </subMap>
+    </child>
+</root>

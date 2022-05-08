@@ -33,7 +33,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.io.File;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,61 +46,98 @@ public class XmlStructHandlerTest {
 
     @Test
     public void test() {
-        StructWorker<VipConfigSyncBean> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", VipConfigSyncBean.class);
-        ArrayList<VipConfigSyncBean> beans = worker.toList(ArrayList::new);
-        Assertions.assertEquals(10, beans.size());
+        XmlStructHandler handler = new XmlStructHandler();
+        Assertions.assertNotNull(handler.matcher());
+        StructWorker<BasicXmlBean> worker = WorkerUtil.newWorker(WORKSPACE, BasicXmlBean.class);
+        worker.checkStructFactory();
+        List<BasicXmlBean> beans = new ArrayList<>();
+        handler.handle(worker, BasicXmlBean.class, beans::add, new File(WorkerUtil.resolveFilePath(WORKSPACE, FILE)));
+        Assertions.assertFalse(beans.isEmpty());
+        Assertions.assertEquals(3, beans.size());
+        BasicXmlBean bean = beans.get(1);
+        Assertions.assertEquals(2, bean.id);
+        Assertions.assertEquals((byte) 2, bean.byteValue);
+        Assertions.assertFalse(bean.booleanValue);
+        Assertions.assertEquals((short) 2, bean.shortValue);
+        Assertions.assertEquals(2, bean.intValue);
+        Assertions.assertEquals(2L, bean.longValue);
+        Assertions.assertEquals(2F, bean.floatValue);
+        Assertions.assertEquals(2D, bean.doubleValue);
+        Assertions.assertEquals((byte) 2, bean.byteObj);
+        Assertions.assertEquals(false, bean.booleanObj);
+        Assertions.assertEquals((short) 2, bean.shortObj);
+        Assertions.assertEquals(2, bean.intObj);
+        Assertions.assertEquals(2L, bean.longObj);
+        Assertions.assertEquals(2F, bean.floatObj);
+        Assertions.assertEquals(2D, bean.doubleObj);
+        Assertions.assertEquals("2", bean.stringObj);
+        Assertions.assertEquals(BigInteger.valueOf(2), bean.bigIntegerObj);
+        Assertions.assertEquals(BigDecimal.valueOf(2), bean.bigDecimalObj);
+        Assertions.assertArrayEquals(new int[]{2}, bean.intValueAry);
+        Assertions.assertArrayEquals(new Double[]{2.0D}, bean.doubleObjAry);
     }
+
+    @Test
+    public void testLoadWithBeanFilter() {
+        XmlStructHandler handler = new XmlStructHandler();
+        StructWorker<BasicXmlBeanWithFilter> worker = WorkerUtil.newWorker(WORKSPACE, BasicXmlBeanWithFilter.class);
+        worker.checkStructFactory();
+        List<BasicXmlBeanWithFilter> beans = new ArrayList<>();
+        handler.handle(worker, BasicXmlBeanWithFilter.class, beans::add, new File(WorkerUtil.resolveFilePath(WORKSPACE, FILE)));
+        Assertions.assertFalse(beans.isEmpty());
+        Assertions.assertEquals(1, beans.size());
+        Assertions.assertEquals(2, beans.get(0).id);
+    }
+
+    private static final String FILE = "tpl_xml_struct_handler.xml";
+    private static final String WORKSPACE = "classpath:";
 
     @XmlRootElement(name = "child")
     @XmlAccessorType(XmlAccessType.FIELD)
-    @StructSheet(fileName = "tpl_vip.xml", startOrder = 1)
-    public static class VipConfigSyncBean {
-        public int gold;
-        public int lv;
-        public int activityId;
-        public int addExp;
-        public int addRpgExp;
-        public int goldPoint;
-        public boolean isLoginBroadcast = false;   //  是否登录广播
-        public boolean isForceEnterChannel = false;   //  是否挤房间
-        /**
-         * 减免买家税收. 单位：百分比
-         */
-        public BigDecimal taxDiscountForBuyer;
-        /**
-         * 减免卖家税收. 单位：百分比
-         */
-        public BigDecimal taxDiscountForSeller;
-        /**
-         * extra player buy gold amount every week.
-         */
-        public int extraMarketBuyGold;
-        /**
-         * 王者祝福使用次数加成百分比
-         */
-        public int addKingScuffleNum;
+    @StructSheet(fileName = FILE, startOrder = 1)
+    static class BasicXmlBean {
+        public int id;
+
+        public byte byteValue;
+        public boolean booleanValue;
+        public short shortValue;
+        public int intValue;
+        public long longValue;
+        public float floatValue;
+        public double doubleValue;
+        public Byte byteObj;
+        public Boolean booleanObj;
+        public Short shortObj;
+        public Integer intObj;
+        public Long longObj;
+        public Float floatObj;
+        public Double doubleObj;
+        public String stringObj;
+        public BigInteger bigIntegerObj;
+        public BigDecimal bigDecimalObj;
+        public int[] intValueAry;
+        public Double[] doubleObjAry;
 
         @XmlElementWrapper(name = "subList")
         @XmlElement(name = "sub")
         public List<Sub> subList;
-
         @XmlJavaTypeAdapter(value = SubMapXmlAdapter.class)
         @XmlElement(name = "subMap")
         public Map<Integer, Sub> subMap;
     }
 
-    public static class Sub {
+    static class Sub {
         public int lv;
         public String name;
     }
 
     @XmlType
-    public static class SubListClz {
+    static class SubListClz {
         @XmlElement(name = "sub")
         public List<Sub> list = new ArrayList<>();
     }
 
-    public static class SubMapXmlAdapter extends XmlAdapter<SubListClz, Map<Integer, Sub>> {
+    static class SubMapXmlAdapter extends XmlAdapter<SubListClz, Map<Integer, Sub>> {
 
         @Override
         public Map<Integer, Sub> unmarshal(SubListClz v) throws Exception {
@@ -113,57 +152,21 @@ public class XmlStructHandlerTest {
         }
     }
 
+    @XmlRootElement(name = "child")
+    @StructSheet(fileName = FILE, startOrder = 2, endOrder = 3, filter = MyFilter.class)
+    static class BasicXmlBeanWithFilter {
 
-    @Test
-    public void testLoadWithBeanFilter() {
-        StructWorker<VipConfigSyncBeanWithFilter> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", VipConfigSyncBeanWithFilter.class);
-        ArrayList<VipConfigSyncBeanWithFilter> beans = worker.toList(ArrayList::new);
-        Assertions.assertEquals(8, beans.size());
+        public int id;
     }
 
-    public static class MyFilter extends StructBeanFilter<VipConfigSyncBeanWithFilter> {
-
-        /**
-         * the constructor must be implement.
-         *
-         * @param cellHandler the real cell handler.
-         */
-        public MyFilter(Consumer<VipConfigSyncBeanWithFilter> cellHandler) {
+    static class MyFilter extends StructBeanFilter<BasicXmlBeanWithFilter> {
+        public MyFilter(Consumer<BasicXmlBeanWithFilter> cellHandler) {
             super(cellHandler);
         }
 
         @Override
-        public boolean test(VipConfigSyncBeanWithFilter vipConfigSyncBean) {
-            return vipConfigSyncBean.lv > 2;
+        public boolean test(BasicXmlBeanWithFilter bean) {
+            return bean.id >= 2;
         }
-    }
-
-    @XmlRootElement(name = "child")
-    @StructSheet(fileName = "tpl_vip.xml", startOrder = 2, filter = MyFilter.class)
-    public static class VipConfigSyncBeanWithFilter {
-        public int gold;
-        public int lv;
-        public int activityId;
-        public int addExp;
-        public int addRpgExp;
-        public int goldPoint;
-        public boolean isLoginBroadcast = false;   //  是否登录广播
-        public boolean isForceEnterChannel = false;   //  是否挤房间
-        /**
-         * 减免买家税收. 单位：百分比
-         */
-        public BigDecimal taxDiscountForBuyer;
-        /**
-         * 减免卖家税收. 单位：百分比
-         */
-        public BigDecimal taxDiscountForSeller;
-        /**
-         * extra player buy gold amount every week.
-         */
-        public int extraMarketBuyGold;
-        /**
-         * 王者祝福使用次数加成百分比
-         */
-        public int addKingScuffleNum;
     }
 }

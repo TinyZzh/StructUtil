@@ -24,6 +24,7 @@ dependencies {
     implementation("org.springframework:spring-oxm:${version_options.SPRING_VERSION}")
 
     implementation("jakarta.xml.bind:jakarta.xml.bind-api:2.3.3")
+    implementation("com.sun.xml.bind:jaxb-impl:2.3.3")
 
     testImplementation("org.springframework:spring-test:${version_options.SPRING_VERSION}")
 }
