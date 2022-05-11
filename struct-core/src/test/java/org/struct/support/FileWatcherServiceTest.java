@@ -141,6 +141,7 @@ class FileWatcherServiceTest {
     public void testRegisterAll() throws IOException {
         FileWatcherService fws = FileWatcherService.newBuilder().build();
         String path = "./";
+        fws.register(path);
         fws.registerAll(path);
         fws.registerAll(Paths.get(path));
     }
