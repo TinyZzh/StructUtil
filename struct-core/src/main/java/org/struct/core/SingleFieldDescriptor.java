@@ -133,9 +133,7 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     }
 
     public Class<?> getAggregateType() {
-        return Object.class == this.aggregateType
-                ? this.reference
-                : this.aggregateType;
+        return this.aggregateType;
     }
 
     public void setAggregateType(Class<?> aggregateType) {
@@ -263,15 +261,14 @@ public class SingleFieldDescriptor extends FieldDescriptor {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         SingleFieldDescriptor that = (SingleFieldDescriptor) o;
-        return required == that.required && Objects.equals(fieldOrRc, that.fieldOrRc) && Objects.equals(reference, that.reference) && Arrays.equals(refGroupBy, that.refGroupBy) && Arrays.equals(refUniqueKey, that.refUniqueKey) && Objects.equals(converter, that.converter);
+        return required == that.required && Objects.equals(fieldOrRc, that.fieldOrRc) && Objects.equals(reference, that.reference) && Arrays.equals(refGroupBy, that.refGroupBy) && Arrays.equals(refUniqueKey, that.refUniqueKey) && Objects.equals(aggregateBy, that.aggregateBy) && Objects.equals(aggregateType, that.aggregateType) && Objects.equals(converter, that.converter);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(super.hashCode(), fieldOrRc, reference, required, converter);
+        int result = Objects.hash(super.hashCode(), fieldOrRc, reference, aggregateBy, aggregateType, required, converter);
         result = 31 * result + Arrays.hashCode(refGroupBy);
         result = 31 * result + Arrays.hashCode(refUniqueKey);
         return result;
     }
-
 }
