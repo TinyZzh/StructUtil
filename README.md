@@ -11,7 +11,8 @@
 通过定义Struct Data Class和辅助的简单注解, 实现常见的数据文件(e.g. *.csv, *.xlsx. etc.)映射转换为定义的Java实例的功能。
 基本上避免了配置表解析，热重载等相关的开发工作量。
 
-> `master`基于JDK 17 LTS开发. 
+> `master`分支基于JDK 17 LTS开发.
+
 > JDK 1.8的请使用[3.5.3.beta-SNAPSHOT](https://github.com/TinyZzh/StructUtil/releases/tag/3.5.3.beta-SNAPSHOT)
 
 notice
@@ -30,41 +31,67 @@ dependencies {
 
 ## 特性
 
-> 1. 低侵入。对已有的代码仅需使用 **StructField** 和 **StructSheet** 两个注解
-> 2. 高性能、低内存占用。使用增量或Stream API的方式避免大文件读取带来的低性能、高内存占用的问题
-> 3. 扩展性。提供WorkerMatcher、StructHandler、Converter等扩展点供用户实现自定义扩展功能
-> 4. 结构化数据自动校验和检查。自动检查校验结构化数据及依赖之间的关系。避免出现循环依赖等问题
-> 5. 丰富的内置解析器。内置提供 **.xls**、**.xlsx**、**.json**、**.xml** 四种常见结构化数据的解析器（扩展中）
-> 6. 丰富的JDK原生类的类型转换支持
-> 7. 自定义类型转换器{Converter}
-> 8. 灵活的结构化数据整理机制。输出的结果支持Array、List、Map、Vector、Set等JDK内置或自定义的集合容器
-> 9. 灵活的文件变更监听和结构化数据文件动态加载能力
-> 10. 支持 **Record** 类型(JDK 16+).
+1. 低侵入。对已有的代码仅需使用 **StructField** 和 **StructSheet** 两个注解
+2. 高性能、低内存占用。使用增量或Stream API的方式避免大文件读取带来的低性能、高内存占用的问题
+3. 扩展性。提供WorkerMatcher、StructHandler、Converter等扩展点供用户实现自定义扩展功能
+4. 结构化数据自动校验和检查。自动检查校验结构化数据及依赖之间的关系。避免出现循环依赖等问题
+5. 丰富的内置解析器。内置提供 **.xls**、**.xlsx**、**.json**、**.xml** 四种常见结构化数据的解析器（扩展中）
+6. 丰富的JDK原生类的类型转换支持
+7. 自定义类型转换器{Converter}
+8. 灵活的结构化数据整理机制。输出的结果支持Array、List、Map、Vector、Set等JDK内置或自定义的集合容器
+9. 灵活的文件变更监听和结构化数据文件动态加载能力
+10. 支持 **Record** 类型(JDK 16+).
 
 ## 快速入门
 
 主要包含两个Java注解. @StructSheet和@StructField
 
+```java
+//  Java Record
+@StructSheet(fileName = "struct_examples.xlsx", sheetName = "Sheet 1")
+record SimplaJO(
+        @StructField(name = "id") int id,
+        @StructField(ref = RefJO.class, refUniqueKey = "id") RefJO ref
+) {
+}
+
+//  Java Class
+@StructSheet(fileName = "struct_examples.xlsx", sheetName = "Sheet 1")
+public final class SimplaJO {
+    @StructField(name = "id") 
+    private int id;
+    @StructField(ref = RefJO.class, refUniqueKey = "id")
+    private RefJO ref;
+}
+```
+
 ### 1. @StructSheet Annotation
 
-定义Excel模板表对应个Java Bean
+定义数据文件的结构.
 
-> 1. fileName. 指定Bean对应的结构化数据文件的文件路径.
-> 2. sheetName. 表单名称. 针对Excel文件
-> 3. startOrder. 控制文件读取的开始. 缺省为: 1 从excel的1行(第一行为0)或文件的第一行开始
-> 4. endOrder. 控制文件读取的结束. 缺省为:-1
-> 5. matcher. 文件匹配器. 用于筛选可用的{StructHandler}.
+|注解名称|缺省值|可选字段|备注|
+|:--|:--:|:--:|---:|
+|fileName|''|**N**|数据文件名称, 带文件的后缀名. e.g. struct.xlsx|
+|sheetName|'Sheet1'|Y|表单名称. 针对Excel文件的包含多个Sheet|
+|startOrder|1|Y|控制文件读取的开始. 缺省为: 1 从excel的1行(第一行为0)或文件的第一行开始|
+|endOrder|-1|Y|控制文件读取的结束. 缺省为:-1
+|matcher|WorkerMatcher.class|Y|自定义WorkHandler, 可以根据条件指定处理的StructHandler. 
+|filter|StructBeanFilter.class|Y|过滤、筛选符合条件的JO. 
 
 ### 2. @StructField Annotation
 
-定义Excel模板表对应个Java Bean中的 Field
+定义列结构. 
 
-> 1. name. 明确的指定bean中的字段对应的Excel的列名
-> 2. ref. 字段映射的StructSheet. 类似于索引. 明确关联另外一个Excel表结构.
-> 3. refGroupBy. 映射的目标根据此字段的值进行分组
-> 4. refUniqueKey. Map对应根据uniqueKey字段的值作为键值对的key.
-> 5. required. 字段是否为必须字段? TRUE时, 字段值必须存在, 字段为映射时, 映射必须存在.
-> 6. converter. 字段类型转换器
+|注解名称|缺省值|可选字段|备注|
+|:--|:--:|:--:|---:|
+|name|''|Y|数据文件中的列名, 当设置非空字符串时，使用注解的值替代类文件中的字段名来解析数据文件|
+|ref|Object.class|Y|引用其他结构|
+|refGroupBy|{}|Y|当ref值有效时, 引用的结构数据根据字段进行分组|
+|refUniqueKey|{}|Y|当ref值有效时, 引用的结构数据根据字段转换为Map
+|aggregateBy|''|Y|根据父结构中的字段值，对子结构进行聚合. 类似于groupBy的功能. 
+|aggregateType|Object.class|Y|当aggregateBy生效时，聚合的集合类型. 不支持Map
+|required|false|Y|字段值非空检查. 设置为True时, 字段值必须为非null的值.|
+|converter|无|Y|将数据文件中的数据转换为期望的JO|
 
 ## Examples
 
@@ -76,7 +103,7 @@ Defined the biological classification info in another sheet to reusable use this
 ```java
 
 @StructSheet(fileName = "Animal.xlsx", sheetName = "t_animal_info")
-public static class Animal {
+public final class Animal {
 
     private int id;
 
@@ -89,7 +116,7 @@ public static class Animal {
 }
 
 @StructSheet(fileName = "Animal.xlsx", sheetName = "t_animal_classification")
-public static class Classification {
+public final class Classification {
     private int id;
     private String domain;
     private String phylum;
@@ -185,15 +212,11 @@ public class ExcelUMStructHandler implements StructHandler {
 
 ```java
 
-@StructSheet(fileName = "tpl_vip.xml", filter = MyFilter.class)
-
-...
-
-public static class MyFilter extends StructBeanFilter<VipConfigSyncBeanWithFilter> {
+// 用例: @StructSheet(fileName = "struct.xml", filter = MyFilter.class)
+public class MyFilter extends StructBeanFilter<StructJO> {
     @Override
-    public boolean test(VipConfigSyncBeanWithFilter vipConfigSyncBean) {
-        //  收集lv大于2的数据, 筛选掉lv小于或等于2的数据.        
-        return vipConfigSyncBean.lv > 2;
+    public boolean test(StructJO obj) {
+        return obj.lv > 2;
     }
 }
 ```
@@ -204,13 +227,13 @@ public static class MyFilter extends StructBeanFilter<VipConfigSyncBeanWithFilte
 
 ```java
 FileWatcherService service = FileWatcherService.newBuilder().setWatchService(mockMs)
-    .setScheduleInitialDelay(10L)
-    .setScheduleTimeUnit(TimeUnit.DAYS)
-    .setScheduleDelay(999L)
-    .setExecutor(Executors.newScheduledThreadPool(1, r -> new Thread(r, "test")))
-    .build();
+        .setScheduleInitialDelay(10L)
+        .setScheduleTimeUnit(TimeUnit.DAYS)
+        .setScheduleDelay(999L)
+        .setExecutor(Executors.newScheduledThreadPool(1,r->new Thread(r,"test")))
+        .build();
 service.bootstrap();
 service.register("./examples/")
-    .registerHook("./examples/tpl_vip.xml",runnable)
-    .registerHook("./examples/tpl_vip2.xml",runnable)
+        .registerHook("./examples/tpl_vip.xml",runnable)
+        .registerHook("./examples/tpl_vip2.xml",runnable)
 ```
