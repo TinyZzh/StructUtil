@@ -7,12 +7,12 @@
 [![wiki](https://img.shields.io/badge/Docs-Wiki-green.svg)](https://github.com/TinyZzh/StructUtil/wiki)
 
 结构化数据处理工具。
-将格式化的数据文件映射转换为Java Bean工具。可以快速、简单的将配置表的结构化数据转换为Java Bean。减轻开发人员对于配置表的工作量。
 
-## 环境要求
+通过定义Struct Data Class和辅助的简单注解, 实现常见的数据文件(e.g. *.csv, *.xlsx. etc.)映射转换为定义的Java实例的功能。
+基本上避免了配置表解析，热重载等相关的开发工作量。
 
-    1. Java 17 LTS. 
-    2. POI 5.2.2
+> `master`基于JDK 17 LTS开发. 
+> JDK 1.8的请使用[3.5.3.beta-SNAPSHOT](https://github.com/TinyZzh/StructUtil/releases/tag/3.5.3.beta-SNAPSHOT)
 
 notice
 
@@ -203,12 +203,14 @@ public static class MyFilter extends StructBeanFilter<VipConfigSyncBeanWithFilte
 工具类`FileWatcherService`实现了简单的文件变更监控Hook. 通过监听文件变更事件，当文件发生变更时，触发Hook来实现热加载.
 
 ```java
-FileWatcherService fws=new FileWatcherService();
-        fws.register("./examples/")
-        .registerHook("./examples/tpl_vip.xml",runnable)
-        .registerHook("./examples/tpl_vip2.xml",runnable)
-        .setScheduleInitialDelay(10L)
-        .setScheduleDelay(1L)
-        .setScheduleTimeUnit(TimeUnit.MILLISECONDS)
-        .bootstrap();
+FileWatcherService service = FileWatcherService.newBuilder().setWatchService(mockMs)
+    .setScheduleInitialDelay(10L)
+    .setScheduleTimeUnit(TimeUnit.DAYS)
+    .setScheduleDelay(999L)
+    .setExecutor(Executors.newScheduledThreadPool(1, r -> new Thread(r, "test")))
+    .build();
+service.bootstrap();
+service.register("./examples/")
+    .registerHook("./examples/tpl_vip.xml",runnable)
+    .registerHook("./examples/tpl_vip2.xml",runnable)
 ```
