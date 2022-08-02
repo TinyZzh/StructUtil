@@ -5,7 +5,7 @@ package org.struct.spi;
  *
  * @param service      the extension's name
  * @param clzOfService the extension's class
- * @param order        the extension's order'
+ * @param order        the extension's order
  * @author TinyZ
  * @date 2022-05-07
  * @see SPI

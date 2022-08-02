@@ -23,7 +23,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ImportResource;
-import org.struct.spring.support.StructStoreConfig;
+import org.struct.examples.MapKeyResolverBeanName;
+import org.struct.spring.support.StructStoreService;
+
+import java.util.List;
 
 /**
  * @author TinyZ.
@@ -41,7 +44,8 @@ import org.struct.spring.support.StructStoreConfig;
 public class MyApplication {
     public static void main(String[] args) {
         ConfigurableApplicationContext ctx = SpringApplication.run(MyApplication.class, args);
-        StructStoreConfig bean = ctx.getBean(StructStoreConfig.class);
+        StructStoreService service = ctx.getBean(StructStoreService.class);
+        List<MapKeyResolverBeanName> list = service.getAll(MapKeyResolverBeanName.class);
         System.out.println();
     }
 }

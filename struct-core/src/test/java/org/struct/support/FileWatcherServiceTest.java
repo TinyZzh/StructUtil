@@ -150,11 +150,12 @@ class FileWatcherServiceTest {
     public void testRegisterHook() throws IOException {
         FileWatcherService fws = FileWatcherService.newBuilder().build();
         String path = "./";
-        fws.registerHook(Paths.get(path), () -> {
+        Path path1 = Paths.get(path);
+        fws.registerHook(path1, () -> {
         });
         fws.registerHook(path, () -> {
         });
-        fws.deregisterHook(Paths.get(path));
+        fws.deregisterHook(path1);
         fws.deregisterHook(path);
     }
 

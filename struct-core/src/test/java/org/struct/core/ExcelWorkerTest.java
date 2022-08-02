@@ -41,11 +41,11 @@ public class ExcelWorkerTest {
 //        StructWorker<Animal> worker = StructWorker.of("./out/test/resources/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
 
-        List<Animal> collect = worker.load(ArrayList::new).stream().collect(Collectors.toList());
+        List<Animal> collect = worker.load(ArrayList::new).stream().toList();
         Map<Object, Object> collected = worker.load(ArrayList::new).stream().collect(Collectors.toMap(o -> o.id, o -> o));
 
 
-        Assertions.assertTrue(!list.isEmpty());
+        Assertions.assertFalse(list.isEmpty());
         Assertions.assertEquals(10, list.size());
     }
 
@@ -53,7 +53,7 @@ public class ExcelWorkerTest {
     public void testAnimalWithArray() throws Exception {
         StructWorker<AnimalWithArray> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", AnimalWithArray.class);
         ArrayList<AnimalWithArray> list = worker.load(ArrayList::new);
-        Assertions.assertTrue(!list.isEmpty());
+        Assertions.assertFalse(list.isEmpty());
     }
 
     @Test
@@ -97,7 +97,7 @@ public class ExcelWorkerTest {
 
         /**
          * this field required's class is {@link Classification}.
-         * So the {@link Classification}'s struct data will be convert to a temp Map collection.
+         * So the {@link Classification}'s struct data will be converted to a temp Map collection.
          * this field's value will be injected from map.
          * the key is {@link ArrayKey} include total refUniqueKey's value .
          */

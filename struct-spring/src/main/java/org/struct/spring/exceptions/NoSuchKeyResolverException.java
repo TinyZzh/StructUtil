@@ -18,11 +18,14 @@
 
 package org.struct.spring.exceptions;
 
+import java.io.Serial;
+
 /**
  * @author TinyZ.
  * @date 2020-07-23.
  */
 public class NoSuchKeyResolverException extends RuntimeException{
+    @Serial
     private static final long serialVersionUID = -4909225945004896588L;
 
     public NoSuchKeyResolverException() {

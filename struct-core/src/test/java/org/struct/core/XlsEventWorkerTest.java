@@ -35,7 +35,7 @@ public class XlsEventWorkerTest {
     public void test() throws Exception {
         StructWorker<Animal> worker = new StructWorker<>("classpath:/org/struct/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
-        Assertions.assertTrue(!list.isEmpty());
+        Assertions.assertFalse(list.isEmpty());
         Assertions.assertEquals(10, list.size());
     }
 
@@ -43,7 +43,7 @@ public class XlsEventWorkerTest {
     public void testWithEndOrder() throws Exception {
         StructWorker<AnimalWithEnd> worker = new StructWorker<>("classpath:/org/struct/core/", AnimalWithEnd.class);
         ArrayList<AnimalWithEnd> list = worker.load(ArrayList::new);
-        Assertions.assertTrue(!list.isEmpty());
+        Assertions.assertFalse(list.isEmpty());
         Assertions.assertEquals(2, list.size());
     }
 
@@ -76,7 +76,7 @@ public class XlsEventWorkerTest {
 
         /**
          * this field required's class is {@link ExcelWorkerTest.Classification}.
-         * So the {@link ExcelWorkerTest.Classification}'s struct data will be convert to a temp Map collection.
+         * So the {@link ExcelWorkerTest.Classification}'s struct data will be converted to a temp Map collection.
          * this field's value will be injected from map.
          * the key is {@link ArrayKey} include total refUniqueKey's value .
          */

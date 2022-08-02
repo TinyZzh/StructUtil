@@ -34,10 +34,10 @@ import java.time.format.DateTimeFormatter;
  */
 class LocalDateConverterTest {
 
-    private LocalDateConverter converter = new LocalDateConverter();
+    private final LocalDateConverter converter = new LocalDateConverter();
 
     @BeforeEach
-    private void beforeAll() {
+    public void beforeAll() {
         converter.setZoneId(ZoneId.systemDefault());
         converter.setFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         Assertions.assertNotNull(converter.getZoneId());

@@ -19,10 +19,12 @@
 package org.struct.core.matcher;
 
 import java.io.File;
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Objects;
 
 public class FileExtensionMatcher implements WorkerMatcher {
+    @Serial
     private static final long serialVersionUID = 4620761370006132284L;
 
     /**

@@ -31,7 +31,7 @@ public class ArrayKeyTest {
         ArrayKey ak3 = new ArrayKey(new Object[]{1, 2});
         Assertions.assertEquals(ak1, ak2);
         Assertions.assertNotEquals(ak2, ak3);
-        Assertions.assertNotEquals(ak2, 1L);
+        Assertions.assertNotEquals(1L, ak2);
     }
 
     @Test

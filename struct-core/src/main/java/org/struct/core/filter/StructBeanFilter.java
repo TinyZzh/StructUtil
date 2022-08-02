@@ -34,7 +34,7 @@ public abstract class StructBeanFilter<T> implements Consumer<T>, Predicate<T> {
     private final Consumer<T> cellHandler;
 
     /**
-     * the constructor must be implement.
+     * the constructor must be implemented.
      *
      * @param cellHandler the real cell handler.
      */

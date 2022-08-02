@@ -56,7 +56,7 @@ class AbstractStructStoreTest implements ApplicationContextAware {
 
     @Test
     public void test2() throws Exception {
-        AbstractStructStore store = new AbstractStructStore(A.class) {
+        AbstractStructStore<Long, A> store = new AbstractStructStore<>(A.class) {
             @Override
             public void initialize() {
 
@@ -68,17 +68,17 @@ class AbstractStructStoreTest implements ApplicationContextAware {
             }
 
             @Override
-            public List getAll() {
+            public List<A> getAll() {
                 return null;
             }
 
             @Override
-            public Object get(Object key) {
+            public A get(Long key) {
                 return null;
             }
 
             @Override
-            public List lookup(Predicate filter) {
+            public List<A> lookup(Predicate<A> filter) {
                 return null;
             }
         };
@@ -91,7 +91,7 @@ class AbstractStructStoreTest implements ApplicationContextAware {
         Assertions.assertFalse(store.isInitialized());
         store.destroy();
         store.tryGet(1L);
-        store.getOrDefault(1L, 0L);
+        store.getOrDefault(1L, null);
         store.lookup(1L, 0L);
         Assertions.assertTrue(store.casStatusInit());
         Assertions.assertTrue(store.casStatusDone());

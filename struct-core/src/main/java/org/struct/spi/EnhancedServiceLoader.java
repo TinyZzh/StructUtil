@@ -179,7 +179,7 @@ final class EnhancedServiceLoader<S> {
             List<ExtensionDefinition> definitions = this.lookupAllExtensionDefinition(loader);
             ExtensionDefinition definition = null;
             if (!definitions.isEmpty()) {
-                if (null == alias || alias.length() <= 0) {
+                if (null == alias || alias.length() == 0) {
                     definition = definitions.get(definitions.size() - 1);
                 } else {
                     for (int i = definitions.size() - 1; i >= 0; i--) {

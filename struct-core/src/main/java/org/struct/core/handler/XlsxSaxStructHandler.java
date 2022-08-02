@@ -94,7 +94,7 @@ public class XlsxSaxStructHandler implements StructHandler {
                         }
                     }
                 } catch (EndOfExcelSheetException e) {
-                    // row num large than endOrder. stop to load struct sheet.
+                    // row num larger than endOrder. stop to load struct sheet.
                 }
             }
         } catch (Exception e) {
@@ -112,7 +112,7 @@ public class XlsxSaxStructHandler implements StructHandler {
         /**
          * column - field name
          */
-        private Map<Integer, String> headRowMap = new HashMap<>();
+        private final Map<Integer, String> headRowMap = new HashMap<>();
 
         private boolean isFirstRow = true;
 

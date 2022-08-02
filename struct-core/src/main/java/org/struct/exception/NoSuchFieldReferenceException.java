@@ -18,7 +18,10 @@
 
 package org.struct.exception;
 
+import java.io.Serial;
+
 public class NoSuchFieldReferenceException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = 19364548129304586L;
 
     public NoSuchFieldReferenceException() {

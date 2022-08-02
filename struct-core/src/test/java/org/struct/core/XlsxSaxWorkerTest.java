@@ -31,7 +31,7 @@ public class XlsxSaxWorkerTest {
     public void test() throws Exception {
         StructWorker<Animal> worker = new StructWorker<>("classpath:/org/struct/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
-        Assertions.assertTrue(!list.isEmpty());
+        Assertions.assertFalse(list.isEmpty());
         Assertions.assertEquals(10, list.size());
     }
 
@@ -39,7 +39,7 @@ public class XlsxSaxWorkerTest {
     public void testWithEndOrder() throws Exception {
         StructWorker<AnimalWithEnd> worker2 = new StructWorker<>("classpath:/org/struct/core/", AnimalWithEnd.class);
         ArrayList<AnimalWithEnd> list2 = worker2.load(ArrayList::new);
-        Assertions.assertTrue(!list2.isEmpty());
+        Assertions.assertFalse(list2.isEmpty());
         Assertions.assertEquals(1, list2.size());
     }
 
@@ -84,7 +84,7 @@ public class XlsxSaxWorkerTest {
 
         /**
          * this field required's class is {@link ExcelWorkerTest.Classification}.
-         * So the {@link ExcelWorkerTest.Classification}'s struct data will be convert to a temp Map collection.
+         * So the {@link ExcelWorkerTest.Classification}'s struct data will be converted to a temp Map collection.
          * this field's value will be injected from map.
          * the key is {@link ArrayKey} include total refUniqueKey's value .
          */

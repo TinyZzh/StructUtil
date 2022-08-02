@@ -20,12 +20,12 @@ notice
 ```groovy
 dependencies {
     //  Excel. *.xls or *.xlsx
-    compile 'org.apache.poi:poi:5.2.2'
-    compile 'org.apache.poi:poi-ooxml:5.2.2'
+    implementation('org.apache.poi:poi:5.2.2')
+    implementation('org.apache.poi:poi-ooxml:5.2.2')
     //  json
-    compile 'com.google.code.gson:gson:2.9.0'
+    implementation('com.google.code.gson:gson:2.9.0')
 
-    compile 'org.slf4j:slf4j-api:1.7.32'
+    implementation('org.slf4j:slf4j-api:1.7.32')
 }
 ```         
 
@@ -132,7 +132,7 @@ public final class Classification {
 
 ```java
 StructWorker<Animal> worker=WorkerUtil.newWorker(rootpath,Animal.class);
-        List<Animal> list=worker.toList(ArrayList::new);
+List<Animal> list=worker.toList(ArrayList::new);
 ```
 
 ### [Feature] Custom Type Converter

@@ -18,7 +18,10 @@
 
 package org.struct.exception;
 
+import java.io.Serial;
+
 public class EndOfExcelSheetException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = -6111017983525047791L;
 
     public EndOfExcelSheetException() {

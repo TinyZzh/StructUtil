@@ -18,7 +18,10 @@
 
 package org.struct.exception;
 
+import java.io.Serial;
+
 public class UnSupportConvertOperationException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = -8092306018258939761L;
 
     public UnSupportConvertOperationException() {

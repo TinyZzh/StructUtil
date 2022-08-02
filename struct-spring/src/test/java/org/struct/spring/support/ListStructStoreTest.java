@@ -59,7 +59,7 @@ class ListStructStoreTest {
             lss.get("xx");
         });
         lss.initialize();
-        System.out.println(lss.toString());
+        System.out.println(lss);
         Assertions.assertEquals(Collections.singletonList("xx"), lss.lookup(x -> x.equals("xx")));
         Assertions.assertEquals(1, lss.getAll().size());
         Assertions.assertEquals("xx", lss.getAll().get(0));

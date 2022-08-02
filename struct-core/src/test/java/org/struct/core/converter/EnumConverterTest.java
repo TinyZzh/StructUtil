@@ -66,7 +66,7 @@ public class EnumConverterTest {
     public enum MyEnum {
         One,
         Two,
-        Three;
+        Three
 
     }
 }

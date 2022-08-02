@@ -91,7 +91,7 @@ public interface StructStore<K, B> {
     B getOrDefault(K key, B dv);
 
     /**
-     * Try get struct store element by the key.
+     * Try return struct store element by the key.
      *
      * @return optional with the element by the key.
      * @see Optional

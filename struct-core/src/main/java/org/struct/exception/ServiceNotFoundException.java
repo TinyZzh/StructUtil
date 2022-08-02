@@ -18,7 +18,10 @@
 
 package org.struct.exception;
 
+import java.io.Serial;
+
 public class ServiceNotFoundException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = -412382901999678754L;
 
     public ServiceNotFoundException() {

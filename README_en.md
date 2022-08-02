@@ -14,8 +14,8 @@ Excel Or Other Configuration Data File Convert To Java Bean Utility.
     2. POI 3.x
 ```groovy
 dependencies {
-    compile 'org.apache.poi:poi:3.16'
-    compile 'org.apache.poi:poi-ooxml:3.16'
+    implementation 'org.apache.poi:poi:3.16'
+    implementation 'org.apache.poi:poi-ooxml:3.16'
 }
 ```         
 
@@ -89,7 +89,7 @@ public static class Animal {
      * this field required's class is {@link Classification}.
      * So the {@link Classification}'s excel data will be convert to a temp Map collection.
      * this field's value will be injected from map.
-     * the key is {@link ArrayKey} include total refUniqueKey's value .
+     * the key is {@link org.struct.core.ArrayKey} include total refUniqueKey's value .
      */
     @StructField(ref = Classification.class, refUniqueKey = {"id"})
     private Classification bean;

@@ -64,7 +64,7 @@ public class SimpleFieldBeanTest {
     enum MyEnum {
         One,
         Two,
-        Three;
+        Three
     }
 
     @StructSheet(fileName = "examples.xlsx", sheetName = "example_1")

@@ -31,7 +31,7 @@ public class ExcelUserModelWorkerTest {
     public void test() throws Exception {
         StructWorker<Animal> worker = new StructWorker<>("classpath:/org/struct/core/", Animal.class);
         ArrayList<Animal> list = worker.load(ArrayList::new);
-        Assertions.assertTrue(!list.isEmpty());
+        Assertions.assertFalse(list.isEmpty());
     }
 
     @StructSheet(fileName = "bean.xls", sheetName = "Sheet2")

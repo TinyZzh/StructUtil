@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-;
-
 /**
  * @author TinyZ
  * @date 2022-04-14
@@ -189,7 +187,7 @@ class JdkStructFactoryTest {
     enum MyEnum {
         One,
         Two,
-        Three;
+        Three
     }
 
     @Test
@@ -249,7 +247,7 @@ class JdkStructFactoryTest {
         @Override
         public Object convert(Object originValue, Class<?> targetType) {
             if (originValue instanceof String s) {
-                return Arrays.asList(s.split("\\|")).stream().map(Integer::parseInt).collect(Collectors.toList());
+                return Arrays.stream(s.split("\\|")).map(Integer::parseInt).collect(Collectors.toList());
             }
             return Collections.emptyList();
         }

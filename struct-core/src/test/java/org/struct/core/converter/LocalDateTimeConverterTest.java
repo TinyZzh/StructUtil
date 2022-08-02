@@ -37,7 +37,7 @@ class LocalDateTimeConverterTest {
     private LocalDateTimeConverter converter = new LocalDateTimeConverter();
 
     @BeforeEach
-    private void beforeAll() {
+    public void beforeAll() {
         converter.setZoneId(ZoneId.systemDefault());
         converter.setFormatter(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         Assertions.assertNotNull(converter.getZoneId());

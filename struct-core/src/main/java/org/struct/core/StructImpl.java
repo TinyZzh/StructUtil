@@ -29,7 +29,7 @@ public class StructImpl {
      * Current row cell's value map.
      * [column index, field value]
      */
-    private HashMap<String, Object> valuesMap = new HashMap<>();
+    private final HashMap<String, Object> valuesMap = new HashMap<>();
 
     /**
      * Add field's value.
@@ -46,7 +46,7 @@ public class StructImpl {
      *
      * @param fieldName the field's name
      * @param val       the field's value
-     * @param force     covert the prevent value if the field has been set.
+     * @param force     covert the previous value if the field has been set.
      */
     public void add(String fieldName, Object val, boolean force) {
         if (fieldName == null || fieldName.isEmpty()) {

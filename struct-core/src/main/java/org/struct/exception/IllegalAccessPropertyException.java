@@ -18,11 +18,14 @@
 
 package org.struct.exception;
 
+import java.io.Serial;
+
 /**
  * @author TinyZ.
  * @version 2019.05.20
  */
 public class IllegalAccessPropertyException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = -5108655813781707895L;
 
     public IllegalAccessPropertyException() {

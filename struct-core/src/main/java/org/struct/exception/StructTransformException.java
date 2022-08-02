@@ -18,11 +18,14 @@
 
 package org.struct.exception;
 
+import java.io.Serial;
+
 /**
  * @author TinyZ.
  * @version 2019.05.20
  */
 public class StructTransformException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = 8846222282251755758L;
 
     public StructTransformException() {

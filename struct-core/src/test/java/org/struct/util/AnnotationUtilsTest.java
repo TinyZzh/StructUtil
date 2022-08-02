@@ -51,14 +51,14 @@ public class AnnotationUtilsTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.TYPE})
-    public static @interface Parent {
+    public @interface Parent {
 
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.TYPE})
     @Parent
-    public static @interface Children {
+    public @interface Children {
 
     }
 

@@ -48,9 +48,6 @@ public class FileWatcherServiceTest {
         fws.register("./examples/")
                 .registerHook("./examples/tpl_vip.xml", runnable)
                 .bootstrap();
-//        while (true) {
-//            Thread.sleep(10000);
-//        }
     }
 
     @XmlRootElement(name = "child")
