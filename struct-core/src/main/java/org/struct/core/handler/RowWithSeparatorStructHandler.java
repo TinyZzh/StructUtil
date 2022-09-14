@@ -50,8 +50,9 @@ public abstract class RowWithSeparatorStructHandler extends MultipleRowsStructHa
     @Override
     protected <T> Object processRow(Class<T> clzOfStruct, String[] columns, String line) {
         String[] split = line.split(separator);
+        int length = Math.min(split.length, columns.length);
         StructImpl impl = new StructImpl();
-        IntStream.range(0, split.length).forEach(i -> {
+        IntStream.range(0, length).forEach(i -> {
             String d = split[i];
             impl.add(columns[i], d.isEmpty() ? d : d.trim());
         });
