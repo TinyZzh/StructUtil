@@ -11,11 +11,35 @@
 通过定义Struct Data Class和辅助的简单注解, 实现常见的数据文件(e.g. *.csv, *.xlsx. etc.)映射转换为定义的Java实例的功能。
 基本上避免了配置表解析，热重载等相关的开发工作量。
 
-> `master`分支基于JDK 17 LTS开发.
+### `master`分支
 
-> JDK 1.8的请使用[3.5.3.beta-SNAPSHOT](https://github.com/TinyZzh/StructUtil/releases/tag/3.5.3.beta-SNAPSHOT)
+支持的最低JAVA版本为Java 17
 
-notice
+```groovy
+dependencies {
+    //  For Spring Boot 2.5.x
+    implementation('org.structutil:struct-all:4.0.1.beta-SNAPSHOT')
+    //  Or use struct-core only
+    implementation('org.structutil:struct-core:4.0.1.beta-SNAPSHOT')
+}
+```
+
+### `3.x`分支
+
+Latest stable version: [3.5.3.beta-SNAPSHOT](https://github.com/TinyZzh/StructUtil/releases/tag/3.5.3.beta-SNAPSHOT)
+
+支持的最低JAVA版本为Java 1.8
+
+```groovy
+dependencies {
+    //  For Spring Boot 2.5.x
+    implementation('org.structutil:struct-all:3.5.3.beta-SNAPSHOT')
+    //  Or use struct-core only
+    implementation('org.structutil:struct-core:3.5.3.beta-SNAPSHOT')
+}
+```
+
+第三方依赖
 
 ```groovy
 dependencies {
