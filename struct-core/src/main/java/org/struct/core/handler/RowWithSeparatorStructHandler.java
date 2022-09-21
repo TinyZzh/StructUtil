@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.core.StructImpl;
 
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -52,10 +51,10 @@ public abstract class RowWithSeparatorStructHandler extends MultipleRowsStructHa
         String[] split = line.split(separator);
         int length = Math.min(split.length, columns.length);
         StructImpl impl = new StructImpl();
-        IntStream.range(0, length).forEach(i -> {
+        for (int i = 0; i < length; i++) {
             String d = split[i];
             impl.add(columns[i], d.isEmpty() ? d : d.trim());
-        });
+        }
         LOGGER.debug("class :{}, struct:{}", clzOfStruct, impl);
         return impl;
     }
