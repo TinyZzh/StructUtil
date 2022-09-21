@@ -136,7 +136,7 @@ public class FileWatcherService implements Runnable {
     public FileWatcherService registerAll(final Path start) throws IOException {
         Objects.requireNonNull(start, "start");
         // register directory and sub-directories
-        Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(start, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                 register(dir);
@@ -182,7 +182,7 @@ public class FileWatcherService implements Runnable {
                 return;
             }
             for (WatchEvent<?> event : key.pollEvents()) {
-                WatchEvent.Kind kind = event.kind();
+                WatchEvent.Kind<?> kind = event.kind();
                 if (kind == StandardWatchEventKinds.OVERFLOW) {
                     continue;
                 }
