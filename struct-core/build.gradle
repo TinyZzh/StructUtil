@@ -19,10 +19,8 @@
 dependencies {
     implementation("org.apache.poi:poi:${version_options.POI_VERSION}")
     implementation("org.apache.poi:poi-ooxml:${version_options.POI_VERSION}")
-
-    implementation('org.dom4j:dom4j:2.1.1')
     //    gson
-    implementation('com.google.code.gson:gson:2.9.0')
+    implementation("com.google.code.gson:gson:${version_options.GSON_VERSION}")
 
     implementation('org.apache.commons:commons-lang3:3.9')
 }

@@ -37,13 +37,14 @@ allprojects {
     apply plugin: 'java-library'
 
     ext.version_options = [
-            SPRING_BOOT_VERSION: "2.5.8",
-            SPRING_VERSION     : "5.3.14",
+            SPRING_BOOT_VERSION: "2.5.14",
+            SPRING_VERSION     : "5.3.22",
             JETTY_VERSION      : "9.4.44.v20210927",
             MOCKITO_VERSION    : "3.9.0",
             JUNIT_VERSION      : "5.7.2",
             POI_VERSION        : "5.2.2",
-            LOG4J2_VERSION     : "2.17.2",
+            LOG4J2_VERSION     : "2.18.0",
+            GSON_VERSION       : "2.9.0",
     ]
 
     jacoco {

@@ -18,6 +18,9 @@
 
 package org.struct.spring.handler;
 
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
+import jakarta.xml.bind.annotation.XmlAnyElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.struct.core.StructDescriptor;
@@ -28,9 +31,6 @@ import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
 import java.util.Collection;
