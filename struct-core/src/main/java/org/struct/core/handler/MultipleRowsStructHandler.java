@@ -23,12 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.struct.core.StructDescriptor;
 import org.struct.core.StructWorker;
 import org.struct.exception.StructTransformException;
+import org.struct.util.BomInputStream;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 /**
@@ -46,14 +46,15 @@ public abstract class MultipleRowsStructHandler implements StructHandler {
     public <T> void handle(StructWorker<T> worker, Class<T> clzOfStruct, Consumer<T> cellHandler, File file) {
         StructDescriptor descriptor = worker.getDescriptor();
         try (FileInputStream fis = new FileInputStream(file);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(fis, StandardCharsets.UTF_8))) {
+             BomInputStream bis = new BomInputStream(fis);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(bis, bis.getBomCharset()))) {
             //  column name. read the first line.
             String[] columns = this.resolveColumnNameArray(clzOfStruct, reader.readLine());
             //  start load data
             int startOrder = descriptor.getStartOrder();
             int endOrder = descriptor.getEndOrder();
             int skip = Math.max(startOrder - 1, 0);
-            //  end order must be large than start order.
+            //  end order must be larger than start order.
             int limit = endOrder < startOrder ? Integer.MAX_VALUE : (endOrder - skip);
             reader.lines().skip(skip)
                     .map(line -> this.processRow(clzOfStruct, columns, line))
