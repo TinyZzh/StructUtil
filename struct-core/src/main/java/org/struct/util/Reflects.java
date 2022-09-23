@@ -18,8 +18,6 @@
 
 package org.struct.util;
 
-import org.apache.commons.lang3.ClassUtils;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
@@ -28,6 +26,7 @@ import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,6 +36,37 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class Reflects {
 
     private static final Map<Class<?>, Map<String, Optional<MethodHandle>>> METHOD_HANDLE_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * Map with primitive wrapper type as key and corresponding primitive
+     * type as value, for example: Integer.class -> int.class.
+     */
+    private static final Map<Class<?>, Class<?>> primitiveWrapperTypeMap = new IdentityHashMap<>(9);
+
+    /**
+     * Map with primitive type as key and corresponding wrapper
+     * type as value, for example: int.class -> Integer.class.
+     */
+    private static final Map<Class<?>, Class<?>> primitiveTypeToWrapperMap = new IdentityHashMap<>(9);
+
+    public static final Class<?>[] EMPTY_CLASS_ARRAY = new Class[0];
+
+    static {
+        primitiveWrapperTypeMap.put(Boolean.class, boolean.class);
+        primitiveWrapperTypeMap.put(Byte.class, byte.class);
+        primitiveWrapperTypeMap.put(Character.class, char.class);
+        primitiveWrapperTypeMap.put(Double.class, double.class);
+        primitiveWrapperTypeMap.put(Float.class, float.class);
+        primitiveWrapperTypeMap.put(Integer.class, int.class);
+        primitiveWrapperTypeMap.put(Long.class, long.class);
+        primitiveWrapperTypeMap.put(Short.class, short.class);
+        primitiveWrapperTypeMap.put(Void.class, void.class);
+
+        // Map entry iteration is less expensive to initialize than forEach with lambdas
+        for (Map.Entry<Class<?>, Class<?>> entry : primitiveWrapperTypeMap.entrySet()) {
+            primitiveTypeToWrapperMap.put(entry.getValue(), entry.getKey());
+        }
+    }
 
     private Reflects() {
         //  no-op
@@ -75,7 +105,7 @@ public final class Reflects {
                 }
             }
         } else {
-            final Class<?>[] paramTypes = ClassUtils.toClass(params);
+            final Class<?>[] paramTypes = toClass(params);
             try {
                 constructor = clazz.getConstructor(paramTypes);
             } catch (NoSuchMethodException e) {
@@ -93,7 +123,7 @@ public final class Reflects {
                 if (params.length == ctorParameterTypes.length) {
                     boolean matched = true;
                     for (int i = 0; i < params.length; i++) {
-                        if (!ClassUtils.isAssignable(params[i].getClass(), ctorParameterTypes[i], true)) {
+                        if (!isAssignable(params[i].getClass(), ctorParameterTypes[i])) {
                             matched = false;
                             break;
                         }
@@ -109,6 +139,34 @@ public final class Reflects {
             constructor.setAccessible(true);
         }
         return constructor;
+    }
+
+    public static Class<?>[] toClass(final Object... array) {
+        if (array == null) {
+            return null;
+        } else if (array.length == 0) {
+            return EMPTY_CLASS_ARRAY;
+        }
+        final Class<?>[] classes = new Class[array.length];
+        for (int i = 0; i < array.length; i++) {
+            classes[i] = array[i] == null ? null : array[i].getClass();
+        }
+        return classes;
+    }
+
+    public static boolean isAssignable(Class<?> lhsType, Class<?> rhsType) {
+        Objects.requireNonNull(lhsType, "Left-hand side type must not be null");
+        Objects.requireNonNull(rhsType, "Right-hand side type must not be null");
+        if (lhsType.isAssignableFrom(rhsType)) {
+            return true;
+        }
+        if (lhsType.isPrimitive()) {
+            Class<?> resolvedPrimitive = primitiveWrapperTypeMap.get(rhsType);
+            return (lhsType == resolvedPrimitive);
+        } else {
+            Class<?> resolvedWrapper = primitiveTypeToWrapperMap.get(rhsType);
+            return (resolvedWrapper != null && lhsType.isAssignableFrom(resolvedWrapper));
+        }
     }
 
     public static List<Field> resolveAllFields(Class<?> clz) {

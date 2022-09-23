@@ -43,7 +43,6 @@ module struct.core {
 
     requires java.xml;
     requires org.slf4j;
-    requires org.apache.commons.lang3;
     requires com.google.gson;
     requires org.apache.poi.poi;
     requires org.apache.poi.ooxml;

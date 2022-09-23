@@ -21,6 +21,4 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:${version_options.POI_VERSION}")
     //    gson
     implementation("com.google.code.gson:gson:${version_options.GSON_VERSION}")
-
-    implementation('org.apache.commons:commons-lang3:3.9')
 }
