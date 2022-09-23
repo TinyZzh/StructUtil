@@ -142,55 +142,6 @@ public final class WorkerUtil {
         return map;
     }
 
-    public static Object getExcelCellValue(CellType cellType, Object cell, FormulaEvaluator evaluator) throws Exception {
-        switch (cellType) {
-            case _NONE:
-                return null;
-            case BLANK:
-                return "";
-            case NUMERIC:
-                Double numeric;
-                if (cell instanceof Cell)
-                    numeric = ((Cell) cell).getNumericCellValue();
-                else if (cell instanceof CellValue)
-                    numeric = ((CellValue) cell).getNumberValue();
-                else
-                    numeric = 0.0D;
-                if (numeric == numeric.longValue()) {
-                    if (numeric.longValue() > Integer.MAX_VALUE) {
-                        return numeric.longValue();
-                    } else
-                        return numeric.intValue();
-                } else {
-                    return numeric;
-                }
-            case STRING:
-                if (cell instanceof Cell) {
-                    return ((Cell) cell).getStringCellValue();
-                } else if (cell instanceof CellValue) {
-                    return ((CellValue) cell).getStringValue();
-                } else {
-                    return "";
-                }
-            case FORMULA:
-                if (cell instanceof Cell) {
-                    CellValue val = evaluator.evaluate((Cell) cell);
-                    return getExcelCellValue(val.getCellType(), cell, evaluator);
-                } else {
-                    return null;
-                }
-            case BOOLEAN:
-                if (cell instanceof Cell)
-                    return ((Cell) cell).getBooleanCellValue();
-                else if (cell instanceof CellValue)
-                    return ((CellValue) cell).getBooleanValue();
-                else
-                    return false;
-            default:
-                throw new Exception("Unknown Cell type");
-        }
-    }
-
     public static <T> StructFactory structFactory(Class<T> clzOfStruct, StructWorker<T> worker) {
         List<StructFactoryBean> beans = FACTORY_BEAN_HOLDER.get();
         for (StructFactoryBean factoryBean : beans) {

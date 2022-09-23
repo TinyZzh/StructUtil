@@ -21,6 +21,8 @@ package org.struct.core.handler;
 import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -35,7 +37,6 @@ import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
 import org.struct.exception.StructTransformException;
 import org.struct.spi.SPI;
-import org.struct.util.WorkerUtil;
 
 import java.io.File;
 import java.util.HashMap;
@@ -131,7 +132,7 @@ public class ExcelUMStructHandler implements StructHandler {
                     .forEach(cell -> {
                         Object value = null;
                         try {
-                            value = WorkerUtil.getExcelCellValue(cell.getCellType(), cell, evaluator);
+                            value = this.getExcelCellValue(cell.getCellType(), cell, evaluator);
                         } catch (Exception e) {
                             //  no-op
                         }
@@ -149,5 +150,54 @@ public class ExcelUMStructHandler implements StructHandler {
             map.put(cell.getColumnIndex(), cell.getStringCellValue().trim());
         }
         return map;
+    }
+
+    Object getExcelCellValue(CellType cellType, Object cell, FormulaEvaluator evaluator) throws Exception {
+        switch (cellType) {
+            case _NONE:
+                return null;
+            case BLANK:
+                return "";
+            case NUMERIC:
+                Double numeric;
+                if (cell instanceof Cell)
+                    numeric = ((Cell) cell).getNumericCellValue();
+                else if (cell instanceof CellValue)
+                    numeric = ((CellValue) cell).getNumberValue();
+                else
+                    numeric = 0.0D;
+                if (numeric == numeric.longValue()) {
+                    if (numeric.longValue() > Integer.MAX_VALUE) {
+                        return numeric.longValue();
+                    } else
+                        return numeric.intValue();
+                } else {
+                    return numeric;
+                }
+            case STRING:
+                if (cell instanceof Cell) {
+                    return ((Cell) cell).getStringCellValue();
+                } else if (cell instanceof CellValue) {
+                    return ((CellValue) cell).getStringValue();
+                } else {
+                    return "";
+                }
+            case FORMULA:
+                if (cell instanceof Cell) {
+                    CellValue val = evaluator.evaluate((Cell) cell);
+                    return getExcelCellValue(val.getCellType(), cell, evaluator);
+                } else {
+                    return null;
+                }
+            case BOOLEAN:
+                if (cell instanceof Cell)
+                    return ((Cell) cell).getBooleanCellValue();
+                else if (cell instanceof CellValue)
+                    return ((CellValue) cell).getBooleanValue();
+                else
+                    return false;
+            default:
+                throw new Exception("Unknown Cell type");
+        }
     }
 }
