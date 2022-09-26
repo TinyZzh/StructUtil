@@ -238,11 +238,12 @@ Closure init_publish_module = {
             mavenLocal()
             maven {
                 name "local_nexus"
-                url "http://192.168.0.2:8081/nexus/content/repositories/snapshots"
+                url "${mavenRepoUrl}"
                 credentials {
-                    username = 'admin'
-                    password = 'admin123'
+                    username = "${mavenRepoUser}"
+                    password = "${mavenRepoPassword}"
                 }
+                allowInsecureProtocol = true
             }
         }
     }
