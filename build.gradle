@@ -238,10 +238,10 @@ Closure init_publish_module = {
             mavenLocal()
             maven {
                 name "local_nexus"
-                url "${mavenRepoUrl}"
+                url project.findProperty("mavenRepoUrl") ?: ""
                 credentials {
-                    username = "${mavenRepoUser}"
-                    password = "${mavenRepoPassword}"
+                    username = project.findProperty("mavenRepoUser") ?: ""
+                    password = project.findProperty("mavenRepoPassword") ?: ""
                 }
                 allowInsecureProtocol = true
             }
