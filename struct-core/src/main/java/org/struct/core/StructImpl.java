@@ -58,6 +58,7 @@ public class StructImpl {
         if (ignore) {
             return;
         }
+        fieldName = fieldName.intern();
         if (force) {
             valuesMap.put(fieldName, val);
         } else {
