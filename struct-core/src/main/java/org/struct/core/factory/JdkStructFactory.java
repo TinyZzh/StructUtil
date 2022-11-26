@@ -133,7 +133,7 @@ public final class JdkStructFactory implements StructFactory {
         } else {
             Object instance = Reflects.newInstance(this.clzOfStruct);
             this.forEachBeanFields(structImpl, (i, sfd, v) -> sfd.setFieldValue(instance, v));
-            return Optional.ofNullable(instance);
+            return Optional.of(instance);
         }
     }
 
@@ -184,13 +184,20 @@ public final class JdkStructFactory implements StructFactory {
             }
         }
         Converter converter = sfd.getConverter();
+        Object fv;
         if (null != converter) {
-            return converter.convert(value, sfd.getFieldType());
+            fv = converter.convert(value, sfd.getFieldType());
         } else if (sfd.isReferenceField()) {
-            return this.handleReferenceFieldValue(structImpl, sfd);
+            fv = this.handleReferenceFieldValue(structImpl, sfd);
         } else {
-            return ConverterRegistry.convert(value, sfd.getFieldType());
+            fv = ConverterRegistry.convert(value, sfd.getFieldType());
         }
+        if (sfd.isCached()) {
+            if (fv instanceof String str) {
+                fv = str.intern();
+            }
+        }
+        return fv;
     }
 
     Object handleReferenceFieldValue(Object structImpl, SingleFieldDescriptor fd) {

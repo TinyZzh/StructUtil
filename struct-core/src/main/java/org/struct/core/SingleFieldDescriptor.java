@@ -46,6 +46,7 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     private String aggregateBy;
     private Class<?> aggregateType;
     private boolean required;
+    private boolean cached;
     private Converter converter;
 
     public SingleFieldDescriptor() {
@@ -67,6 +68,7 @@ public class SingleFieldDescriptor extends FieldDescriptor {
         assert fieldOrRc instanceof Field || fieldOrRc instanceof RecordComponent;
         if (annotation != null) {
             this.setRequired(annotation.required());
+            this.setCached(annotation.cached());
             if (!annotation.name().isEmpty()) {
                 this.setName(annotation.name());
             }
@@ -146,6 +148,14 @@ public class SingleFieldDescriptor extends FieldDescriptor {
 
     public void setRequired(boolean required) {
         this.required = required;
+    }
+
+    public boolean isCached() {
+        return cached;
+    }
+
+    public void setCached(boolean cached) {
+        this.cached = cached;
     }
 
     public Converter getConverter() {

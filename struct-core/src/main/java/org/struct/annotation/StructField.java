@@ -110,6 +110,15 @@ public @interface StructField {
     boolean required() default false;
 
     /**
+     * Is cache field value?
+     * If the field's type is String.class use the JVM StringTable, otherwise use the ConcurrentHashMap.
+     *
+     * @return true if cache the field's value, otherwise false.
+     * @since 4.0
+     */
+    boolean cached() default false;
+
+    /**
      * Use the custom converter replace the default system converter to convert this field value.
      *
      * @return the converter class.
