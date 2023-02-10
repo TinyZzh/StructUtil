@@ -93,7 +93,7 @@ subprojects {
     }
 
     distTar {
-        setArchivesBaseName("${rootProject.name}-all")
+        setArchivesBaseName("${project.name}")
         compression = Compression.GZIP
         getArchiveExtension().set('tar.gz')
     }
