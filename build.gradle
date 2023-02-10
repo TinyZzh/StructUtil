@@ -161,6 +161,9 @@ Closure init_publish_module = {
         outputs.file "$project.buildDir/generatePomPropertiesFile/pom.properties"
         doLast {
             File file = outputs.files.singleFile
+            if (file.isFile() && file.exists()) {
+                file.delete()
+            }
             file.parentFile.mkdirs()
             file << inputs.properties.collect { key, value -> "$key: $value" }.join('\n')
         }
