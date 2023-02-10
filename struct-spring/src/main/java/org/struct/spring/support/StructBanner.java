@@ -18,7 +18,12 @@
 
 package org.struct.spring.support;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Properties;
 
 /**
  * Struct Banner.
@@ -29,6 +34,8 @@ import java.io.PrintStream;
 public enum StructBanner {
 
     INSTANCE;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StructBanner.class);
 
     /**
      * font: doom
@@ -44,7 +51,7 @@ public enum StructBanner {
     };
 
     private static final String STRUCT_STORE_SERVICE = " :: Struct Store Service :: ";
-    private static final String VERSION = "4.0.1.beta-SNAPSHOT";
+    private static final String VERSION = loadVersionProperties();
 
     /**
      * Print struct store service banner.
@@ -64,6 +71,17 @@ public enum StructBanner {
      */
     public String getVersion() {
         return VERSION;
+    }
+
+    static String loadVersionProperties() {
+        Properties prop = new Properties();
+        try (InputStream in = StructBanner.class.getResourceAsStream("/META-INF/maven/org.structutil/struct-spring/pom.properties")) {
+            prop.load(in);
+            return prop.getProperty("version", "Unknown");
+        } catch (Throwable e) {
+            LOGGER.error("");
+        }
+        return "Unknown";
     }
 
 }
