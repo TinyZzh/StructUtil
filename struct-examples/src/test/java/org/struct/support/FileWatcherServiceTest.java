@@ -18,13 +18,13 @@
 
 package org.struct.support;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 import org.struct.util.WorkerUtil;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
