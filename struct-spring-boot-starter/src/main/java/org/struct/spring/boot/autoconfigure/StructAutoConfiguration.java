@@ -66,7 +66,7 @@ import java.util.List;
 @ConditionalOnProperty(prefix = StarterConstant.STRUCT_STORE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE + 1000)
 @Configuration
-@EnableConfigurationProperties({StructProperties.class, StructStoreProperties.class, StructServiceProperties.class})
+@EnableConfigurationProperties({StructProperties.class, StructServiceProperties.class})
 public class StructAutoConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StructAutoConfiguration.class);
@@ -75,18 +75,22 @@ public class StructAutoConfiguration {
     @ConditionalOnMissingBean
     public StructConfig structConfig(StructProperties properties) {
         StructConfig config = new StructConfig();
-        config.setArrayConverterStringSeparator(properties.getArrayConverterStringSeparator());
-        config.setArrayConverterStringTrim(properties.isArrayConverterStringTrim());
-        config.setArrayConverterIgnoreBlank(properties.isArrayConverterIgnoreBlank());
         config.setStructRequiredDefault(properties.isStructRequiredDefault());
         config.setIgnoreEmptyRow(properties.isIgnoreEmptyRow());
 
         //  set array converter's properties
-        Converter arrayConverter = ConverterRegistry.lookup(Array.class);
-        if (arrayConverter instanceof ArrayConverter) {
-            ((ArrayConverter) arrayConverter).setSeparator(config.getArrayConverterStringSeparator());
-            ((ArrayConverter) arrayConverter).setStrTrim(config.isArrayConverterStringTrim());
-            ((ArrayConverter) arrayConverter).setIgnoreBlank(config.isArrayConverterIgnoreBlank());
+        ArrayConverterProperties acp = properties.getArrayConverter();
+        if (null != acp) {
+            config.setArrayConverterStringSeparator(acp.getStringSeparator());
+            config.setArrayConverterStringTrim(acp.isStringTrim());
+            config.setArrayConverterIgnoreBlank(acp.isIgnoreBlank());
+
+            Converter converter = ConverterRegistry.lookup(Array.class);
+            if (converter instanceof ArrayConverter) {
+                ((ArrayConverter) converter).setSeparator(acp.getStringSeparator());
+                ((ArrayConverter) converter).setStrTrim(acp.isStringTrim());
+                ((ArrayConverter) converter).setIgnoreBlank(acp.isIgnoreBlank());
+            }
         }
 
         return config;
@@ -94,15 +98,15 @@ public class StructAutoConfiguration {
 
     @ConditionalOnMissingBean()
     @Bean()
-    public StructStoreConfig structStoreConfig(StructStoreProperties properties, StructServiceProperties serviceProperties) {
+    public StructStoreConfig structStoreConfig(StructServiceProperties properties) {
         StructStoreConfig config = new StructStoreConfig();
         config.setWorkspace(properties.getWorkspace());
-        config.setLazyLoad(serviceProperties.isLazyLoad());
-        config.setMonitorFileChange(serviceProperties.isMonitorFileChange());
-        config.setScheduleInitialDelay(serviceProperties.getScheduleInitialDelay());
-        config.setScheduleDelay(serviceProperties.getScheduleDelay());
-        config.setScheduleTimeUnit(serviceProperties.getScheduleTimeUnit());
-        config.setBanner(serviceProperties.isBanner());
+        config.setLazyLoad(properties.isLazyLoad());
+        config.setWatchFile(properties.isWatchFile());
+        config.setScheduleInitialDelay(properties.getScheduleInitialDelay());
+        config.setScheduleDelay(properties.getScheduleDelay());
+        config.setScheduleTimeUnit(properties.getScheduleTimeUnit());
+        config.setBanner(properties.isBanner());
         return config;
     }
 
@@ -119,7 +123,7 @@ public class StructAutoConfiguration {
     }
 
     @ConditionalOnMissingBean()
-    @ConditionalOnProperty(prefix = StarterConstant.MONITOR_FILE_CHANGE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = StarterConstant.WATCH_FILE, name = StarterConstant.ENABLE, havingValue = "true", matchIfMissing = true)
     @Bean()
     public FileWatcherService fileWatcherService(StructStoreConfig config, List<StructStore> storeList) throws IOException {
         File file = new File(config.getWorkspace());

@@ -21,13 +21,15 @@ package org.struct.core.converter;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
+import static org.struct.core.StructInternal.ARRAY_CONVERTER_IGNORE_BLANK;
+import static org.struct.core.StructInternal.ARRAY_CONVERTER_STRING_SEPARATOR;
+import static org.struct.core.StructInternal.ARRAY_CONVERTER_STRING_TRIM;
+
 /**
  * @author TinyZ.
  * @version 2020.03.26
  */
 public class ArrayConverter implements Converter {
-
-    private static final String DEFAULT_SEPARATOR = "\\|";
 
     /**
      * The string separator.
@@ -43,7 +45,7 @@ public class ArrayConverter implements Converter {
     private boolean ignoreBlank;
 
     public ArrayConverter() {
-        this(DEFAULT_SEPARATOR, true);
+        this(ARRAY_CONVERTER_STRING_SEPARATOR, ARRAY_CONVERTER_STRING_TRIM, ARRAY_CONVERTER_IGNORE_BLANK);
     }
 
     public ArrayConverter(String separator, boolean strTrim) {

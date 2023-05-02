@@ -28,6 +28,6 @@ public final class StarterConstant {
     public static final String STRUCT_STORE = STRUCT_UTIL + ".store";
     public static final String ENABLE = "enable";
     public static final String SERVICE = STRUCT_STORE + ".service";
-    public static final String MONITOR_FILE_CHANGE = SERVICE + ".monitor-file-change";
+    public static final String WATCH_FILE = SERVICE + ".watch-file";
 
 }

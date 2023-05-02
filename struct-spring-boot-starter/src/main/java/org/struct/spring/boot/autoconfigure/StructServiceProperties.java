@@ -19,6 +19,7 @@
 package org.struct.spring.boot.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.struct.spring.support.StructConstant;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,12 +30,21 @@ import java.util.concurrent.TimeUnit;
 @ConfigurationProperties(prefix = StarterConstant.SERVICE)
 public class StructServiceProperties {
 
+    private String workspace = StructConstant.STRUCT_WORKSPACE;
     private boolean lazyLoad = true;
-    private boolean monitorFileChange = true;
+    private boolean watchFile = true;
     private long scheduleInitialDelay = 10000L;
     private long scheduleDelay = 5000L;
     private TimeUnit scheduleTimeUnit = TimeUnit.SECONDS;
     private boolean banner = true;
+
+    public String getWorkspace() {
+        return workspace;
+    }
+
+    public void setWorkspace(String workspace) {
+        this.workspace = workspace;
+    }
 
     public boolean isLazyLoad() {
         return lazyLoad;
@@ -44,12 +54,12 @@ public class StructServiceProperties {
         this.lazyLoad = lazyLoad;
     }
 
-    public boolean isMonitorFileChange() {
-        return monitorFileChange;
+    public boolean isWatchFile() {
+        return watchFile;
     }
 
-    public void setMonitorFileChange(boolean monitorFileChange) {
-        this.monitorFileChange = monitorFileChange;
+    public void setWatchFile(boolean watchFile) {
+        this.watchFile = watchFile;
     }
 
     public long getScheduleInitialDelay() {

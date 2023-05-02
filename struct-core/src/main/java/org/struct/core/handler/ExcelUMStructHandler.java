@@ -32,6 +32,7 @@ import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.struct.core.StructDescriptor;
 import org.struct.core.StructImpl;
+import org.struct.core.StructInternal;
 import org.struct.core.StructWorker;
 import org.struct.core.matcher.FileExtensionMatcher;
 import org.struct.core.matcher.WorkerMatcher;
@@ -53,20 +54,7 @@ import java.util.stream.IntStream;
 @SPI(name = "excel-user", order = 0)
 public class ExcelUMStructHandler implements StructHandler {
 
-    /**
-     * Disable excel usermode if the file length greater than 1.5MB, otherwise false.
-     * default : 1.5mb
-     */
-    private static long EXCEL_USER_MODE_FILE_LENGTH_THRESHOLD = 1_572_864L;
-
-    static {
-        String property = System.getProperty("struct.excel.usermode.threshold");
-        if (property != null) {
-            EXCEL_USER_MODE_FILE_LENGTH_THRESHOLD = Long.parseLong(property);
-        }
-    }
-
-    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(EXCEL_USER_MODE_FILE_LENGTH_THRESHOLD, WorkerMatcher.HIGHEST,
+    private static final WorkerMatcher MATCHER = new FileExtensionMatcher(StructInternal.HANDLER_XLSX_UM_LENGTH_THRESHOLD, WorkerMatcher.HIGHEST,
             FileExtensionMatcher.FILE_XLSX, FileExtensionMatcher.FILE_XLS);
 
     @Override

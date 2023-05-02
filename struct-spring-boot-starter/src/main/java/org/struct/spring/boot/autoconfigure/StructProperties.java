@@ -29,34 +29,16 @@ import java.util.Objects;
 @ConfigurationProperties(prefix = StarterConstant.STRUCT_UTIL)
 public class StructProperties {
 
-    private String arrayConverterStringSeparator = "\\|";
-    private boolean arrayConverterStringTrim = true;
-    private boolean arrayConverterIgnoreBlank = false;
     private boolean structRequiredDefault = false;
     private boolean ignoreEmptyRow = true;
+    private ArrayConverterProperties arrayConverter;
 
-    public String getArrayConverterStringSeparator() {
-        return arrayConverterStringSeparator;
+    public ArrayConverterProperties getArrayConverter() {
+        return arrayConverter;
     }
 
-    public void setArrayConverterStringSeparator(String arrayConverterStringSeparator) {
-        this.arrayConverterStringSeparator = arrayConverterStringSeparator;
-    }
-
-    public boolean isArrayConverterStringTrim() {
-        return arrayConverterStringTrim;
-    }
-
-    public void setArrayConverterStringTrim(boolean arrayConverterStringTrim) {
-        this.arrayConverterStringTrim = arrayConverterStringTrim;
-    }
-
-    public boolean isArrayConverterIgnoreBlank() {
-        return arrayConverterIgnoreBlank;
-    }
-
-    public void setArrayConverterIgnoreBlank(boolean arrayConverterIgnoreBlank) {
-        this.arrayConverterIgnoreBlank = arrayConverterIgnoreBlank;
+    public void setArrayConverter(ArrayConverterProperties arrayConverter) {
+        this.arrayConverter = arrayConverter;
     }
 
     public boolean isStructRequiredDefault() {
@@ -78,11 +60,9 @@ public class StructProperties {
     @Override
     public String toString() {
         return "StructProperties{" +
-                "arrayConverterStringSeparator='" + arrayConverterStringSeparator + '\'' +
-                ", arrayConverterStringTrim=" + arrayConverterStringTrim +
-                ", arrayConverterIgnoreBlank=" + arrayConverterIgnoreBlank +
-                ", structRequiredDefault=" + structRequiredDefault +
+                "structRequiredDefault=" + structRequiredDefault +
                 ", ignoreEmptyRow=" + ignoreEmptyRow +
+                ", arrayConverter=" + arrayConverter +
                 '}';
     }
 
@@ -91,12 +71,12 @@ public class StructProperties {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StructProperties that = (StructProperties) o;
-        return arrayConverterStringTrim == that.arrayConverterStringTrim && arrayConverterIgnoreBlank == that.arrayConverterIgnoreBlank && structRequiredDefault == that.structRequiredDefault && ignoreEmptyRow == that.ignoreEmptyRow && Objects.equals(arrayConverterStringSeparator, that.arrayConverterStringSeparator);
+        return structRequiredDefault == that.structRequiredDefault && ignoreEmptyRow == that.ignoreEmptyRow && Objects.equals(arrayConverter, that.arrayConverter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(arrayConverterStringSeparator, arrayConverterStringTrim, arrayConverterIgnoreBlank, structRequiredDefault, ignoreEmptyRow);
+        return Objects.hash(structRequiredDefault, ignoreEmptyRow, arrayConverter);
     }
 
 }

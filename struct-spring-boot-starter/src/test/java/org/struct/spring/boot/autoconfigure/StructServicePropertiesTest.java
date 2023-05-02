@@ -32,15 +32,17 @@ class StructServicePropertiesTest {
     @Test
     public void test() {
         StructServiceProperties properties = new StructServiceProperties();
+        properties.setWorkspace("./");
         properties.setBanner(true);
         properties.setLazyLoad(true);
-        properties.setMonitorFileChange(true);
+        properties.setWatchFile(true);
         properties.setScheduleDelay(1L);
         properties.setScheduleTimeUnit(TimeUnit.DAYS);
         properties.setScheduleInitialDelay(2L);
+        Assertions.assertEquals("./", properties.getWorkspace());
         Assertions.assertTrue(properties.isBanner());
         Assertions.assertTrue(properties.isLazyLoad());
-        Assertions.assertTrue(properties.isMonitorFileChange());
+        Assertions.assertTrue(properties.isWatchFile());
         Assertions.assertEquals(1L, properties.getScheduleDelay());
         Assertions.assertEquals(2L, properties.getScheduleInitialDelay());
         Assertions.assertEquals(TimeUnit.DAYS, properties.getScheduleTimeUnit());

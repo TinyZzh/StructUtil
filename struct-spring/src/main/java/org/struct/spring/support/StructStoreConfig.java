@@ -39,7 +39,7 @@ public class StructStoreConfig {
     /**
      * Monitor struct file changed event.
      */
-    private boolean monitorFileChange = true;
+    private boolean watchFile = true;
     /**
      * Set the scheduled job's initial delay.
      */
@@ -80,12 +80,12 @@ public class StructStoreConfig {
         return this;
     }
 
-    public boolean isMonitorFileChange() {
-        return monitorFileChange;
+    public boolean isWatchFile() {
+        return watchFile;
     }
 
-    public StructStoreConfig setMonitorFileChange(boolean monitorFileChange) {
-        this.monitorFileChange = monitorFileChange;
+    public StructStoreConfig setWatchFile(boolean watchFile) {
+        this.watchFile = watchFile;
         return this;
     }
 

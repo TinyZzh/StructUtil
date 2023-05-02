@@ -34,16 +34,18 @@ class StructPropertiesTest {
         Assertions.assertEquals(properties.toString(), new StructProperties().toString());
         Assertions.assertEquals(properties.hashCode(), new StructProperties().hashCode());
 
-        properties.setArrayConverterStringSeparator("a");
-        properties.setArrayConverterStringTrim(true);
-        properties.setArrayConverterIgnoreBlank(true);
+        ArrayConverterProperties acp = new ArrayConverterProperties();
+        acp.setStringSeparator("a");
+        acp.setStringTrim(true);
+        acp.setIgnoreBlank(true);
+        properties.setArrayConverter(acp);
         properties.setStructRequiredDefault(true);
         properties.setIgnoreEmptyRow(true);
 
-        Assertions.assertEquals("a", properties.getArrayConverterStringSeparator());
-        Assertions.assertTrue(properties.isArrayConverterIgnoreBlank());
+        Assertions.assertEquals("a", properties.getArrayConverter().getStringSeparator());
+        Assertions.assertTrue(properties.getArrayConverter().isIgnoreBlank());
+        Assertions.assertTrue(properties.getArrayConverter().isIgnoreBlank());
         Assertions.assertTrue(properties.isStructRequiredDefault());
-        Assertions.assertTrue(properties.isArrayConverterStringTrim());
         Assertions.assertTrue(properties.isIgnoreEmptyRow());
     }
 }

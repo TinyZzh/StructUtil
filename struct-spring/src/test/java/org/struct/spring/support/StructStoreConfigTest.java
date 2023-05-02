@@ -36,7 +36,7 @@ class StructStoreConfigTest {
         config.setLazyLoad(false);
         config.setSyncWaitForInit(false);
         config.setBanner(false);
-        config.setMonitorFileChange(false);
+        config.setWatchFile(false);
         config.setScheduleDelay(1L);
         config.setScheduleInitialDelay(2L);
         config.setScheduleTimeUnit(TimeUnit.SECONDS);
@@ -46,7 +46,7 @@ class StructStoreConfigTest {
         Assertions.assertEquals(TimeUnit.SECONDS, config.getScheduleTimeUnit());
         Assertions.assertFalse(config.isLazyLoad());
         Assertions.assertFalse(config.isSyncWaitForInit());
-        Assertions.assertFalse(config.isMonitorFileChange());
+        Assertions.assertFalse(config.isWatchFile());
         Assertions.assertFalse(config.isBanner());
     }
 }
