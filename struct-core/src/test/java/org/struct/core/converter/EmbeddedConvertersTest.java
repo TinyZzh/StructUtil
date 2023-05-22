@@ -39,7 +39,7 @@ import static org.struct.core.converter.EmbeddedConverters.IntegerConverter;
  * @author TinyZ.
  * @version 2022.05.03
  */
-class EmbeddedConvertersTest {
+public class EmbeddedConvertersTest {
 
     @Test
     public void test() {
