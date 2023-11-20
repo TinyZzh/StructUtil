@@ -18,11 +18,18 @@
 
 package org.struct.core.handler;
 
+import org.apache.poi.hssf.eventusermodel.dummyrecord.MissingCellDummyRecord;
+import org.apache.poi.hssf.record.FormulaRecord;
+import org.apache.poi.hssf.record.LabelRecord;
+import org.apache.poi.hssf.record.RKRecord;
+import org.apache.poi.hssf.record.StringRecord;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
+import org.struct.core.handler.XlsEventStructHandler.XlsListener;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
@@ -31,6 +38,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * @author TinyZ.
@@ -51,6 +60,38 @@ class XlsEventStructHandlerTest {
         List<Temp> list = new ArrayList<>();
         handler.handle(worker, Temp.class, list::add, new File(WorkerUtil.resolveFilePath(workspace, "bean.xls")));
         Assertions.assertFalse(list.isEmpty());
+    }
+
+    @Test
+    public void testProcessRecord() {
+        XlsListener listener = new XlsListener(null, null, null);
+        {
+            RKRecord record = mock(RKRecord.class);
+            Mockito.doReturn(RKRecord.sid).when(record).getSid();
+            listener.processRecord(record);
+        }
+        {
+            FormulaRecord record = mock(FormulaRecord.class);
+            listener.getFormatListener().processRecord(record);
+            Mockito.doReturn(FormulaRecord.sid).when(record).getSid();
+//            listener.processRecord(record);
+            Mockito.doReturn(Double.NaN).when(record).getValue();
+            listener.processRecord(record);
+        }
+        {
+            StringRecord record = mock(StringRecord.class);
+            Mockito.doReturn(StringRecord.sid).when(record).getSid();
+            listener.processRecord(record);
+        }
+        {
+            LabelRecord record = mock(LabelRecord.class);
+            Mockito.doReturn(LabelRecord.sid).when(record).getSid();
+            listener.processRecord(record);
+        }
+        {
+            MissingCellDummyRecord record = mock(MissingCellDummyRecord.class);
+            listener.processRecord(record);
+        }
     }
 
     @StructSheet(fileName = "bean.xls", sheetName = "Sheet1")
