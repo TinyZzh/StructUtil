@@ -34,13 +34,12 @@ jobs:
     - name: Generate Codecov Report
 #      if: ${{ failure() }}
       if: ${{ success() }}
-      env:
-        CODECOV_TOKEN: 28627f9d-cc37-4651-a0c7-731a3370d5c1
       run: ./gradlew codeCoverageReport
 #      https://github.com/codecov/codecov-action
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         flags: unittests
         name: codecov-struct-util
         fail_ci_if_error: true
