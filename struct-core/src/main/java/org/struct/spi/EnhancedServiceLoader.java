@@ -251,10 +251,10 @@ final class EnhancedServiceLoader<S> {
         while (urls.hasMoreElements()) {
             URL url = urls.nextElement();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
-                String line = null;
+                String line;
                 while (null != (line = reader.readLine())) {
                     line = line.trim();
-                    if (line.length() > 0) {
+                    if (!line.isEmpty()) {
                         try {
                             output.add(this.createExtensionDefinition(line, classLoader));
                         } catch (LinkageError | ClassNotFoundException e) {
@@ -284,7 +284,7 @@ final class EnhancedServiceLoader<S> {
         return EnhancedServiceLoader.class.getClassLoader();
     }
 
-    class Holder<V> {
+    static class Holder<V> {
 
         volatile V instance;
 
