@@ -17,16 +17,16 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up JDK 17(Eclipse Temurin)
       uses: actions/setup-java@v3
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'microsoft'
         cache: gradle
 
     - name: Validate Gradle wrapper
-      uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
+      uses: gradle/wrapper-validation-action@v1
     - name: Build with Gradle
       run: ./gradlew --no-daemon build -x test
 
@@ -39,7 +39,7 @@ jobs:
       run: ./gradlew codeCoverageReport
 #      https://github.com/codecov/codecov-action
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         flags: unittests
         name: codecov-struct-util
