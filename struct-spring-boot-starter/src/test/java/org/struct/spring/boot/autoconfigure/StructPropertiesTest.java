@@ -30,6 +30,9 @@ class StructPropertiesTest {
     @Test
     public void test() {
         StructProperties properties = new StructProperties();
+        Assertions.assertEquals(properties, properties);
+        Assertions.assertNotEquals(properties, null);
+        Assertions.assertNotEquals(properties, new Object());
         Assertions.assertEquals(properties, new StructProperties());
         Assertions.assertEquals(properties.toString(), new StructProperties().toString());
         Assertions.assertEquals(properties.hashCode(), new StructProperties().hashCode());

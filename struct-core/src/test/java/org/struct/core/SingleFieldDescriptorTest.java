@@ -15,6 +15,9 @@ class SingleFieldDescriptorTest {
     public void test() {
         RecordComponent rc = RecordBean.class.getRecordComponents()[0];
         SingleFieldDescriptor sfd = new SingleFieldDescriptor(rc, null, false);
+        Assertions.assertEquals(sfd, sfd);
+        Assertions.assertNotEquals(sfd, null);
+        Assertions.assertNotEquals(sfd, new Object());
         Assertions.assertEquals(new SingleFieldDescriptor(rc, null, false), sfd);
         sfd.setReference(float.class);
         //  getAggregateType

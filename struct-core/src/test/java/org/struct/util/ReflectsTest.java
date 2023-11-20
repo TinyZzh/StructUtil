@@ -22,8 +22,10 @@ package org.struct.util;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Optional;
 
 public class ReflectsTest {
 
@@ -61,6 +63,14 @@ public class ReflectsTest {
         Assertions.assertThrows(IllegalStateException.class, () -> Reflects.newInstance(OnlyPriParamException.class, "xx"));
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> Reflects.newInstance(OnlyPriParamException.class, new double[]{1.0D}));
+    }
+
+    @Test
+    public void testToClass() {
+        Assertions.assertNull(Reflects.toClass(null));
+        Assertions.assertEquals(Reflects.EMPTY_CLASS_ARRAY, Reflects.toClass(new Class[0]));
+        Assertions.assertArrayEquals(new Class[]{Integer.class, Boolean.class}, Reflects.toClass(1, false));
+        Assertions.assertArrayEquals(new Class[]{Integer.class, null}, Reflects.toClass(2, null));
     }
 
     public class Apple {
@@ -210,6 +220,16 @@ public class ReflectsTest {
         public void setAge(int age) {
             this.age = age;
         }
+    }
+
+    @Test
+    public void testLookupFieldSetter() {
+        Assertions.assertThrows(IllegalStateException.class, () -> Reflects.lookupFieldSetter(RecordClz.class, "id"));
+        Assertions.assertThrows(AssertionError.class, () -> Reflects.lookupFieldSetter(RecordClz.class, ""));
+        Optional<MethodHandle> optional = Reflects.lookupFieldSetter(SubBeanClz.class, "id");
+        Assertions.assertTrue(optional.isPresent());
+        Optional<MethodHandle> optional2 = Reflects.lookupFieldSetter(SubBeanClz.class, "idxxx");
+        Assertions.assertFalse(optional2.isPresent());
     }
 
 }

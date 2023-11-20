@@ -18,8 +18,18 @@
 
 package org.struct.spring.boot.autoconfigure;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ResourceLoader;
+import org.struct.core.StructConfig;
+import org.struct.spring.boot.autoconfigure.StructAutoConfiguration.AutoConfiguredMapperScannerRegistrar;
+
+import java.util.Collections;
+
+import static org.mockito.ArgumentMatchers.anyString;
 
 /**
  * @author TinyZ.
@@ -29,8 +39,32 @@ import org.springframework.boot.test.context.SpringBootTest;
 class StructAutoConfigurationTest {
 
     @Test
-    public void test() {
-        System.out.println();
+    public void testStructConfig() {
+        StructAutoConfiguration configuration = new StructAutoConfiguration();
+        StructProperties properties = new StructProperties();
+        ArrayConverterProperties arrayConverterProperties = new ArrayConverterProperties();
+        properties.setArrayConverter(arrayConverterProperties);
+        StructConfig config = configuration.structConfig(properties);
+
+        Assertions.assertEquals(config.isStructRequiredDefault(), properties.isStructRequiredDefault());
+        Assertions.assertEquals(config.isIgnoreEmptyRow(), properties.isIgnoreEmptyRow());
+
+        Assertions.assertEquals(config.getArrayConverterStringSeparator(), arrayConverterProperties.getStringSeparator());
+        Assertions.assertEquals(config.isArrayConverterIgnoreBlank(), arrayConverterProperties.isIgnoreBlank());
+        Assertions.assertEquals(config.isArrayConverterStringTrim(), arrayConverterProperties.isStringTrim());
+    }
+
+    @Test
+    public void testAutoConfiguredMapperScannerRegistrar() {
+        AutoConfiguredMapperScannerRegistrar registrar = new AutoConfiguredMapperScannerRegistrar();
+        BeanFactory beanFactory = Mockito.mock(BeanFactory.class);
+        Mockito.doReturn(true).when(beanFactory).containsBean(anyString());
+        Mockito.doReturn(Collections.singleton("xx")).when(beanFactory).getBean(anyString());
+        registrar.setBeanFactory(beanFactory);
+        registrar.setResourceLoader(Mockito.mock(ResourceLoader.class));
+
+        registrar.registerBeanDefinitions(null, null);
+
     }
 
 }

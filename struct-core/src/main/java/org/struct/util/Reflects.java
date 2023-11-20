@@ -219,7 +219,7 @@ public final class Reflects {
 
     public static Optional<MethodHandle> lookupFieldSetter(Class<?> clzOfObj, String fieldName) {
         Objects.requireNonNull(clzOfObj, "clzOfObj");
-        assert fieldName != null && fieldName.length() > 0;
+        assert fieldName != null && !fieldName.isEmpty();
         if (clzOfObj.isRecord())
             throw new IllegalStateException("Record can not access the field's write method");
         Map<String, Optional<MethodHandle>> methodHandleMap = METHOD_HANDLE_MAP.computeIfAbsent(clzOfObj, c -> new ConcurrentHashMap<>());
