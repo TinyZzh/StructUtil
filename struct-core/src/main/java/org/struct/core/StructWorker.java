@@ -30,6 +30,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,16 +112,16 @@ public class StructWorker<T> {
                     .filter(entry -> entry.getValue() instanceof Collection)
                     .map(entry -> new Object[]{entry.getKey(), ((Collection) entry.getValue()).toArray()})
                     .collect(Collectors.toMap(o -> o[0], o -> o[1]));
-            tempRefFieldValueMap.put(clzFieldUrl, collect);
+            tempRefFieldValueMap.put(clzFieldUrl, Collections.unmodifiableMap(collect));
         } else if (Collection.class.isAssignableFrom(targetType)) {
             Map<Object, ?> map = subWorker.toListWithGroup(targetType, descriptor.getRefGroupBy());
-            tempRefFieldValueMap.put(clzFieldUrl, (Map<Object, Object>) map);
+            tempRefFieldValueMap.put(clzFieldUrl, Collections.unmodifiableMap(map));
         } else if (Map.class.isAssignableFrom(targetType)) {
             Map<Object, ?> map = subWorker.toMapWithGroup(targetType, descriptor.getRefUniqueKey(), descriptor.getRefGroupBy());
-            tempRefFieldValueMap.put(clzFieldUrl, (Map<Object, Object>) map);
+            tempRefFieldValueMap.put(clzFieldUrl, Collections.unmodifiableMap(map));
         } else {
             Map<Object, ?> map = subWorker.toMap(HashMap::new, descriptor.getRefUniqueKey());
-            tempRefFieldValueMap.put(clzFieldUrl, (Map<Object, Object>) map);
+            tempRefFieldValueMap.put(clzFieldUrl, Collections.unmodifiableMap(map));
         }
     }
 

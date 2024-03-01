@@ -136,8 +136,9 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     }
 
     protected Map<K, B> loadStructData() {
-        return WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
+        Map<K, B> map = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
                 .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
+        return Collections.unmodifiableMap(map);
     }
 
     @Override

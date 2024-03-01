@@ -84,15 +84,24 @@ public interface StructStore<K, B> {
     /**
      * Get struct store element by the key.
      *
+     * @param key the element key.
      * @return the element by the key.
      */
     B get(K key);
 
+    /**
+     * Get struct store or return default instance.
+     *
+     * @param key the element key.
+     * @param dv  the struct store default instance.
+     * @return the struct store.
+     */
     B getOrDefault(K key, B dv);
 
     /**
      * Try return struct store element by the key.
      *
+     * @param key the element key.
      * @return optional with the element by the key.
      * @see Optional
      */

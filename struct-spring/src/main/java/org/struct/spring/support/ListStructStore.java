@@ -75,8 +75,9 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
     }
 
     protected List<B> loadStructData() {
-        return WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
+        LinkedList<B> list = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
                 .toList(LinkedList::new);
+        return Collections.unmodifiableList(list);
     }
 
     @Override
