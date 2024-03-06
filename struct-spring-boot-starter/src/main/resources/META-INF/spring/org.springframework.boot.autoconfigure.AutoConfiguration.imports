@@ -1,0 +1,2 @@
+org.struct.spring.boot.autoconfigure.StructAutoConfiguration
+org.struct.spring.boot.autoconfigure.StructStoreServiceHealthContributorAutoConfiguration
