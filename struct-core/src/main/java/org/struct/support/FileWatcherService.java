@@ -153,7 +153,7 @@ public class FileWatcherService implements Runnable {
     public FileWatcherService registerHook(Path path, Runnable hook) {
         List<Runnable> list = this.hooksMap.computeIfAbsent(path, p -> Collections.synchronizedList(new ArrayList<>()));
         list.add(hook);
-        LOGGER.info("Register file hook. path: {}", path.toAbsolutePath());
+        LOGGER.info("file watcher register path:{} success.", path.toAbsolutePath());
         return this;
     }
 
@@ -164,7 +164,7 @@ public class FileWatcherService implements Runnable {
     public FileWatcherService deregisterHook(Path path) {
         List<Runnable> l = this.hooksMap.remove(path);
         if (null != l) {
-            LOGGER.info("Deregister file hook. path: {}", path.toAbsolutePath());
+            LOGGER.info("file watcher deregister path:{} done.", path.toAbsolutePath());
         }
         return this;
     }
