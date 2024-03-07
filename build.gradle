@@ -37,13 +37,13 @@ allprojects {
     apply plugin: 'java-library'
 
     ext.version_options = [
-            SPRING_BOOT_VERSION: "2.5.14",
-            SPRING_VERSION     : "5.3.22",
+            SPRING_BOOT_VERSION: "3.1.5",
+            SPRING_VERSION     : "6.0.13",
             JETTY_VERSION      : "9.4.44.v20210927",
-            MOCKITO_VERSION    : "3.9.0",
-            JUNIT_VERSION      : "5.7.2",
+            MOCKITO_VERSION    : "5.7.0",
+            JUNIT_VERSION      : "5.9.3",
             POI_VERSION        : "5.2.2",
-            LOG4J2_VERSION     : "2.18.0",
+            LOG4J2_VERSION     : "2.20.0",
             GSON_VERSION       : "2.9.0",
     ]
 
@@ -76,14 +76,14 @@ subprojects {
 
     dependencies {
         //  slf4j
-        implementation('org.slf4j:slf4j-api:1.7.32')
+        implementation('org.slf4j:slf4j-api:2.0.9')
         //  junit 5.x and mockito
         testImplementation("org.mockito:mockito-core:${version_options.MOCKITO_VERSION}")
         testImplementation("org.junit.jupiter:junit-jupiter:${version_options.JUNIT_VERSION}")
         //  log4j 2.x
         testImplementation("org.apache.logging.log4j:log4j-api:${version_options.LOG4J2_VERSION}")
         testImplementation("org.apache.logging.log4j:log4j-core:${version_options.LOG4J2_VERSION}")
-        testImplementation("org.apache.logging.log4j:log4j-slf4j-impl:${version_options.LOG4J2_VERSION}")
+        testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:${version_options.LOG4J2_VERSION}")
         testImplementation("org.apache.logging.log4j:log4j-jul:${version_options.LOG4J2_VERSION}")
     }
 
@@ -122,7 +122,7 @@ task codeCoverageReport(type: JacocoReport) {
     reports {
         xml.enabled true
         xml.destination file("${buildDir}/reports/report.xml")
-        html.enabled true
+        html.enabled false
         html.destination file("${buildDir}/reports/html")
         csv.enabled false
     }
