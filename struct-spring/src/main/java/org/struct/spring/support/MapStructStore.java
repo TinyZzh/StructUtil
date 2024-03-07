@@ -145,7 +145,7 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     public void dispose() {
         //  reset status.
         this.casStatusReset();
-        this.cached.clear();
+        this.cached = Collections.EMPTY_MAP;
     }
 
     @Override

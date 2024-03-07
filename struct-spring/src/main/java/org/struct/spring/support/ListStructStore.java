@@ -84,7 +84,7 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
     public void dispose() {
         //  reset status.
         this.casStatusReset();
-        this.cached.clear();
+        this.cached = Collections.EMPTY_LIST;
     }
 
     @Override
