@@ -84,10 +84,10 @@ public class ArrayConverter implements Converter {
 
     @Override
     public Object convert(Object originValue, Class<?> targetType) {
-        if (!targetType.isArray() || String.class != originValue.getClass()) {
+        if (!targetType.isArray()) {
             return null;
         }
-        String content = (String) originValue;
+        String content = String.valueOf(originValue);
         Class<?> componentType = targetType.getComponentType();
         String[] data = content.split(separator);
         if (this.isIgnoreBlank()) {
