@@ -132,7 +132,12 @@ public final class JdkStructFactory implements StructFactory {
             }
         } else {
             Object instance = Reflects.newInstance(this.clzOfStruct);
-            this.forEachBeanFields(structImpl, (i, sfd, v) -> sfd.setFieldValue(instance, v));
+            this.forEachBeanFields(structImpl, (i, sfd, v) -> {
+                sfd.setFieldValue(instance, v);
+                if (structImpl instanceof StructImpl impl) {
+                    impl.add(sfd.getName(), v, true);
+                }
+            });
             return Optional.of(instance);
         }
     }
