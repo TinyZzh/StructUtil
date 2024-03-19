@@ -67,6 +67,8 @@ public class ExcelUMStructHandler implements StructHandler {
         StructDescriptor descriptor = worker.getDescriptor();
         try (Workbook wb = WorkbookFactory.create(file, null, true)) {
             Sheet sheet = wb.getSheet(descriptor.getSheetName());
+            if (sheet == null)
+                throw new StructTransformException("Sheet not found: " + descriptor.getSheetName());
 
             int firstRowOrder = this.getFirstRowOrder(descriptor, sheet);
             Row headRow = sheet.getRow(Math.max(0, firstRowOrder - 1));
