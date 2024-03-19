@@ -84,8 +84,8 @@ public class ArrayConverter implements Converter {
 
     @Override
     public Object convert(Object originValue, Class<?> targetType) {
-        if (!targetType.isArray()) {
-            return null;
+        if (!targetType.isArray() || originValue == null) {
+            return Array.newInstance(targetType.getComponentType(), 0);
         }
         String content = String.valueOf(originValue);
         Class<?> componentType = targetType.getComponentType();
