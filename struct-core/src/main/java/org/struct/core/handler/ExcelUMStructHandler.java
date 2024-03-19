@@ -137,7 +137,10 @@ public class ExcelUMStructHandler implements StructHandler {
     private Map<Integer, String> resolveExcelColumnToField(Row headRow) {
         final Map<Integer, String> map = new HashMap<>();
         for (Cell cell : headRow) {
-            map.put(cell.getColumnIndex(), cell.getStringCellValue().trim());
+            String trim = cell.getStringCellValue().trim();
+            if (!trim.isEmpty()) {
+                map.put(cell.getColumnIndex(), trim);
+            }
         }
         return map;
     }
