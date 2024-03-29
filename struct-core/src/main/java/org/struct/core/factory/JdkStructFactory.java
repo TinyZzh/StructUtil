@@ -16,6 +16,7 @@ import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.exception.StructTransformException;
 import org.struct.exception.UnSupportConvertOperationException;
 import org.struct.util.AnnotationUtils;
+import org.struct.util.ConverterUtil;
 import org.struct.util.Reflects;
 
 import java.lang.reflect.AnnotatedElement;
@@ -193,7 +194,12 @@ public final class JdkStructFactory implements StructFactory {
         if (null != converter) {
             fv = converter.convert(value, sfd.getFieldType());
         } else if (sfd.isReferenceField()) {
-            fv = this.handleReferenceFieldValue(structImpl, sfd);
+            if (Collection.class.isAssignableFrom(sfd.getFieldType())
+                    && ConverterUtil.isBasicType(sfd.getReference())) {
+                fv = ConverterRegistry.convertCollection(value, sfd.getFieldType(), sfd.getReference());
+            } else {
+                fv = this.handleReferenceFieldValue(structImpl, sfd);
+            }
         } else {
             fv = ConverterRegistry.convert(value, sfd.getFieldType());
         }

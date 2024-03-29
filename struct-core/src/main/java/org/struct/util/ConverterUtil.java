@@ -20,13 +20,32 @@ package org.struct.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 public final class ConverterUtil {
 
     private static final BigInteger LONG_MIN = BigInteger.valueOf(Long.MIN_VALUE);
 
     private static final BigInteger LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE);
+
+    private static final List<Class<?>> BASIC_TYPES = Arrays.asList(
+            int.class, Integer.class,
+            long.class, Long.class,
+            boolean.class, Boolean.class,
+            short.class, Short.class,
+            byte.class, Byte.class,
+            float.class, Float.class,
+            double.class, Double.class,
+            BigInteger.class, BigDecimal.class,
+            String.class,
+            Date.class,
+            LocalDate.class, LocalDateTime.class, LocalTime.class
+    );
 
     private ConverterUtil() {
         //  no-op
@@ -49,6 +68,10 @@ public final class ConverterUtil {
     public static boolean isHexNumber(String value) {
         int index = (value.startsWith("-") ? 1 : 0);
         return (value.startsWith("0x", index) || value.startsWith("0X", index) || value.startsWith("#", index));
+    }
+
+    public static boolean isBasicType(Class<?> clz) {
+        return BASIC_TYPES.contains(clz);
     }
 
     /**

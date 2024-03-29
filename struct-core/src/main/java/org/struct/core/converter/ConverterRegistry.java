@@ -19,12 +19,20 @@
 package org.struct.core.converter;
 
 import org.struct.spi.ServiceLoader;
+import org.struct.util.ConverterUtil;
 import org.struct.util.Reflects;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -118,5 +126,39 @@ public final class ConverterRegistry {
             return converter.convert(originValue, requiredType);
         }
         return originValue;
+    }
+
+    public static Object convertCollection(Object originValue, Class<?> collectType, Class<?> requiredType) {
+        if (!Collection.class.isAssignableFrom(collectType)
+                || !ConverterUtil.isBasicType(requiredType)) {
+            return originValue;
+        }
+        Collection collection = null;
+        if (collectType.isInterface()) {
+            if (Set.class.isAssignableFrom(collectType)) {
+                collection = new HashSet();
+            } else if (SortedSet.class.isAssignableFrom(collectType)) {
+                collection = new TreeSet();
+            } else {
+                collection = new ArrayList();
+            }
+        } else {
+            try {
+                collection = (Collection<Object>) collectType.newInstance();
+            } catch (Exception e) {
+                //  no-op
+                collection = new ArrayList();
+            }
+        }
+        //  try lookup user's converter first.
+        Converter converter = lookup(Array.class);
+        if (converter != null) {
+            Object[] convert = (Object[]) converter.convert(originValue, Array.newInstance(requiredType, 0).getClass());
+            if (convert != null
+                    && convert.getClass().isArray()) {
+                Collections.addAll(collection, convert);
+            }
+        }
+        return collection;
     }
 }
