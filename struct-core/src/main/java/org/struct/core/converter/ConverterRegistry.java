@@ -26,7 +26,6 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -128,6 +127,7 @@ public final class ConverterRegistry {
         return originValue;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static Object convertCollection(Object originValue, Class<?> collectType, Class<?> requiredType) {
         if (!Collection.class.isAssignableFrom(collectType)
                 || !ConverterUtil.isBasicType(requiredType)) {
@@ -135,16 +135,16 @@ public final class ConverterRegistry {
         }
         Collection collection = null;
         if (collectType.isInterface()) {
-            if (Set.class.isAssignableFrom(collectType)) {
-                collection = new HashSet();
-            } else if (SortedSet.class.isAssignableFrom(collectType)) {
+            if (SortedSet.class.isAssignableFrom(collectType)) {
                 collection = new TreeSet();
+            } else if (Set.class.isAssignableFrom(collectType)) {
+                collection = new HashSet();
             } else {
                 collection = new ArrayList();
             }
         } else {
             try {
-                collection = (Collection<Object>) collectType.newInstance();
+                collection = (Collection<Object>) collectType.getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 //  no-op
                 collection = new ArrayList();
@@ -152,11 +152,10 @@ public final class ConverterRegistry {
         }
         //  try lookup user's converter first.
         Converter converter = lookup(Array.class);
-        if (converter != null) {
-            Object[] convert = (Object[]) converter.convert(originValue, Array.newInstance(requiredType, 0).getClass());
-            if (convert != null
-                    && convert.getClass().isArray()) {
-                Collections.addAll(collection, convert);
+        Object ary = converter.convert(originValue, Array.newInstance(requiredType, 0).getClass());
+        if (ary != null && ary.getClass().isArray()) {
+            for (int i = 0; i < Array.getLength(ary); i++) {
+                collection.add(Array.get(ary, i));
             }
         }
         return collection;

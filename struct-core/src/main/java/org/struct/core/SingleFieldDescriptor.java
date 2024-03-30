@@ -23,6 +23,7 @@ import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
 import org.struct.core.factory.StructFactory;
 import org.struct.exception.IllegalAccessPropertyException;
+import org.struct.util.ConverterUtil;
 
 import java.io.Serial;
 import java.lang.reflect.Field;
@@ -30,6 +31,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 
 public class SingleFieldDescriptor extends FieldDescriptor {
@@ -173,6 +175,31 @@ public class SingleFieldDescriptor extends FieldDescriptor {
      */
     public boolean isReferenceField() {
         return null != this.reference && Object.class != this.reference;
+    }
+
+    /**
+     * Is this field is basic type Collection field? e.g.
+     *
+     * <pre> {@code
+     *    define struct field.
+     *  class xxx {
+     *      @StructField(ref = int.class)
+     *      public List<Integer> var0;
+     *      @StructField(ref = String.class)
+     *      public List<String> var1;
+     *      @StructField(ref = Double.class)
+     *      public List<Double> var2;
+     *  }}</pre>
+     *
+     * @return
+     * @see ConverterRegistry#convertCollection(Object, Class, Class)
+     * @see ConverterUtil#isBasicType(Class)
+     */
+    public boolean isBasicTypeCollection() {
+        boolean isRefConfigMissing = this.refGroupBy.length == 0 && refUniqueKey.length == 0 && !this.isAggregateField();
+        return Collection.class.isAssignableFrom(this.getFieldType())
+                && isRefConfigMissing
+                && ConverterUtil.isBasicType(this.getReference());
     }
 
     /**

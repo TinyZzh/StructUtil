@@ -94,7 +94,7 @@ public class StructWorker<T> {
     }
 
     public void handleReferenceFieldValue(StructFactory structFactory, SingleFieldDescriptor descriptor) throws RuntimeException {
-        if (descriptor == null || !descriptor.isReferenceField()) {
+        if (descriptor == null || !descriptor.isReferenceField() || descriptor.isBasicTypeCollection()) {
             return;
         }
         String clzFieldUrl = descriptor.getRefFieldUrl();

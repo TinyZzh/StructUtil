@@ -194,8 +194,7 @@ public final class JdkStructFactory implements StructFactory {
         if (null != converter) {
             fv = converter.convert(value, sfd.getFieldType());
         } else if (sfd.isReferenceField()) {
-            if (Collection.class.isAssignableFrom(sfd.getFieldType())
-                    && ConverterUtil.isBasicType(sfd.getReference())) {
+            if (sfd.isBasicTypeCollection()) {
                 fv = ConverterRegistry.convertCollection(value, sfd.getFieldType(), sfd.getReference());
             } else {
                 fv = this.handleReferenceFieldValue(structImpl, sfd);

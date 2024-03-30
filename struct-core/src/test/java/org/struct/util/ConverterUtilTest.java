@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.util.Date;
 
 import static org.struct.util.ConverterUtil.*;
 
@@ -50,6 +52,18 @@ class ConverterUtilTest {
 
         Assertions.assertEquals(1L, checkedLongValue(BigDecimal.valueOf(1L), long.class));
         Assertions.assertThrows(IllegalArgumentException.class, () -> checkedLongValue(BigDecimal.valueOf(Long.MAX_VALUE).add(BigDecimal.ONE), long.class));
+    }
+
+    @Test
+    public void testIsBasicType() {
+        Assertions.assertTrue(isBasicType(int.class));
+        Assertions.assertTrue(isBasicType(Integer.class));
+        Assertions.assertTrue(isBasicType(long.class));
+        Assertions.assertTrue(isBasicType(Long.class));
+        Assertions.assertTrue(isBasicType(Date.class));
+        Assertions.assertTrue(isBasicType(LocalDate.class));
+
+        Assertions.assertFalse(isBasicType(Object.class));
     }
 
 }

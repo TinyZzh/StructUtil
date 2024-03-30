@@ -20,10 +20,13 @@ package org.struct.core.handler;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
 import org.struct.core.StructWorker;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -38,6 +41,18 @@ class CsvStructHandlerTest {
 
         StructWorker<CsvFileBean> worker = new StructWorker<>("classpath:/org/struct/core/", CsvFileBean.class);
         ArrayList<CsvFileBean> list = worker.toList(ArrayList::new);
+        Assertions.assertEquals(5, list.size());
+        Assertions.assertTrue(list.contains(var0));
+    }
+
+    @Test
+    public void testBasicCollection() {
+        BasicCollectionBean var0 = new BasicCollectionBean(1, "n1");
+        var0.status = new ArrayList<>(Arrays.asList(11, 12, 13));
+        var0.tags = new ArrayList<>(Arrays.asList("tag10", "tag11"));
+
+        StructWorker<BasicCollectionBean> worker = new StructWorker<>("classpath:/org/struct/core/", BasicCollectionBean.class);
+        ArrayList<BasicCollectionBean> list = worker.toList(ArrayList::new);
         Assertions.assertEquals(5, list.size());
         Assertions.assertTrue(list.contains(var0));
     }
@@ -130,6 +145,48 @@ class CsvStructHandlerTest {
         @Override
         public int hashCode() {
             return Objects.hash(id, name);
+        }
+    }
+
+    @StructSheet(fileName = "examples.csv")
+    static class BasicCollectionBean {
+
+        private int id;
+        private String name;
+        @StructField(ref = int.class)
+        private List<Integer> status;
+        @StructField(ref = String.class)
+        private List<String> tags;
+
+        public BasicCollectionBean() {
+        }
+
+        public BasicCollectionBean(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return "Bean{" +
+                    "id=" + id +
+                    ", name='" + name + '\'' +
+                    ", status=" + status +
+                    ", tags=" + tags +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            BasicCollectionBean bean = (BasicCollectionBean) o;
+            return id == bean.id && Objects.equals(name, bean.name) && Objects.equals(status, bean.status) && Objects.equals(tags, bean.tags);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, name, status, tags);
         }
     }
 

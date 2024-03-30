@@ -23,7 +23,15 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class ConverterRegistryTest {
 
@@ -155,6 +163,30 @@ public class ConverterRegistryTest {
                 continue;
             }
             Assertions.fail();
+        }
+    }
+
+    @Test
+    public void covertCollection() {
+        List<Integer> list = Arrays.asList(1, 2);
+        Assertions.assertEquals(new TreeSet<>(list), ConverterRegistry.convertCollection("1|2", SortedSet.class, int.class));
+        Assertions.assertEquals(new HashSet<>(list), ConverterRegistry.convertCollection("1|2", Set.class, int.class));
+        Assertions.assertEquals(new HashSet<>(list), ConverterRegistry.convertCollection("1|2", HashSet.class, int.class));
+        Assertions.assertEquals(new ArrayList<>(list), ConverterRegistry.convertCollection("1|2", List.class, int.class));
+        Assertions.assertEquals(new LinkedList<>(list), ConverterRegistry.convertCollection("1|2", LinkedList.class, int.class));
+//        Assertions.assertEquals(new ArrayDeque<>(list), ConverterRegistry.convertCollection("1", ArrayDeque.class, int.class));
+
+        //  constructor params is empty.
+        Assertions.assertEquals(new ArrayList<>(list), ConverterRegistry.convertCollection("1|2", MyList.class, int.class));
+        Assertions.assertEquals(ArrayList.class, ConverterRegistry.convertCollection("1|2", MyList.class, int.class).getClass());
+        //  illegal convert params
+        Assertions.assertEquals("1|2", ConverterRegistry.convertCollection("1|2", HashMap.class, int.class));
+        Assertions.assertEquals("1|2", ConverterRegistry.convertCollection("1|2", Set.class, ConverterRegistry.class));
+    }
+
+    class MyList<E> extends ArrayList<E> {
+        public MyList(int initialCapacity) {
+            super(initialCapacity);
         }
     }
 }
