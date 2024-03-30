@@ -46,7 +46,7 @@ import java.lang.annotation.Target;
  *          @StructField(ref = A.class, refGroupBy = "A.tag", refUniqueKey = "A.id")
  *          private Map&lt;Integer, A> map;
  *     }
- * </pre>
+ * }</pre>
  *
  * @author TinyZ.
  * @version 2019.03.23
