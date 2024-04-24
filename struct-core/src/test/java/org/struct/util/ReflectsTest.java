@@ -21,11 +21,18 @@ package org.struct.util;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.struct.annotation.StructField;
+import org.struct.annotation.StructOptional;
+import org.struct.annotation.StructSheet;
+import org.struct.core.converter.Converter;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ReflectsTest {
 
@@ -232,4 +239,81 @@ public class ReflectsTest {
         Assertions.assertFalse(optional2.isPresent());
     }
 
+    @Test
+    public void testRecordFileName() {
+        List<String> list = Reflects.resolveStructRelatedFileName(RecordAggregateByListKey.class);
+        Assertions.assertFalse(list.isEmpty());
+        Assertions.assertTrue(list.contains("file1.xlsx"));
+        Assertions.assertTrue(list.contains("file2.csv"));
+        list = Reflects.resolveStructRelatedFileName(ClassAggregateByListKey.class);
+        Assertions.assertFalse(list.isEmpty());
+        Assertions.assertTrue(list.contains("file1.xlsx"));
+        Assertions.assertTrue(list.contains("file2.csv"));
+    }
+
+    @StructSheet(fileName = "file1.xlsx", sheetName = "Sheet1")
+    class ClassAggregateByListKey {
+        static final int id = 1;
+        @StructField(name = "ids", converter = ListIntConverter.class)
+        private List<Integer> idList;
+        @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+        private RecordAggregateTargetBean[] beansAry;
+        @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+        private List<RecordAggregateTargetBean> beansList;
+        @StructOptional(value = {
+                @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids"),
+                @StructField(ref = ClassAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+        })
+        private RecordAggregateTargetBean var0;
+        @StructField(ref = ClassEmptyFile.class, refUniqueKey = "id")
+        private ClassEmptyFile var1;
+    }
+
+    @StructSheet(fileName = "file2.csv", sheetName = "Sheet1")
+    record RecordAggregateByListKey(int id,
+                                    @StructField(name = "ids", converter = ListIntConverter.class)
+                                    List<Integer> idList,
+                                    @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+                                    RecordAggregateTargetBean[] beansAry,
+                                    @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+                                    List<RecordAggregateTargetBean> beansList,
+                                    @StructOptional(value = {
+                                            @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids"),
+                                            @StructField(ref = ClassAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
+                                    })
+                                    RecordAggregateTargetBean var0,
+                                    @StructField(ref = ClassEmptyFile.class, refUniqueKey = "id")
+                                    ClassEmptyFile var1
+    ) {
+    }
+
+    @StructSheet(fileName = "file1.xlsx", sheetName = "Sheet2")
+    record RecordAggregateTargetBean(int id,
+                                     String domain,
+                                     String phylum,
+                                     String clazz,
+                                     String order,
+                                     String family,
+                                     String genus,
+                                     String species) {
+    }
+
+    @StructSheet(fileName = "file2.csv", sheetName = "Sheet1")
+    class ClassAggregateTargetBean {
+    }
+
+    @StructSheet(fileName = "")
+    class ClassEmptyFile {
+    }
+
+    static class ListIntConverter implements Converter {
+
+        @Override
+        public Object convert(Object originValue, Class<?> targetType) {
+            if (originValue instanceof String s) {
+                return Arrays.stream(s.split("\\|")).map(Integer::parseInt).collect(Collectors.toList());
+            }
+            return Collections.emptyList();
+        }
+    }
 }

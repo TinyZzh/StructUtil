@@ -18,20 +18,28 @@
 
 package org.struct.util;
 
+import org.struct.annotation.StructField;
+import org.struct.annotation.StructOptional;
+import org.struct.annotation.StructSheet;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public final class Reflects {
 
@@ -181,6 +189,52 @@ public final class Reflects {
             thatClz = thatClz.getSuperclass();
         }
         return result;
+    }
+
+    /**
+     * Resolve Struct related data file name list.
+     *
+     * @param clzOfStruct the struct class.
+     * @return data file's name list.
+     */
+    public static List<String> resolveStructRelatedFileName(Class<?> clzOfStruct) {
+        List<AnnotatedElement> list = new LinkedList<>();
+        if (clzOfStruct.isRecord()) {
+            Collections.addAll(list, clzOfStruct.getRecordComponents());
+        } else {
+            Class<?> thatClz = clzOfStruct;
+            while (thatClz != Object.class) {
+                for (Field field : thatClz.getDeclaredFields()) {
+                    if (!Modifier.isStatic(field.getModifiers())) {
+                        list.add(field);
+                    }
+                }
+                thatClz = thatClz.getSuperclass();
+            }
+        }
+        return list.stream()
+                .flatMap(fieldOrRc -> {
+                    StructField annoField;
+                    StructOptional anno;
+                    if (null != (anno = AnnotationUtils.findAnnotation(StructOptional.class, fieldOrRc))) {
+                        return Arrays.stream(anno.value());
+                    } else if (null != (annoField = AnnotationUtils.findAnnotation(StructField.class, fieldOrRc))) {
+                        return Stream.of(annoField);
+                    } else {
+                        return Stream.empty();
+                    }
+                })
+                .filter(structField -> Object.class != structField.ref())
+                .map(structField -> {
+                    StructSheet anno = AnnotationUtils.findAnnotation(StructSheet.class, structField.ref());
+                    if (null == anno || anno.fileName().isEmpty()) {
+                        return null;
+                    }
+                    return anno.fileName();
+                })
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
     }
 
     public static Optional<MethodHandle> lookupFieldGetter(Class<?> clzOfObj, String fieldName) {
