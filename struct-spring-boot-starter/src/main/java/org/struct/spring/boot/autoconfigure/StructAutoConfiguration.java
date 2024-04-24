@@ -41,7 +41,6 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.StringUtils;
 import org.struct.core.StructConfig;
-import org.struct.core.StructDescriptor;
 import org.struct.core.converter.ArrayConverter;
 import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
@@ -51,6 +50,7 @@ import org.struct.spring.support.StructStore;
 import org.struct.spring.support.StructStoreConfig;
 import org.struct.spring.support.StructStoreService;
 import org.struct.support.FileWatcherService;
+import org.struct.util.Reflects;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
@@ -142,8 +142,10 @@ public class StructAutoConfiguration {
         storeList.parallelStream()
                 .forEach(store -> {
                     //  register reload hook
-                    StructDescriptor descriptor = new StructDescriptor(store.clzOfBean());
-                    fws.registerHook(WorkerUtil.resolveFilePath(config.getWorkspace(), descriptor.getFileName()), store::reload);
+                    List<String> fileNameList = Reflects.resolveStructRelatedFileName(store.clzOfBean());
+                    for (String fileName : fileNameList) {
+                        fws.registerHook(WorkerUtil.resolveFilePath(config.getWorkspace(), fileName), store::reload);
+                    }
                 });
         fws.bootstrap();
         return fws;

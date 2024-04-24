@@ -164,7 +164,7 @@ public class FileWatcherService implements Runnable {
     public FileWatcherService deregisterHook(Path path) {
         List<Runnable> l = this.hooksMap.remove(path);
         if (null != l) {
-            LOGGER.info("file watcher deregister path:{} done.", path.toAbsolutePath());
+            LOGGER.info("file watcher deregister path:{} done. hook size:{}", path.toAbsolutePath(), l.size());
         }
         return this;
     }
