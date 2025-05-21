@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructOptional;
 import org.struct.annotation.StructSheet;
+import org.struct.core.converter.ConvertContext;
 import org.struct.core.converter.Converter;
 
 import java.lang.invoke.MethodHandle;
@@ -309,7 +310,7 @@ public class ReflectsTest {
     static class ListIntConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (originValue instanceof String s) {
                 return Arrays.stream(s.split("\\|")).map(Integer::parseInt).collect(Collectors.toList());
             }
