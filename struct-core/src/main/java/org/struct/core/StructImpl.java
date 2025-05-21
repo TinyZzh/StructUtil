@@ -23,7 +23,7 @@ import java.util.HashMap;
 /**
  * Temp struct instance implement.
  */
-public class StructImpl {
+public final class StructImpl {
 
     /**
      * Current row cell's value map.
@@ -69,7 +69,11 @@ public class StructImpl {
     }
 
     public Object get(SingleFieldDescriptor descriptor) {
-        return valuesMap.get(descriptor.getName());
+        return this.get(descriptor.getName());
+    }
+
+    public Object get(String key) {
+        return valuesMap.get(key);
     }
 
     public boolean isEmpty() {
