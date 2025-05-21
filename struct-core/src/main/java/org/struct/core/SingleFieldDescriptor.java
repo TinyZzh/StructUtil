@@ -192,7 +192,7 @@ public class SingleFieldDescriptor extends FieldDescriptor {
      *  }}</pre>
      *
      * @return
-     * @see ConverterRegistry#convertCollection(Object, Class, Class)
+     * @see ConverterRegistry#convertCollection(org.struct.core.converter.ConvertContext, Object, Class, Class)
      * @see ConverterUtil#isBasicType(Class)
      */
     public boolean isBasicTypeCollection() {

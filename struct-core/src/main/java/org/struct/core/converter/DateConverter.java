@@ -41,7 +41,7 @@ public class DateConverter implements Converter {
     private String formatPattern = Strings.DATE_TIME_FORMAT_PATTERN;
 
     @Override
-    public Object convert(Object originValue, Class<?> targetType) {
+    public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
         if (null == originValue) {
             return null;
         } else if (Date.class != targetType

@@ -81,7 +81,7 @@ public class EmbeddedConverters implements Converters {
     static class IntegerConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return 0;
             } else if (originValue instanceof String) {
@@ -102,7 +102,7 @@ public class EmbeddedConverters implements Converters {
     static class LongConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return 0L;
             } else if (originValue instanceof String) {
@@ -120,7 +120,7 @@ public class EmbeddedConverters implements Converters {
     static class BooleanConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return false;
             } else if (originValue.getClass() == Boolean.class) {
@@ -139,7 +139,7 @@ public class EmbeddedConverters implements Converters {
     static class ShortConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return (short) 0;
             } else if (originValue instanceof String) {
@@ -160,7 +160,7 @@ public class EmbeddedConverters implements Converters {
     static class ByteConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return (byte) 0x00;
             } else if (originValue instanceof String) {
@@ -181,7 +181,7 @@ public class EmbeddedConverters implements Converters {
     static class FloatConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return 0.0F;
             } else if (originValue instanceof String) {
@@ -196,7 +196,7 @@ public class EmbeddedConverters implements Converters {
     static class DoubleConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return 0.0D;
             } else if (originValue instanceof String) {
@@ -211,7 +211,7 @@ public class EmbeddedConverters implements Converters {
     static class BigIntegerConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return BigInteger.ZERO;
             } else if (originValue instanceof String) {
@@ -232,7 +232,7 @@ public class EmbeddedConverters implements Converters {
     static class BigDecimalConverter implements Converter {
 
         @Override
-        public Object convert(Object originValue, Class<?> targetType) {
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
             if (null == originValue) {
                 return BigDecimal.ZERO;
             } else if (originValue instanceof String) {

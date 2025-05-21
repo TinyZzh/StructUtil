@@ -26,10 +26,12 @@ public interface Converter {
     /**
      * Covert origin value to target field's type.
      *
+     * @param ctx
      * @param originValue the origin value.
      * @param targetType  the convert to field type.
      * @return return the converted value
      */
-    Object convert(Object originValue, Class<?> targetType);
+    Object convert(ConvertContext ctx, Object originValue, Class<?> targetType);
+
 
 }

@@ -21,7 +21,7 @@ package org.struct.core.converter;
 public class StringConverter implements Converter {
 
     @Override
-    public Object convert(Object originValue, Class<?> targetType) {
+    public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
         if (String.class == targetType) {
             if (null != originValue) {
                 return originValue.toString();

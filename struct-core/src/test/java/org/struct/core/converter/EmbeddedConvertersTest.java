@@ -51,149 +51,149 @@ public class EmbeddedConvertersTest {
     public void testIntegerConverter() {
         IntegerConverter converter = new IntegerConverter();
         //  int.class
-        Assertions.assertEquals(0, converter.convert(null, int.class));
-        Assertions.assertEquals(1, converter.convert("1", int.class));
-        Assertions.assertEquals(1, converter.convert("0x1", int.class));
-        Assertions.assertEquals(1, converter.convert(1, int.class));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.ONE), int.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, int.class));
+        Assertions.assertEquals(0, converter.convert(null, null, int.class));
+        Assertions.assertEquals(1, converter.convert(null, "1", int.class));
+        Assertions.assertEquals(1, converter.convert(null, "0x1", int.class));
+        Assertions.assertEquals(1, converter.convert(null, 1, int.class));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(null, BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.ONE), int.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, int.class));
         //  Integer.class
-        Assertions.assertEquals(0, converter.convert(null, Integer.class));
-        Assertions.assertEquals(1, converter.convert("1", Integer.class));
-        Assertions.assertEquals(1, converter.convert("0x1", Integer.class));
-        Assertions.assertEquals(1, converter.convert(1, Integer.class));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.ONE), Integer.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, Integer.class));
+        Assertions.assertEquals(0, converter.convert(null, null, Integer.class));
+        Assertions.assertEquals(1, converter.convert(null, "1", Integer.class));
+        Assertions.assertEquals(1, converter.convert(null, "0x1", Integer.class));
+        Assertions.assertEquals(1, converter.convert(null, 1, Integer.class));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(null, BigInteger.valueOf(Integer.MAX_VALUE).add(BigInteger.ONE), Integer.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, Integer.class));
     }
 
     @Test
     public void testLongConverter() {
         LongConverter converter = new LongConverter();
         //  int.class
-        Assertions.assertEquals(0L, converter.convert(null, long.class));
-        Assertions.assertEquals(1L, converter.convert("1", long.class));
-        Assertions.assertEquals(1L, converter.convert("0x1", long.class));
-        Assertions.assertEquals(1L, converter.convert(1, long.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, long.class));
+        Assertions.assertEquals(0L, converter.convert(null, null, long.class));
+        Assertions.assertEquals(1L, converter.convert(null, "1", long.class));
+        Assertions.assertEquals(1L, converter.convert(null, "0x1", long.class));
+        Assertions.assertEquals(1L, converter.convert(null, 1, long.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, long.class));
         //  Integer.class
-        Assertions.assertEquals(0L, converter.convert(null, Long.class));
-        Assertions.assertEquals(1L, converter.convert("1", Long.class));
-        Assertions.assertEquals(1L, converter.convert("0x1", Long.class));
-        Assertions.assertEquals(1L, converter.convert(1, Long.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, Long.class));
+        Assertions.assertEquals(0L, converter.convert(null, null, Long.class));
+        Assertions.assertEquals(1L, converter.convert(null, "1", Long.class));
+        Assertions.assertEquals(1L, converter.convert(null, "0x1", Long.class));
+        Assertions.assertEquals(1L, converter.convert(null, 1, Long.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, Long.class));
     }
 
     @Test
     public void testBooleanConverter() {
         BooleanConverter converter = new BooleanConverter();
         //  int.class
-        Assertions.assertEquals(false, converter.convert(null, boolean.class));
-        Assertions.assertEquals(true, converter.convert(Boolean.TRUE, boolean.class));
-        Assertions.assertEquals(true, converter.convert((short) 1, boolean.class));
-        Assertions.assertEquals(true, converter.convert("y", boolean.class));
-        Assertions.assertEquals(true, converter.convert(1, boolean.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, boolean.class));
+        Assertions.assertEquals(false, converter.convert(null, null, boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, Boolean.TRUE, boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, (short) 1, boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, "y", boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, 1, boolean.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, boolean.class));
         //  Integer.class
-        Assertions.assertEquals(false, converter.convert(null, Boolean.class));
-        Assertions.assertEquals(true, converter.convert(Boolean.TRUE, Boolean.class));
-        Assertions.assertEquals(true, converter.convert(1, Boolean.class));
-        Assertions.assertEquals(true, converter.convert("y", Boolean.class));
-        Assertions.assertEquals(true, converter.convert(1, Boolean.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, Boolean.class));
+        Assertions.assertEquals(false, converter.convert(null, null, Boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, Boolean.TRUE, Boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, 1, Boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, "y", Boolean.class));
+        Assertions.assertEquals(true, converter.convert(null, 1, Boolean.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, Boolean.class));
     }
 
     @Test
     public void testShortConverter() {
         ShortConverter converter = new ShortConverter();
         //  int.class
-        Assertions.assertEquals((short) 0, converter.convert(null, short.class));
-        Assertions.assertEquals((short) 1, converter.convert("1", short.class));
-        Assertions.assertEquals((short) 1, converter.convert("0x1", short.class));
-        Assertions.assertEquals((short) 1, converter.convert(1, short.class));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(BigInteger.valueOf(Short.MAX_VALUE).add(BigInteger.ONE), short.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, short.class));
+        Assertions.assertEquals((short) 0, converter.convert(null, null, short.class));
+        Assertions.assertEquals((short) 1, converter.convert(null, "1", short.class));
+        Assertions.assertEquals((short) 1, converter.convert(null, "0x1", short.class));
+        Assertions.assertEquals((short) 1, converter.convert(null, 1, short.class));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(null, BigInteger.valueOf(Short.MAX_VALUE).add(BigInteger.ONE), short.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, short.class));
         //  Integer.class
-        Assertions.assertEquals((short) 0, converter.convert(null, Short.class));
-        Assertions.assertEquals((short) 1, converter.convert("1", Short.class));
-        Assertions.assertEquals((short) 1, converter.convert("0x1", Short.class));
-        Assertions.assertEquals((short) 1, converter.convert(1, Short.class));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(BigInteger.valueOf(Short.MAX_VALUE).add(BigInteger.ONE), Short.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, Short.class));
+        Assertions.assertEquals((short) 0, converter.convert(null, null, Short.class));
+        Assertions.assertEquals((short) 1, converter.convert(null, "1", Short.class));
+        Assertions.assertEquals((short) 1, converter.convert(null, "0x1", Short.class));
+        Assertions.assertEquals((short) 1, converter.convert(null, 1, Short.class));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(null, BigInteger.valueOf(Short.MAX_VALUE).add(BigInteger.ONE), Short.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, Short.class));
     }
 
     @Test
     public void testByteConverter() {
         ByteConverter converter = new ByteConverter();
         //  int.class
-        Assertions.assertEquals((byte) 0x00, converter.convert(null, byte.class));
-        Assertions.assertEquals((byte) 0x01, converter.convert("1", byte.class));
-        Assertions.assertEquals((byte) 0x01, converter.convert("0x1", byte.class));
-        Assertions.assertEquals((byte) 0x01, converter.convert(1, byte.class));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(BigInteger.valueOf(Byte.MAX_VALUE).add(BigInteger.ONE), byte.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, byte.class));
+        Assertions.assertEquals((byte) 0x00, converter.convert(null, null, byte.class));
+        Assertions.assertEquals((byte) 0x01, converter.convert(null, "1", byte.class));
+        Assertions.assertEquals((byte) 0x01, converter.convert(null, "0x1", byte.class));
+        Assertions.assertEquals((byte) 0x01, converter.convert(null, 1, byte.class));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(null, BigInteger.valueOf(Byte.MAX_VALUE).add(BigInteger.ONE), byte.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, byte.class));
         //  Integer.class
-        Assertions.assertEquals((byte) 0x00, converter.convert(null, Byte.class));
-        Assertions.assertEquals((byte) 0x01, converter.convert("1", Byte.class));
-        Assertions.assertEquals((byte) 0x01, converter.convert("0x1", Byte.class));
-        Assertions.assertEquals((byte) 0x01, converter.convert(1, Byte.class));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(BigInteger.valueOf(Byte.MAX_VALUE).add(BigInteger.ONE), Byte.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, Byte.class));
+        Assertions.assertEquals((byte) 0x00, converter.convert(null, null, Byte.class));
+        Assertions.assertEquals((byte) 0x01, converter.convert(null, "1", Byte.class));
+        Assertions.assertEquals((byte) 0x01, converter.convert(null, "0x1", Byte.class));
+        Assertions.assertEquals((byte) 0x01, converter.convert(null, 1, Byte.class));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> converter.convert(null, BigInteger.valueOf(Byte.MAX_VALUE).add(BigInteger.ONE), Byte.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, Byte.class));
     }
 
     @Test
     public void testFloatConverter() {
         FloatConverter converter = new FloatConverter();
         //  int.class
-        Assertions.assertEquals(0.0F, converter.convert(null, float.class));
-        Assertions.assertEquals(1.0F, converter.convert("1", float.class));
-        Assertions.assertEquals(1.0F, converter.convert(1, float.class));
-        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert("0x1", float.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, float.class));
+        Assertions.assertEquals(0.0F, converter.convert(null, null, float.class));
+        Assertions.assertEquals(1.0F, converter.convert(null, "1", float.class));
+        Assertions.assertEquals(1.0F, converter.convert(null, 1, float.class));
+        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert(null, "0x1", float.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, float.class));
         //  Integer.class
-        Assertions.assertEquals(0.0F, converter.convert(null, Float.class));
-        Assertions.assertEquals(1.0F, converter.convert("1", Float.class));
-        Assertions.assertEquals(1.0F, converter.convert(1, Float.class));
-        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert("0x1", Float.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, Float.class));
+        Assertions.assertEquals(0.0F, converter.convert(null, null, Float.class));
+        Assertions.assertEquals(1.0F, converter.convert(null, "1", Float.class));
+        Assertions.assertEquals(1.0F, converter.convert(null, 1, Float.class));
+        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert(null, "0x1", Float.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, Float.class));
     }
 
     @Test
     public void testDoubleConverter() {
         DoubleConverter converter = new DoubleConverter();
         //  int.class
-        Assertions.assertEquals(0.0D, converter.convert(null, double.class));
-        Assertions.assertEquals(1.0D, converter.convert("1", double.class));
-        Assertions.assertEquals(1.0D, converter.convert(1, double.class));
-        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert("0x1", double.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, double.class));
+        Assertions.assertEquals(0.0D, converter.convert(null, null, double.class));
+        Assertions.assertEquals(1.0D, converter.convert(null, "1", double.class));
+        Assertions.assertEquals(1.0D, converter.convert(null, 1, double.class));
+        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert(null, "0x1", double.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, double.class));
         //  Integer.class
-        Assertions.assertEquals(0.0D, converter.convert(null, Double.class));
-        Assertions.assertEquals(1.0D, converter.convert("1", Double.class));
-        Assertions.assertEquals(1.0D, converter.convert(1, Double.class));
-        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert("0x1", Double.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, Double.class));
+        Assertions.assertEquals(0.0D, converter.convert(null, null, Double.class));
+        Assertions.assertEquals(1.0D, converter.convert(null, "1", Double.class));
+        Assertions.assertEquals(1.0D, converter.convert(null, 1, Double.class));
+        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert(null, "0x1", Double.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, Double.class));
     }
 
     @Test
     public void testBigIntegerConverter() {
         BigIntegerConverter converter = new BigIntegerConverter();
         //  int.class
-        Assertions.assertEquals(BigInteger.ZERO, converter.convert(null, BigInteger.class));
-        Assertions.assertEquals(BigInteger.ONE, converter.convert("1", BigInteger.class));
-        Assertions.assertEquals(BigInteger.ONE, converter.convert("0x1", BigInteger.class));
-        Assertions.assertEquals(BigInteger.ONE, converter.convert(1, BigInteger.class));
-        Assertions.assertEquals(BigInteger.ONE, converter.convert(BigDecimal.valueOf(1), BigInteger.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, BigInteger.class));
+        Assertions.assertEquals(BigInteger.ZERO, converter.convert(null, null, BigInteger.class));
+        Assertions.assertEquals(BigInteger.ONE, converter.convert(null, "1", BigInteger.class));
+        Assertions.assertEquals(BigInteger.ONE, converter.convert(null, "0x1", BigInteger.class));
+        Assertions.assertEquals(BigInteger.ONE, converter.convert(null, 1, BigInteger.class));
+        Assertions.assertEquals(BigInteger.ONE, converter.convert(null, BigDecimal.valueOf(1), BigInteger.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, BigInteger.class));
     }
 
     @Test
     public void testBigDecimalConverter() {
         BigDecimalConverter converter = new BigDecimalConverter();
         //  BigDecimal.class
-        Assertions.assertEquals(BigDecimal.ZERO, converter.convert(null, BigDecimal.class));
-        Assertions.assertEquals(BigDecimal.ONE, converter.convert("1", BigDecimal.class));
-        Assertions.assertEquals(BigDecimal.ONE, converter.convert(1, BigDecimal.class));
-        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert("0x1", BigDecimal.class));
-        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(converter, BigDecimal.class));
+        Assertions.assertEquals(BigDecimal.ZERO, converter.convert(null, null, BigDecimal.class));
+        Assertions.assertEquals(BigDecimal.ONE, converter.convert(null, "1", BigDecimal.class));
+        Assertions.assertEquals(BigDecimal.ONE, converter.convert(null, 1, BigDecimal.class));
+        Assertions.assertThrows(NumberFormatException.class, () -> converter.convert(null, "0x1", BigDecimal.class));
+        Assertions.assertThrows(UnSupportConvertOperationException.class, () -> converter.convert(null, converter, BigDecimal.class));
     }
 }

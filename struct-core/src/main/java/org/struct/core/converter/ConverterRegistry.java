@@ -103,11 +103,12 @@ public final class ConverterRegistry {
     /**
      * Convert originValue to requiredType.
      *
+     * @param ctx
      * @param originValue  the origin value.
      * @param requiredType the required type.
      * @return the converted object, which must be an instance of {@code requiredType} (or null)
      */
-    public static Object convert(Object originValue, Class<?> requiredType) {
+    public static Object convert(ConvertContext ctx, Object originValue, Class<?> requiredType) {
         if (Object.class == requiredType
                 || requiredType.isInstance(originValue)) {
             return originValue;
@@ -122,13 +123,13 @@ public final class ConverterRegistry {
             }
         }
         if (null != converter) {
-            return converter.convert(originValue, requiredType);
+            return converter.convert(ctx, originValue, requiredType);
         }
         return originValue;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static Object convertCollection(Object originValue, Class<?> collectType, Class<?> requiredType) {
+    public static Object convertCollection(ConvertContext ctx, Object originValue, Class<?> collectType, Class<?> requiredType) {
         if (!Collection.class.isAssignableFrom(collectType)
                 || !ConverterUtil.isBasicType(requiredType)) {
             return originValue;
@@ -152,7 +153,7 @@ public final class ConverterRegistry {
         }
         //  try lookup user's converter first.
         Converter converter = lookup(Array.class);
-        Object ary = converter.convert(originValue, Array.newInstance(requiredType, 0).getClass());
+        Object ary = converter.convert(ctx, originValue, Array.newInstance(requiredType, 0).getClass());
         if (ary != null && ary.getClass().isArray()) {
             for (int i = 0; i < Array.getLength(ary); i++) {
                 collection.add(Array.get(ary, i));

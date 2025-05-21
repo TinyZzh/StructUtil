@@ -27,29 +27,29 @@ public class EnumConverterTest {
     @Test
     public void test() {
         EnumConverter converter = new EnumConverter();
-        Assertions.assertEquals(MyEnum.One, converter.convert(0, MyEnum.class));
-        Assertions.assertEquals(MyEnum.Two, converter.convert(1.0D, MyEnum.class));
-        Assertions.assertEquals(MyEnum.Three, converter.convert(2L, MyEnum.class));
+        Assertions.assertEquals(MyEnum.One, converter.convert(null, 0, MyEnum.class));
+        Assertions.assertEquals(MyEnum.Two, converter.convert(null, 1.0D, MyEnum.class));
+        Assertions.assertEquals(MyEnum.Three, converter.convert(null, 2L, MyEnum.class));
 
-        Assertions.assertEquals(MyEnum.One, converter.convert("0", MyEnum.class));
-        Assertions.assertEquals(MyEnum.Two, converter.convert("1", MyEnum.class));
-        Assertions.assertEquals(MyEnum.Three, converter.convert("2", MyEnum.class));
+        Assertions.assertEquals(MyEnum.One, converter.convert(null, "0", MyEnum.class));
+        Assertions.assertEquals(MyEnum.Two, converter.convert(null, "1", MyEnum.class));
+        Assertions.assertEquals(MyEnum.Three, converter.convert(null, "2", MyEnum.class));
 
-        Assertions.assertEquals(MyEnum.One, converter.convert("One", MyEnum.class));
-        Assertions.assertEquals(MyEnum.Two, converter.convert("Two", MyEnum.class));
-        Assertions.assertEquals(MyEnum.Three, converter.convert("Three", MyEnum.class));
+        Assertions.assertEquals(MyEnum.One, converter.convert(null, "One", MyEnum.class));
+        Assertions.assertEquals(MyEnum.Two, converter.convert(null, "Two", MyEnum.class));
+        Assertions.assertEquals(MyEnum.Three, converter.convert(null, "Three", MyEnum.class));
 
-        Assertions.assertEquals(MyEnum.One, converter.convert("one", MyEnum.class));
-        Assertions.assertEquals(MyEnum.Two, converter.convert("two", MyEnum.class));
-        Assertions.assertEquals(MyEnum.Three, converter.convert("three", MyEnum.class));
+        Assertions.assertEquals(MyEnum.One, converter.convert(null, "one", MyEnum.class));
+        Assertions.assertEquals(MyEnum.Two, converter.convert(null, "two", MyEnum.class));
+        Assertions.assertEquals(MyEnum.Three, converter.convert(null, "three", MyEnum.class));
 
-        Assertions.assertEquals("three", converter.convert("three", Integer.class));
+        Assertions.assertEquals("three", converter.convert(null, "three", Integer.class));
 
-        Assertions.assertEquals(MyEnum.One, converter.convert(MyEnum.One, MyEnum.class));
-        Assertions.assertEquals(MyEnum.Two, converter.convert(MyEnum.Two, MyEnum.class));
-        Assertions.assertEquals(MyEnum.Three, converter.convert(MyEnum.Three, MyEnum.class));
+        Assertions.assertEquals(MyEnum.One, converter.convert(null, MyEnum.One, MyEnum.class));
+        Assertions.assertEquals(MyEnum.Two, converter.convert(null, MyEnum.Two, MyEnum.class));
+        Assertions.assertEquals(MyEnum.Three, converter.convert(null, MyEnum.Three, MyEnum.class));
         try {
-            converter.convert("four", MyEnum.class);
+            converter.convert(null, "four", MyEnum.class);
         } catch (IllegalStateException e) {
             //  no-op
         } catch (Exception e) {
@@ -60,7 +60,7 @@ public class EnumConverterTest {
     @Test
     public void testEnum() {
         Assertions.assertTrue(Enum.class.isAssignableFrom(MyEnum.class));
-        Assertions.assertEquals(MyEnum.Two, ConverterRegistry.convert("two", MyEnum.class));
+        Assertions.assertEquals(MyEnum.Two, ConverterRegistry.convert(null, "two", MyEnum.class));
     }
 
     public enum MyEnum {

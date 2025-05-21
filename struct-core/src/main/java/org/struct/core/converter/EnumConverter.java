@@ -26,14 +26,14 @@ package org.struct.core.converter;
 public class EnumConverter implements Converter {
 
     @Override
-    public Object convert(Object originValue, Class<?> targetType) {
+    public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
         if (!targetType.isEnum()) {
             return originValue;
         }
         Object[] enums = targetType.getEnumConstants();
         //  1. int -> enum
         try {
-            int i = (int) ConverterRegistry.convert(originValue, Integer.class);
+            int i = (int) ConverterRegistry.convert(ctx, originValue, Integer.class);
             if (0 <= i && i < enums.length) {
                 return enums[i];
             }

@@ -47,7 +47,7 @@ class LocalDateTimeConverterTest {
     @ParameterizedTest()
     @ValueSource(strings = {"2020-09-15 01:02:03", "1600102923", "1600102923000"})
     public void testStr(String str) {
-        Object c = converter.convert(str, LocalDateTime.class);
+        Object c = converter.convert(null, str, LocalDateTime.class);
         Assertions.assertTrue(c instanceof LocalDateTime);
         Assertions.assertEquals(2020, ((LocalDateTime) c).getYear());
         Assertions.assertEquals(9, ((LocalDateTime) c).getMonthValue());
@@ -59,7 +59,7 @@ class LocalDateTimeConverterTest {
 
     @Test
     public void testTimestamp() {
-        Object c = converter.convert(1600102923, LocalDateTime.class);
+        Object c = converter.convert(null, 1600102923, LocalDateTime.class);
         Assertions.assertTrue(c instanceof LocalDateTime);
         Assertions.assertEquals(2020, ((LocalDateTime) c).getYear());
         Assertions.assertEquals(9, ((LocalDateTime) c).getMonthValue());
@@ -71,7 +71,7 @@ class LocalDateTimeConverterTest {
 
     @Test
     public void testMills() {
-        Object c = converter.convert(1600102923000L, LocalDateTime.class);
+        Object c = converter.convert(null, 1600102923000L, LocalDateTime.class);
         Assertions.assertTrue(c instanceof LocalDateTime);
         Assertions.assertEquals(2020, ((LocalDateTime) c).getYear());
         Assertions.assertEquals(9, ((LocalDateTime) c).getMonthValue());
@@ -83,7 +83,7 @@ class LocalDateTimeConverterTest {
 
     @Test
     public void testOriginIsLocalDateTime() {
-        Object c = converter.convert(LocalDateTime.of(2020, 9, 15, 1, 2, 3), LocalDateTime.class);
+        Object c = converter.convert(null, LocalDateTime.of(2020, 9, 15, 1, 2, 3), LocalDateTime.class);
         Assertions.assertTrue(c instanceof LocalDateTime);
         Assertions.assertEquals(2020, ((LocalDateTime) c).getYear());
         Assertions.assertEquals(9, ((LocalDateTime) c).getMonthValue());
@@ -95,14 +95,14 @@ class LocalDateTimeConverterTest {
 
     @Test
     public void testTargetNotLocalDate() {
-        Object c = converter.convert(1, int.class);
+        Object c = converter.convert(null, 1, int.class);
         Assertions.assertEquals(1, c);
     }
 
     @ParameterizedTest()
     @ValueSource(strings = {"2020/09/15", "2020/09/15 01:02:03"})
     public void testFail(String str) {
-        Object c = converter.convert(str, LocalDateTime.class);
+        Object c = converter.convert(null, str, LocalDateTime.class);
         Assertions.assertFalse(c instanceof LocalDateTime);
         Assertions.assertEquals(str, c);
     }

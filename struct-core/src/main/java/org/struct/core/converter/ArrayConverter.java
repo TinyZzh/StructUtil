@@ -83,7 +83,7 @@ public class ArrayConverter implements Converter {
     }
 
     @Override
-    public Object convert(Object originValue, Class<?> targetType) {
+    public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
         if (!targetType.isArray() || originValue == null) {
             return Array.newInstance(targetType.getComponentType(), 0);
         }
@@ -96,7 +96,7 @@ public class ArrayConverter implements Converter {
         Object array = Array.newInstance(componentType, data.length);
         for (int i = 0; i < data.length; i++) {
             String str = strTrim ? data[i].trim() : data[i];
-            Array.set(array, i, ConverterRegistry.convert(str, componentType));
+            Array.set(array, i, ConverterRegistry.convert(ctx, str, componentType));
         }
         return array;
     }

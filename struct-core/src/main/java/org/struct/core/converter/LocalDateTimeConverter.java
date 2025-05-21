@@ -41,7 +41,7 @@ public class LocalDateTimeConverter implements Converter {
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Strings.DATE_TIME_FORMAT_PATTERN);
 
     @Override
-    public Object convert(Object originValue, Class<?> targetType) {
+    public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
         if (LocalDateTime.class != targetType
                 || LocalDateTime.class == originValue.getClass()) {
             return originValue;

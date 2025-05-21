@@ -38,23 +38,23 @@ class DateConverterTest {
         Assertions.assertEquals(Strings.DATE_FORMAT_PATTERN, converter.getFormatPattern());
         converter.setFormatPattern(Strings.DATE_TIME_FORMAT_PATTERN);
 
-        Assertions.assertNull(converter.convert(null, Date.class));
+        Assertions.assertNull(converter.convert(null, null, Date.class));
 
         long mills = System.currentTimeMillis();
         Date date = new Date(mills);
-        Assertions.assertEquals(date, converter.convert(date, Date.class));
+        Assertions.assertEquals(date, converter.convert(null, date, Date.class));
 
         long timestamp = System.currentTimeMillis() / 1000L;
-        Assertions.assertEquals(new Date(timestamp * 1000L), converter.convert((int) timestamp, Date.class));
-        Assertions.assertEquals(new Date(timestamp * 1000L), converter.convert(timestamp, Date.class));
+        Assertions.assertEquals(new Date(timestamp * 1000L), converter.convert(null, (int) timestamp, Date.class));
+        Assertions.assertEquals(new Date(timestamp * 1000L), converter.convert(null, timestamp, Date.class));
 
         SimpleDateFormat format = new SimpleDateFormat(Strings.DATE_TIME_FORMAT_PATTERN);
         String dateStr = format.format(date);
-        Assertions.assertEquals(date.toString(), converter.convert(dateStr, Date.class).toString());
+        Assertions.assertEquals(date.toString(), converter.convert(null, dateStr, Date.class).toString());
 
-        Assertions.assertEquals(new Date(mills), converter.convert(String.valueOf(mills), Date.class));
+        Assertions.assertEquals(new Date(mills), converter.convert(null, String.valueOf(mills), Date.class));
 
-        Assertions.assertEquals("xx", converter.convert("xx", Date.class));
+        Assertions.assertEquals("xx", converter.convert(null, "xx", Date.class));
     }
 
 }

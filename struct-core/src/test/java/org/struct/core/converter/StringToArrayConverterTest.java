@@ -43,14 +43,14 @@ public class StringToArrayConverterTest {
     @Test
     public void convertParamNotString() {
         ArrayConverter converter = new ArrayConverter();
-        Object result = converter.convert(11, List.class);
+        Object result = converter.convert(null, 11, List.class);
         Assertions.assertNull(result);
     }
 
     @Test
     public void convertNotArray() {
         ArrayConverter converter = new ArrayConverter();
-        Object result = converter.convert("|11|22|333|4444", List.class);
+        Object result = converter.convert(null, "|11|22|333|4444", List.class);
         Assertions.assertNull(result);
     }
 
@@ -58,7 +58,7 @@ public class StringToArrayConverterTest {
     public void convert2StringArray() {
         ArrayConverter converter = new ArrayConverter();
         converter.setIgnoreBlank(true);
-        String[] data = (String[]) converter.convert("|11|22|333|4444", String[].class);
+        String[] data = (String[]) converter.convert(null, "|11|22|333|4444", String[].class);
         Assertions.assertEquals("11", data[0]);
         Assertions.assertEquals("22", data[1]);
         Assertions.assertEquals("333", data[2]);
@@ -69,7 +69,7 @@ public class StringToArrayConverterTest {
     public void convert2longArray() {
         ArrayConverter converter = new ArrayConverter();
         converter.setIgnoreBlank(true);
-        long[] data = (long[]) converter.convert("|11|22|333|4444", long[].class);
+        long[] data = (long[]) converter.convert(null, "|11|22|333|4444", long[].class);
         Assertions.assertEquals(11L, data[0]);
         Assertions.assertEquals(22L, data[1]);
         Assertions.assertEquals(333L, data[2]);
@@ -80,7 +80,7 @@ public class StringToArrayConverterTest {
     public void convert2IntegerArray() {
         ArrayConverter converter = new ArrayConverter();
         converter.setIgnoreBlank(true);
-        Integer[] data = (Integer[]) converter.convert("|11|22|333|4444", Integer[].class);
+        Integer[] data = (Integer[]) converter.convert(null, "|11|22|333|4444", Integer[].class);
         Assertions.assertEquals((Integer) 11, data[0]);
         Assertions.assertEquals((Integer) 22, data[1]);
         Assertions.assertEquals((Integer) 333, data[2]);
@@ -90,7 +90,7 @@ public class StringToArrayConverterTest {
     @Test
     public void convert2IntegerArrayWithBlank() {
         ArrayConverter converter = new ArrayConverter("\\|", false);
-        Integer[] data = (Integer[]) converter.convert("11|22|333|4444", Integer[].class);
+        Integer[] data = (Integer[]) converter.convert(null, "11|22|333|4444", Integer[].class);
         Assertions.assertEquals((Integer) 11, data[0]);
         Assertions.assertEquals((Integer) 22, data[1]);
         Assertions.assertEquals((Integer) 333, data[2]);

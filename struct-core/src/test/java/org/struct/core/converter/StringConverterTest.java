@@ -30,8 +30,8 @@ class StringConverterTest {
     @Test
     public void test() {
         StringConverter converter = new StringConverter();
-        Assertions.assertEquals("xx", converter.convert("xx", String.class));
-        Assertions.assertEquals(1, converter.convert(1, int.class));
-        Assertions.assertNull(converter.convert(null, String.class));
+        Assertions.assertEquals("xx", converter.convert(null, "xx", String.class));
+        Assertions.assertEquals(1, converter.convert(null, 1, int.class));
+        Assertions.assertNull(converter.convert(null, null, String.class));
     }
 }

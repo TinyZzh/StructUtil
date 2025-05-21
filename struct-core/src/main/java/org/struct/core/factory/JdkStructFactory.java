@@ -28,13 +28,14 @@ import org.struct.core.OptionalDescriptor;
 import org.struct.core.SingleFieldDescriptor;
 import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
+import org.struct.core.converter.ConvertContext;
 import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
+import org.struct.core.converter.DefaultConvertContext;
 import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.exception.StructTransformException;
 import org.struct.exception.UnSupportConvertOperationException;
 import org.struct.util.AnnotationUtils;
-import org.struct.util.ConverterUtil;
 import org.struct.util.Reflects;
 
 import java.lang.reflect.AnnotatedElement;
@@ -207,18 +208,19 @@ public final class JdkStructFactory implements StructFactory {
                 throw new IllegalArgumentException("unresolved required clz:" + this.clzOfStruct.getSimpleName() + "#field:" + sfd.getName() + "'s value. val:" + value);
             }
         }
+        ConvertContext ctx = new DefaultConvertContext(structImpl, sfd);
         Converter converter = sfd.getConverter();
         Object fv;
         if (null != converter) {
-            fv = converter.convert(value, sfd.getFieldType());
+            fv = converter.convert(ctx, value, sfd.getFieldType());
         } else if (sfd.isReferenceField()) {
             if (sfd.isBasicTypeCollection()) {
-                fv = ConverterRegistry.convertCollection(value, sfd.getFieldType(), sfd.getReference());
+                fv = ConverterRegistry.convertCollection(ctx, value, sfd.getFieldType(), sfd.getReference());
             } else {
                 fv = this.handleReferenceFieldValue(structImpl, sfd);
             }
         } else {
-            fv = ConverterRegistry.convert(value, sfd.getFieldType());
+            fv = ConverterRegistry.convert(ctx, value, sfd.getFieldType());
         }
         if (sfd.isCached()) {
             if (fv instanceof String str) {
