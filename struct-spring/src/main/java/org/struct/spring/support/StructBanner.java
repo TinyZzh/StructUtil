@@ -21,8 +21,11 @@ package org.struct.spring.support;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 /**
@@ -57,11 +60,17 @@ public enum StructBanner {
      * Print struct store service banner.
      */
     public void print() {
-        PrintStream ps = System.out;
-        for (String line : BANNER) {
-            ps.println(line);
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             PrintStream filePS = new PrintStream(baos)) {
+            filePS.println();
+            for (String line : BANNER) {
+                filePS.println(line);
+            }
+            filePS.println(STRUCT_STORE_SERVICE + "    (" + getVersion() + ")");
+            LOGGER.info(baos.toString(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        ps.println(STRUCT_STORE_SERVICE + "    (" + getVersion() + ")");
     }
 
     /**
@@ -79,7 +88,7 @@ public enum StructBanner {
             prop.load(in);
             return prop.getProperty("version", "Unknown");
         } catch (Throwable e) {
-            LOGGER.error("");
+            LOGGER.error("struct-util version information is unknown. the pom.properties is not exists.");
         }
         return "Unknown";
     }
