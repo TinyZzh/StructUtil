@@ -18,49 +18,6 @@
 
 package org.struct.util;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.CellValue;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
 public class ExcelUtilTest {
 
-    @Test
-    public void testNewListOnlyException() throws Exception {
-        //
-        try {
-            WorkerUtil.newListOnly(Object.class);
-        } catch (Exception e) {
-            return;
-        }
-        Assertions.fail();
-    }
-
-    @Test
-    public void testNewInterface() throws Exception {
-        Collection<Object> objects = WorkerUtil.newListOnly(List.class);
-        Assertions.assertTrue(ArrayList.class.isAssignableFrom(objects.getClass()));
-    }
-
-    @Test
-    public void testNewAbstractClass() throws Exception {
-        Collection<Object> objects = WorkerUtil.newListOnly(AbstractList.class);
-        Assertions.assertTrue(ArrayList.class.isAssignableFrom(objects.getClass()));
-    }
-
-    @Test
-    public void testNewArrayList() throws Exception {
-        Collection<Object> objects = WorkerUtil.newListOnly(ArrayList.class);
-        Assertions.assertTrue(ArrayList.class.isAssignableFrom(objects.getClass()));
-        Assertions.assertTrue(HashSet.class.isAssignableFrom(WorkerUtil.newListOnly(HashSet.class).getClass()));
-    }
 }

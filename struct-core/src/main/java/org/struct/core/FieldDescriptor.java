@@ -45,7 +45,7 @@ public abstract class FieldDescriptor implements Serializable, Comparable<FieldD
 
     @Override
     public String toString() {
-        return "SingleFieldDescriptor{" +
+        return "FieldDescriptor{" +
                 "name='" + name + '\'' +
                 '}';
     }

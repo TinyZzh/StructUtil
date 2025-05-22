@@ -34,6 +34,7 @@ public class EnhancedServiceLoaderTest {
 
     @Test
     public void testLoad() {
+        ServiceLoader serviceLoader = new ServiceLoader();
         EnhancedServiceLoader<StructHandler> loader = new EnhancedServiceLoader<>(StructHandler.class);
         Assertions.assertNotNull(loader.load(ServiceLoader.class.getClassLoader()));
         Assertions.assertEquals(CsvStructHandler.class, loader.load("csv").getClass());

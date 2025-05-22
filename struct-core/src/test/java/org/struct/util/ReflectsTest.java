@@ -158,6 +158,8 @@ public class ReflectsTest {
         Assertions.assertEquals(values[1], Reflects.lookupAccessor(RecordClz.class, "name").invoke(record));
         Assertions.assertNull(Reflects.lookupAccessor(RecordClz.class, "nameX"));
 
+        Assertions.assertThrows(AssertionError.class, () -> Reflects.lookupAccessor(RecordClz.class, null));
+        Assertions.assertThrows(AssertionError.class, () -> Reflects.lookupAccessor(RecordClz.class, ""));
     }
 
     @Test
@@ -194,6 +196,16 @@ public class ReflectsTest {
         Assertions.assertTrue(Reflects.resolveAllFields(BeanClz.class, false).isEmpty());
         Assertions.assertEquals(1, Reflects.resolveAllFields(SubBeanClz.class, false).size());
         Assertions.assertTrue(Reflects.resolveAllFields(RecordClz.class, false).isEmpty());
+    }
+
+    @Test
+    public void testIsAssignable() {
+        Assertions.assertTrue(Reflects.isAssignable(Object.class, BeanClz.class));
+        Assertions.assertFalse(Reflects.isAssignable(BeanClz.class, Object.class));
+        Assertions.assertTrue(Reflects.isAssignable(int.class, Integer.class));
+        Assertions.assertFalse(Reflects.isAssignable(int.class, Long.class));
+        Assertions.assertTrue(Reflects.isAssignable(Integer.class, int.class));
+        Assertions.assertFalse(Reflects.isAssignable(Integer.class, String.class));
     }
 
     static class BeanClz {
