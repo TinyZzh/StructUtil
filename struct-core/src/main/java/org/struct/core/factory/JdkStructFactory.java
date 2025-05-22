@@ -123,7 +123,7 @@ public final class JdkStructFactory implements StructFactory {
     }
 
     SingleFieldDescriptor createSingleFieldDescriptor(Object fieldOrRc, StructField annotation) {
-        SingleFieldDescriptor descriptor = new SingleFieldDescriptor(fieldOrRc, annotation, worker.globalStructRequiredValue());
+        SingleFieldDescriptor descriptor = new SingleFieldDescriptor(fieldOrRc, annotation);
         //  try resolve field reference.
         worker.handleReferenceFieldValue(this, descriptor);
         return descriptor;

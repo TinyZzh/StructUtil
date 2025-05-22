@@ -65,7 +65,7 @@ public class SingleFieldDescriptor extends FieldDescriptor {
         this.converter = converter;
     }
 
-    public SingleFieldDescriptor(Object fieldOrRc, StructField annotation, boolean globalStructRequiredValue) {
+    public SingleFieldDescriptor(Object fieldOrRc, StructField annotation) {
         this.fieldOrRc = Objects.requireNonNull(fieldOrRc, "field");
         assert fieldOrRc instanceof Field || fieldOrRc instanceof RecordComponent;
         if (annotation != null) {
@@ -91,7 +91,7 @@ public class SingleFieldDescriptor extends FieldDescriptor {
                 this.setConverter(ConverterRegistry.lookupOrDefault(c, c));
             }
         } else {
-            this.setRequired(globalStructRequiredValue);
+            this.setRequired(StructConfig.INSTANCE.isStructRequiredDefault());
         }
         String name = this.getName();
         //  handle default field name.

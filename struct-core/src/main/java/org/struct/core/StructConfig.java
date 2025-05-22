@@ -23,20 +23,9 @@ import org.struct.annotation.StructField;
 /**
  * Struct global configuration.
  */
-public class StructConfig {
+public enum StructConfig {
 
-    /**
-     * {@link org.struct.core.converter.ArrayConverter}
-     */
-    private String arrayConverterStringSeparator = "\\|";
-    /**
-     *
-     */
-    private boolean arrayConverterStringTrim = true;
-    /**
-     * ignore blank string.
-     */
-    private boolean arrayConverterIgnoreBlank = false;
+    INSTANCE;
 
     /**
      * The default {@link StructField#required()}'s value.
@@ -47,7 +36,10 @@ public class StructConfig {
      * Ignore row if this row's all cell is blank.
      */
     private boolean ignoreEmptyRow = true;
-
+    /**
+     * Allow circular references.
+     */
+    private boolean allowCircularReferences = true;
 
     public boolean isStructRequiredDefault() {
         return structRequiredDefault;
@@ -65,27 +57,11 @@ public class StructConfig {
         this.ignoreEmptyRow = ignoreEmptyRow;
     }
 
-    public String getArrayConverterStringSeparator() {
-        return arrayConverterStringSeparator;
+    public boolean isAllowCircularReferences() {
+        return allowCircularReferences;
     }
 
-    public void setArrayConverterStringSeparator(String arrayConverterStringSeparator) {
-        this.arrayConverterStringSeparator = arrayConverterStringSeparator;
-    }
-
-    public boolean isArrayConverterStringTrim() {
-        return arrayConverterStringTrim;
-    }
-
-    public void setArrayConverterStringTrim(boolean arrayConverterStringTrim) {
-        this.arrayConverterStringTrim = arrayConverterStringTrim;
-    }
-
-    public boolean isArrayConverterIgnoreBlank() {
-        return arrayConverterIgnoreBlank;
-    }
-
-    public void setArrayConverterIgnoreBlank(boolean arrayConverterIgnoreBlank) {
-        this.arrayConverterIgnoreBlank = arrayConverterIgnoreBlank;
+    public void setAllowCircularReferences(boolean allowCircularReferences) {
+        this.allowCircularReferences = allowCircularReferences;
     }
 }

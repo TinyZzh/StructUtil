@@ -64,9 +64,9 @@ public class FieldDescriptorTest {
             StructOptional anno;
             if (null != (anno = AnnotationUtils.findAnnotation(StructOptional.class, field))) {
                 list.add(new OptionalDescriptor(field, anno,
-                        (f, an) -> new SingleFieldDescriptor(f, an, false)));
+                        (f, an) -> new SingleFieldDescriptor(f, an)));
             } else {
-                list.add(new SingleFieldDescriptor(field, AnnotationUtils.findAnnotation(StructField.class, field), false));
+                list.add(new SingleFieldDescriptor(field, AnnotationUtils.findAnnotation(StructField.class, field)));
             }
         }
         Collections.sort(list);

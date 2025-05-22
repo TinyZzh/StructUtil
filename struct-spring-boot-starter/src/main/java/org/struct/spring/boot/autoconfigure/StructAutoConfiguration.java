@@ -74,17 +74,13 @@ public class StructAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public StructConfig structConfig(StructProperties properties) {
-        StructConfig config = new StructConfig();
-        config.setStructRequiredDefault(properties.isStructRequiredDefault());
-        config.setIgnoreEmptyRow(properties.isIgnoreEmptyRow());
+        StructConfig.INSTANCE.setStructRequiredDefault(properties.isStructRequiredDefault());
+        StructConfig.INSTANCE.setIgnoreEmptyRow(properties.isIgnoreEmptyRow());
+        StructConfig.INSTANCE.setAllowCircularReferences(properties.isAllowCircularReferences());
 
         //  set array converter's properties
         ArrayConverterProperties acp = properties.getArrayConverter();
         if (null != acp) {
-            config.setArrayConverterStringSeparator(acp.getStringSeparator());
-            config.setArrayConverterStringTrim(acp.isStringTrim());
-            config.setArrayConverterIgnoreBlank(acp.isIgnoreBlank());
-
             Converter converter = ConverterRegistry.lookup(Array.class);
             if (converter instanceof ArrayConverter) {
                 ((ArrayConverter) converter).setSeparator(acp.getStringSeparator());
@@ -93,7 +89,7 @@ public class StructAutoConfiguration {
             }
         }
 
-        return config;
+        return StructConfig.INSTANCE;
     }
 
     @ConditionalOnMissingBean()

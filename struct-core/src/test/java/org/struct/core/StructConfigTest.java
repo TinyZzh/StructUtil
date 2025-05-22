@@ -29,17 +29,12 @@ class StructConfigTest {
 
     @Test
     public void test() {
-        StructConfig config = new StructConfig();
-        config.setArrayConverterIgnoreBlank(false);
-        config.setArrayConverterStringSeparator("xx");
+        StructConfig config = StructConfig.INSTANCE;
         config.setIgnoreEmptyRow(false);
-        config.setArrayConverterIgnoreBlank(false);
-        config.setArrayConverterStringTrim(false);
+        config.setAllowCircularReferences(false);
         config.setStructRequiredDefault(false);
-        Assertions.assertFalse(config.isArrayConverterIgnoreBlank());
-        Assertions.assertFalse(config.isArrayConverterStringTrim());
         Assertions.assertFalse(config.isIgnoreEmptyRow());
         Assertions.assertFalse(config.isStructRequiredDefault());
-        Assertions.assertEquals("xx", config.getArrayConverterStringSeparator());
+        Assertions.assertFalse(config.isAllowCircularReferences());
     }
 }

@@ -89,17 +89,15 @@ public class StructWorker<T> {
         }
     }
 
-    public boolean globalStructRequiredValue() {
-        return this.config != null && this.config.isStructRequiredDefault();
-    }
-
     public void handleReferenceFieldValue(StructFactory structFactory, SingleFieldDescriptor descriptor) throws RuntimeException {
         if (descriptor == null || !descriptor.isReferenceField() || descriptor.isBasicTypeCollection()) {
             return;
         }
         String clzFieldUrl = descriptor.getRefFieldUrl();
         if (tempRefFieldValueMap.containsKey(clzFieldUrl)) {
-            throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
+            LOGGER.debug("Struct circular references, clzFieldUrl:{}, prev:{}", clzFieldUrl, descriptor.getName());
+            if (!StructConfig.INSTANCE.isAllowCircularReferences())
+                throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
         }
         Class<?> targetType = descriptor.getFieldType();
         if (descriptor.isAggregateField()) {

@@ -70,7 +70,7 @@ public final class StructInternal {
                 consumer.accept(property);
             }
         } catch (Exception e) {
-            LOGGER.warn("handle property" + propertyName + " failure. ");
+            LOGGER.warn("handle property {} failure. ", propertyName);
         }
     }
 

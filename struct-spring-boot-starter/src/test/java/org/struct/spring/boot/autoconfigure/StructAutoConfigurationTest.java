@@ -48,10 +48,6 @@ class StructAutoConfigurationTest {
 
         Assertions.assertEquals(config.isStructRequiredDefault(), properties.isStructRequiredDefault());
         Assertions.assertEquals(config.isIgnoreEmptyRow(), properties.isIgnoreEmptyRow());
-
-        Assertions.assertEquals(config.getArrayConverterStringSeparator(), arrayConverterProperties.getStringSeparator());
-        Assertions.assertEquals(config.isArrayConverterIgnoreBlank(), arrayConverterProperties.isIgnoreBlank());
-        Assertions.assertEquals(config.isArrayConverterStringTrim(), arrayConverterProperties.isStringTrim());
     }
 
     @Test

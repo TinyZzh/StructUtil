@@ -35,7 +35,7 @@ class OptionalDescriptorTest {
     public void test() {
         SingleFieldDescriptor[] descriptors = new SingleFieldDescriptor[1];
         for (Field field : Clz.class.getDeclaredFields()) {
-            descriptors[0] = new SingleFieldDescriptor(field, field.getAnnotation(StructField.class), false);
+            descriptors[0] = new SingleFieldDescriptor(field, field.getAnnotation(StructField.class));
         }
         OptionalDescriptor descriptor1 = new OptionalDescriptor();
         descriptor1.setDescriptors(descriptors);

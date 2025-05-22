@@ -31,6 +31,7 @@ public class StructProperties {
 
     private boolean structRequiredDefault = false;
     private boolean ignoreEmptyRow = true;
+    private boolean allowCircularReferences = true;
     private ArrayConverterProperties arrayConverter;
 
     public ArrayConverterProperties getArrayConverter() {
@@ -57,26 +58,34 @@ public class StructProperties {
         this.ignoreEmptyRow = ignoreEmptyRow;
     }
 
+    public boolean isAllowCircularReferences() {
+        return allowCircularReferences;
+    }
+
+    public void setAllowCircularReferences(boolean allowCircularReferences) {
+        this.allowCircularReferences = allowCircularReferences;
+    }
+
     @Override
     public String toString() {
         return "StructProperties{" +
                 "structRequiredDefault=" + structRequiredDefault +
                 ", ignoreEmptyRow=" + ignoreEmptyRow +
+                ", allowCircularReferences=" + allowCircularReferences +
                 ", arrayConverter=" + arrayConverter +
                 '}';
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StructProperties that = (StructProperties) o;
-        return structRequiredDefault == that.structRequiredDefault && ignoreEmptyRow == that.ignoreEmptyRow && Objects.equals(arrayConverter, that.arrayConverter);
+        return structRequiredDefault == that.structRequiredDefault && ignoreEmptyRow == that.ignoreEmptyRow && allowCircularReferences == that.allowCircularReferences && Objects.equals(arrayConverter, that.arrayConverter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(structRequiredDefault, ignoreEmptyRow, arrayConverter);
+        return Objects.hash(structRequiredDefault, ignoreEmptyRow, allowCircularReferences, arrayConverter);
     }
 
 }
