@@ -250,7 +250,7 @@ Closure init_publish_module = {
             }
             maven {
                 name "gitea"
-                url = uri("http://192.168.190.182:3000/api/packages/zzh/maven")
+                url = uri(project.findProperty("giteaMavenRepoUrl"))
                 credentials(HttpHeaderCredentials) {
                     name = "Authorization"
                     value = "token " + project.findProperty("giteaMavenAccessToken")
