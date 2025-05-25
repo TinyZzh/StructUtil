@@ -98,6 +98,7 @@ public class StructWorker<T> {
             LOGGER.debug("Struct circular references, clzFieldUrl:{}, prev:{}", clzFieldUrl, descriptor.getName());
             if (!StructConfig.INSTANCE.isAllowCircularReferences())
                 throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
+            return;
         }
         Class<?> targetType = descriptor.getFieldType();
         if (descriptor.isAggregateField()) {
