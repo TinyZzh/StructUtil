@@ -137,7 +137,7 @@ public class XlsxSaxStructHandler implements StructHandler {
             if (!this.isFirstRow && rowStruct != null) {
                 worker.createInstance(rowStruct).ifPresent(this.objHandler);
             }
-            this.isFirstRow = false;
+            this.isFirstRow = rowNum + 1 < this.firstRow;
             this.curColumnIndex = 0;
             this.rowStruct = null;
         }
