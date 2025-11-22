@@ -18,8 +18,8 @@
 
 package org.struct.spring.boot.autoconfigure;
 
-import org.springframework.boot.actuate.health.AbstractHealthIndicator;
-import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.health.contributor.AbstractHealthIndicator;
+import org.springframework.boot.health.contributor.Health;
 import org.struct.spring.support.StructBanner;
 import org.struct.spring.support.StructStoreService;
 
