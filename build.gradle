@@ -37,18 +37,18 @@ allprojects {
     apply plugin: 'java-library'
 
     ext.version_options = [
-            SPRING_BOOT_VERSION: "3.1.5",
-            SPRING_VERSION     : "6.0.13",
-            JETTY_VERSION      : "9.4.44.v20210927",
-            MOCKITO_VERSION    : "5.7.0",
-            JUNIT_VERSION      : "5.9.3",
+            SPRING_BOOT_VERSION: "4.0.0",
+            SPRING_VERSION     : "7.0.1",
+            JETTY_VERSION      : "12.1.4",
+            MOCKITO_VERSION    : "5.20.0",
+            JUNIT_VERSION      : "6.0.1",
+            LOG4J2_VERSION     : "2.25.2",
+            GSON_VERSION       : "2.13.2",
             POI_VERSION        : "5.2.2",
-            LOG4J2_VERSION     : "2.20.0",
-            GSON_VERSION       : "2.9.0",
     ]
 
     jacoco {
-        toolVersion = "0.8.8"
+        toolVersion = "0.8.14"
     }
 
     repositories {
@@ -66,17 +66,21 @@ subprojects {
     apply plugin: 'idea'
     apply plugin: 'distribution'
 
-    sourceCompatibility = 17
-    targetCompatibility = 17
-    compileJava.options.setEncoding("UTF-8")
-    compileTestJava.options.setEncoding("UTF-8")
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
 
     group = "${rootProject.group}"
     version = "${rootProject.version}"
 
     dependencies {
         //  slf4j
-        implementation('org.slf4j:slf4j-api:2.0.9')
+        implementation('org.slf4j:slf4j-api:2.0.17')
         //  junit 5.x and mockito
         testImplementation("org.mockito:mockito-core:${version_options.MOCKITO_VERSION}")
         testImplementation("org.junit.jupiter:junit-jupiter:${version_options.JUNIT_VERSION}")
@@ -93,15 +97,15 @@ subprojects {
     }
 
     distTar {
-        setArchivesBaseName("${project.name}")
+        archiveBaseName = project.name
         compression = Compression.GZIP
-        getArchiveExtension().set('tar.gz')
+        archiveExtension = 'tar.gz'
     }
 
     distributions {
         main {
             contents {
-                from project.tasks.withType(Jar)
+                from(tasks.jar)
             }
         }
     }
@@ -120,11 +124,11 @@ task codeCoverageReport(type: JacocoReport) {
     }
 
     reports {
-        xml.enabled true
-        xml.destination file("${buildDir}/reports/report.xml")
-        html.enabled false
-        html.destination file("${buildDir}/reports/html")
-        csv.enabled false
+        xml.required = true
+        xml.outputLocation = file("${buildDir}/reports/report.xml")
+        html.required = false
+        html.outputLocation = file("${buildDir}/reports/html")
+        csv.required = false
     }
 
     afterEvaluate {
@@ -169,22 +173,20 @@ Closure init_publish_module = {
         }
     }
 
-    model {
-        tasks.jar {
-            manifest {
-                attributes 'Implementation-Title': project.description ?: rootProject.description,
-                        'Implementation-Version': project.version,
-                        'Built-By': System.getProperty('user.name'),
-                        'Built-Date': new Date(),
-                        'Built-JDK': System.getProperty('java.version'),
-                        'Built-Gradle': gradle.gradleVersion,
-                        'Target-JDK': project.targetCompatibility
-            }
-            into("META-INF/maven/$project.group/$project.name") {
-                from { generatePomFileForMavenPublication }
-                rename ".*.xml", "pom.xml"
-                from generatePomPropertiesFile
-            }
+    tasks.named('jar') {
+        manifest {
+            attributes 'Implementation-Title': project.description ?: rootProject.description,
+                    'Implementation-Version': project.version,
+                    'Built-By': System.getProperty('user.name'),
+                    'Built-Date': new Date(),
+                    'Built-JDK': System.getProperty('java.version'),
+                    'Built-Gradle': gradle.gradleVersion,
+                    'Target-JDK': project.java.toolchain.languageVersion.map { it.asInt() }.get()
+        }
+        into("META-INF/maven/$project.group/$project.name") {
+            from { generatePomFileForMavenPublication }
+            rename ".*.xml", "pom.xml"
+            from generatePomPropertiesFile
         }
     }
 
@@ -250,7 +252,7 @@ Closure init_publish_module = {
             }
             maven {
                 name "gitea"
-                url = uri(project.findProperty("giteaMavenRepoUrl"))
+                url project.findProperty("giteaMavenRepoUrl") ?: ""
                 credentials(HttpHeaderCredentials) {
                     name = "Authorization"
                     value = "token " + project.findProperty("giteaMavenAccessToken")

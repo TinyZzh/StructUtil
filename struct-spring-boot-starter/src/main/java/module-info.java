@@ -18,4 +18,5 @@ module struct.spring.boot {
     requires spring.boot.actuator;
     requires spring.boot.actuator.autoconfigure;
     requires spring.boot.autoconfigure;
+    requires spring.boot.health;
 }
