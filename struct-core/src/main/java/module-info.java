@@ -21,6 +21,7 @@ import org.struct.core.factory.DefaultStructFactoryBean;
 import org.struct.core.handler.CsvStructHandler;
 import org.struct.core.handler.ExcelUMStructHandler;
 import org.struct.core.handler.JsonStructHandler;
+import org.struct.core.handler.ProtobufStructHandler;
 import org.struct.core.handler.XlsEventStructHandler;
 import org.struct.core.handler.XlsxSaxStructHandler;
 
@@ -44,6 +45,7 @@ module struct.core {
     requires java.xml;
     requires org.slf4j;
     requires com.google.gson;
+    requires com.google.protobuf;
     requires org.apache.poi.poi;
     requires org.apache.poi.ooxml;
 
@@ -54,7 +56,8 @@ module struct.core {
             CsvStructHandler,
             XlsEventStructHandler,
             XlsxSaxStructHandler,
-            ExcelUMStructHandler
+            ExcelUMStructHandler,
+            ProtobufStructHandler
             ;
     provides org.struct.core.converter.Converters with
             EmbeddedConverters;
