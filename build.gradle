@@ -45,6 +45,7 @@ allprojects {
             LOG4J2_VERSION     : "2.25.2",
             GSON_VERSION       : "2.13.2",
             POI_VERSION        : "5.2.2",
+            PROTOBUF_VERSION   : "4.29.3"
     ]
 
     jacoco {
