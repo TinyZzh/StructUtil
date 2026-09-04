@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package org.struct.examples.protobuf;
+
+// 与 StructUtil 的 ProtobufStructHandler 配套的示例 message 定义。
+//
+// 使用 protoc 生成 Java 类（protoc 3.6.1，与 struct-core 的 protobuf-java 版本对齐）：
+//   protoc --java_out=src/main/java examples/item.proto
+//
+// 生成的 Item 类即为 @StructSheet 的目标 bean，框架会直接复用其静态 parser()
+// 把 .bin 二进制解析成 Item 实例——不经过中间层 StructImpl。
+//
+// 本仓库的 ProtobufExample 直接用一份等价手写的 ItemProto（见 ItemProto.java）来演示，
+// 免去本地 protoc 依赖；两者形态一致，可无缝替换。
+message Item {
+  int32 id = 1;
+  string name = 2;
+  double price = 3;
+  repeated string tags = 4;
+}
