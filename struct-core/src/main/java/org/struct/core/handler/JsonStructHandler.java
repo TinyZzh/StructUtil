@@ -20,10 +20,12 @@ package org.struct.core.handler;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +42,9 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -83,8 +88,15 @@ public class JsonStructHandler implements StructHandler {
                     //  end
                     return;
                 } else {
-                    Object rowStruct = gson.fromJson(reader, clzOfStruct);
-                    worker.createInstance(rowStruct).ifPresent(cellHandler);
+                    //  NOTE: deserialize into StructImpl (the intermediate row representation)
+                    //  instead of clzOfStruct. Deserializing straight into the target bean
+                    //  bypassed every Converter registered in ConverterRegistry
+                    //  (LocalDate, Enum, array separator, user converters...) and forced a
+                    //  second reflective conversion inside createInstance.
+                    StructImpl rowStruct = gson.fromJson(reader, StructImpl.class);
+                    if (rowStruct != null) {
+                        worker.createInstance(rowStruct).ifPresent(cellHandler);
+                    }
                 }
             }
             reader.endArray();
@@ -98,11 +110,53 @@ public class JsonStructHandler implements StructHandler {
 
         @Override
         public StructImpl deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+            if (jsonElement == null || !jsonElement.isJsonObject()) {
+                return null;
+            }
             StructImpl struct = new StructImpl();
-            jsonElement.getAsJsonObject().entrySet().forEach(e -> {
-                struct.add(e.getKey(), e.getValue().getAsString());
-            });
+            for (Map.Entry<String, JsonElement> entry : jsonElement.getAsJsonObject().entrySet()) {
+                Object value = this.resolveValue(entry.getValue());
+                //  StructImpl#add already ignores null/empty values.
+                struct.add(entry.getKey(), value);
+            }
             return struct;
+        }
+
+        /**
+         * Resolve a json element to a plain java value.
+         * <p>
+         * NOTE: the previous implementation called {@code getAsString()} on every element,
+         * which throws {@link UnsupportedOperationException} for numbers, booleans,
+         * arrays and nested objects - so any non-string field blew up.
+         */
+        private Object resolveValue(JsonElement element) {
+            //  NOTE: `element` is never null - it is always a member of a JsonObject's
+            //  entry set - so only JsonNull has to be handled here.
+            if (element.isJsonNull()) {
+                return null;
+            }
+            if (element.isJsonPrimitive()) {
+                JsonPrimitive primitive = element.getAsJsonPrimitive();
+                if (primitive.isString()) {
+                    return primitive.getAsString();
+                }
+                if (primitive.isBoolean()) {
+                    return primitive.getAsBoolean();
+                }
+                return primitive.getAsNumber();
+            }
+            if (element.isJsonArray()) {
+                //  keep the structure so that array/collection fields are filled
+                //  element-wise (see ArrayConverter), instead of being split by a separator.
+                JsonArray array = element.getAsJsonArray();
+                List<Object> list = new ArrayList<>(array.size());
+                for (JsonElement item : array) {
+                    list.add(this.resolveValue(item));
+                }
+                return list;
+            }
+            //  nested object: keep the raw element, a user defined converter may resolve it.
+            return element;
         }
     }
 }

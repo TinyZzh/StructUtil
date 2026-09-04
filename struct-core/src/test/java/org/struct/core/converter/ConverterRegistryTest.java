@@ -52,6 +52,76 @@ public class ConverterRegistryTest {
         Assertions.assertEquals(num, obj);
     }
 
+    /**
+     * An abstract or interface converter class cannot be instantiated.
+     */
+    @Test
+    public void registerAbstractConverterClzIsRejected() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ConverterRegistry.register(C.class, AbstractConverter.class));
+    }
+
+    /**
+     * {@code unregister} removes a previously registered converter, making the
+     * lookup fall back to "return the value untouched".
+     */
+    @Test
+    public void unregister() {
+        ConverterRegistry.register(C.class, new MyConverter(7));
+        Assertions.assertNotNull(ConverterRegistry.lookup(C.class));
+        ConverterRegistry.unregister(C.class);
+        Assertions.assertNull(ConverterRegistry.lookup(C.class));
+        //  with no converter left the origin value is returned as is
+        Assertions.assertEquals("raw", ConverterRegistry.convert(null, "raw", C.class));
+    }
+
+    /**
+     * A converter class without a matching constructor must be reported.
+     */
+    @Test
+    public void lookupOrDefaultWithoutMatchingConstructor() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ConverterRegistry.lookupOrDefault(D.class, NoMatchingCtorConverter.class));
+    }
+
+    /**
+     * {@code lookupOrDefault} returns the already registered instance and does not
+     * create a new one.
+     */
+    @Test
+    public void lookupOrDefaultReturnsRegistered() {
+        Converter registered = new MyConverter(3);
+        ConverterRegistry.register(E.class, registered);
+        Assertions.assertSame(registered, ConverterRegistry.lookupOrDefault(E.class, MyConverter.class, 1));
+        ConverterRegistry.unregister(E.class);
+    }
+
+    public static class C {
+    }
+
+    public static class D {
+    }
+
+    public static class E {
+    }
+
+    public abstract static class AbstractConverter implements Converter {
+    }
+
+    /**
+     * Only a constructor with (unmatched) parameters is declared.
+     */
+    public static class NoMatchingCtorConverter implements Converter {
+
+        public NoMatchingCtorConverter(String never) {
+        }
+
+        @Override
+        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
+            return originValue;
+        }
+    }
+
     public static class A {
         public String content;
 

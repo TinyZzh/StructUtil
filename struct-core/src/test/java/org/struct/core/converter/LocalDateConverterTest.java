@@ -94,4 +94,14 @@ class LocalDateConverterTest {
         Assertions.assertFalse(c instanceof LocalDate);
         Assertions.assertEquals(str, c);
     }
+
+    /**
+     * A missing (null) value must not blow up - an empty date column used to raise a
+     * {@link NullPointerException} here.
+     */
+    @Test
+    public void testNullValue() {
+        Assertions.assertNull(converter.convert(null, null, LocalDate.class));
+        Assertions.assertNull(ConverterRegistry.convert(null, null, LocalDate.class));
+    }
 }

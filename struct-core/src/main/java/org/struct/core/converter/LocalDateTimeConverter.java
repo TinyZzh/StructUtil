@@ -42,6 +42,9 @@ public class LocalDateTimeConverter implements Converter {
 
     @Override
     public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
+        if (originValue == null) {
+            return null;
+        }
         if (LocalDateTime.class != targetType
                 || LocalDateTime.class == originValue.getClass()) {
             return originValue;
