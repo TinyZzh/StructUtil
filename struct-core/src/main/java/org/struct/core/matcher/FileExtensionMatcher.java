@@ -36,6 +36,10 @@ public class FileExtensionMatcher implements WorkerMatcher {
     public static final String FILE_XML = ".xml";
     public static final String FILE_BINARY = ".binary";
     public static final String FILE_CSV = ".csv";
+    public static final String FILE_PROTO = ".proto";
+    public static final String FILE_PROTOBUF = ".protobuf";
+    public static final String FILE_PBF = ".pbf";
+    public static final String FILE_BIN = ".bin";
 
     /**
      * 可处理的文件大小的阀值

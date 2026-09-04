@@ -18,11 +18,15 @@
 
 package org.struct.core;
 
+import com.google.protobuf.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.struct.annotation.StructSheet;
 import org.struct.core.factory.StructFactory;
 import org.struct.core.filter.StructBeanFilter;
 import org.struct.core.handler.StructHandler;
+import org.struct.core.matcher.WorkerMatcher;
+import org.struct.util.AnnotationUtils;
 import org.struct.util.WorkerUtil;
 
 import java.io.File;
@@ -71,6 +75,42 @@ public class StructWorker<T> {
         this(workspace, clzOfStruct, new StructDescriptor(clzOfStruct), new ConcurrentHashMap<>());
     }
 
+    /**
+     * Load a protobuf binary file directly into a protoc-generated {@link Message} subclass
+     * without annotating that class with {@link StructSheet} (protoc regenerates it on every
+     * build, so you cannot add annotations to it). The data file name is supplied explicitly
+     * because it cannot be inferred from the generated class; the protobuf message name
+     * defaults to the class's simple name.
+     *
+     * <p>This is path A of {@code ProtobufStructHandler}: the parsed message IS the bean,
+     * no intermediate {@code StructImpl} is involved.
+     *
+     * @param workspace  working directory for relative file paths.
+     * @param clzOfStruct a {@link Message} subclass produced by protoc (must NOT be @StructSheet-annotated).
+     * @param fileName    the protobuf binary file name, e.g. {@code "item.bin"}.
+     * @throws IllegalArgumentException if the class is neither @StructSheet-annotated nor a Message.
+     */
+    public StructWorker(String workspace, Class<T> clzOfStruct, String fileName) {
+        this(workspace, clzOfStruct, resolveProtobufDescriptor(clzOfStruct, fileName), new ConcurrentHashMap<>());
+    }
+
+    private static <T> StructDescriptor resolveProtobufDescriptor(Class<T> clzOfStruct, String fileName) {
+        StructSheet anno = AnnotationUtils.findAnnotation(StructSheet.class, clzOfStruct);
+        if (anno != null) {
+            //  Annotated class: prefers the annotation (fileName argument ignored for consistency
+            //  with the primary constructor). Callers wanting annotation-driven loading should use it.
+            return new StructDescriptor(anno);
+        }
+        if (!Message.class.isAssignableFrom(clzOfStruct)) {
+            throw new IllegalArgumentException(
+                    "clazz:" + clzOfStruct.getName() + " must be annotated by @StructSheet, "
+                            + "or be a protobuf Message subclass when a fileName is supplied");
+        }
+        //  Zero-annotation path A: message name defaults to the simple class name;
+        //  matcher/filter mirror the @StructSheet defaults (placeholders).
+        return new StructDescriptor(fileName, clzOfStruct.getSimpleName(), 0, 0, WorkerMatcher.class, StructBeanFilter.class);
+    }
+
     public StructWorker(String workspace, Class<T> clzOfStruct, StructDescriptor descriptor, Map<String, Map<Object, Object>> tempRefFieldValueMap) {
         this.workspace = workspace;
         this.clzOfStruct = clzOfStruct;
@@ -100,6 +140,12 @@ public class StructWorker<T> {
                 throw new RuntimeException("loop dependent with key:" + clzFieldUrl + ", prev:" + descriptor.getName());
             return;
         }
+        //  Mark this reference as "being resolved" BEFORE recursing.
+        //  Without this placeholder the circular reference check above could never
+        //  trigger: the sub worker re-enters this method with the very same key while
+        //  the real value is only put into the map after the recursion returns,
+        //  so a circular reference recursed until StackOverflowError.
+        tempRefFieldValueMap.put(clzFieldUrl, Collections.emptyMap());
         Class<?> targetType = descriptor.getFieldType();
         if (descriptor.isAggregateField()) {
             targetType = descriptor.resolveAggregateWorkerType();
