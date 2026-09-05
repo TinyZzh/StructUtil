@@ -18,6 +18,8 @@
 
 package org.struct.core;
 
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Message;
 import org.struct.annotation.StructField;
 import org.struct.core.converter.Converter;
 import org.struct.core.converter.ConverterRegistry;
@@ -32,6 +34,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.RecordComponent;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 public class SingleFieldDescriptor extends FieldDescriptor {
@@ -50,6 +53,14 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     private boolean required;
     private boolean cached;
     private Converter converter;
+
+    /**
+     * Memoized protobuf field lookup. {@code transient}: it is a derived cache, not
+     * state, and {@link Descriptors.FieldDescriptor} is not serializable.
+     *
+     * @see #fieldValueFromMessage(Message)
+     */
+    private transient volatile ProtobufField pbField;
 
     public SingleFieldDescriptor() {
     }
@@ -220,6 +231,14 @@ public class SingleFieldDescriptor extends FieldDescriptor {
 
     /**
      * Get field's value.
+     * <p>
+     * The value source is resolved by the runtime type of {@code instance}:
+     * <ul>
+     *   <li>{@link StructImpl} - a row of tabular data (csv / excel), keyed by column name.</li>
+     *   <li>{@link Message} - a protobuf message; the value is read straight from the
+     *       message's descriptor by field name, with no intermediate row object.</li>
+     *   <li>anything else - a plain bean / record, read reflectively.</li>
+     * </ul>
      *
      * @param instance the instance object
      * @return field's value.
@@ -227,6 +246,9 @@ public class SingleFieldDescriptor extends FieldDescriptor {
     public Object getFieldValueFrom(Object instance) {
         if (instance instanceof StructImpl si) {
             return si.get(this);
+        }
+        if (instance instanceof Message msg) {
+            return this.fieldValueFromMessage(msg);
         }
         try {
             if (fieldOrRc instanceof RecordComponent rc) {
@@ -240,6 +262,69 @@ public class SingleFieldDescriptor extends FieldDescriptor {
             }
         } catch (Exception e) {
             throw new IllegalAccessPropertyException("get field value failure. field:" + this.getName(), e);
+        }
+        return null;
+    }
+
+    /**
+     * Read this field's value directly out of a protobuf message.
+     * <p>
+     * This is what lets a protobuf {@code DynamicMessage} drive the regular converter
+     * pipeline without ever being flattened into a {@link StructImpl}: it saves the
+     * whole intermediate row object (one HashMap plus one entry set per row).
+     *
+     * <p><b>Why {@code hasField} is checked.</b> proto3 omits fields holding the type's
+     * default value from the wire, but {@code getField} still returns that default
+     * ({@code 0} / {@code ""} / {@code false}). An unset field must behave exactly like
+     * a key missing from a {@link StructImpl} - i.e. {@code null} - otherwise
+     * {@code required} validation and the converters would observe {@code 0} instead of
+     * "absent" and silently produce wrong data.
+     *
+     * <p>The resolved {@link Descriptors.FieldDescriptor} is memoized against the
+     * message descriptor it came from. A single data file always yields the same
+     * descriptor instance, so this is a monomorphic hit after the first row; the pair
+     * is published as one immutable record, so a torn read can only cause a re-resolve,
+     * never a mismatch between descriptor and field.
+     */
+    private Object fieldValueFromMessage(Message msg) {
+        Descriptors.Descriptor msgDescriptor = msg.getDescriptorForType();
+        ProtobufField cached = this.pbField;
+        Descriptors.FieldDescriptor fd;
+        if (cached != null && cached.descriptor() == msgDescriptor) {
+            fd = cached.field();
+        } else {
+            fd = resolveProtobufField(msgDescriptor, this.getName());
+            this.pbField = new ProtobufField(msgDescriptor, fd);
+        }
+        if (fd == null) {
+            return null;
+        }
+        if (fd.isRepeated()) {
+            List<?> values = (List<?>) msg.getField(fd);
+            return values.isEmpty() ? null : values;
+        }
+        return msg.hasField(fd) ? msg.getField(fd) : null;
+    }
+
+    /**
+     * Resolve a protobuf field by name. proto field names are {@code snake_case} by
+     * convention while the corresponding java / JSON name is {@code camelCase}, so the
+     * JSON name is tried as a fallback - that way both {@code stack_limit} and
+     * {@code stackLimit} resolve to the same field.
+     */
+    private static Descriptors.FieldDescriptor resolveProtobufField(Descriptors.Descriptor descriptor, String name) {
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        Descriptors.FieldDescriptor fd = descriptor.findFieldByName(name);
+        if (fd != null) {
+            return fd;
+        }
+        //  Fall back to the protobuf JSON name (e.g. snake_case field vs camelCase bean).
+        for (Descriptors.FieldDescriptor candidate : descriptor.getFields()) {
+            if (name.equals(candidate.getJsonName())) {
+                return candidate;
+            }
         }
         return null;
     }
@@ -307,5 +392,13 @@ public class SingleFieldDescriptor extends FieldDescriptor {
         result = 31 * result + Arrays.hashCode(refGroupBy);
         result = 31 * result + Arrays.hashCode(refUniqueKey);
         return result;
+    }
+
+    /**
+     * A message descriptor paired with the field resolved from it. Both components are
+     * published together through a single {@code volatile} write, so a reader can never
+     * observe a field that belongs to a different descriptor.
+     */
+    private record ProtobufField(Descriptors.Descriptor descriptor, Descriptors.FieldDescriptor field) {
     }
 }

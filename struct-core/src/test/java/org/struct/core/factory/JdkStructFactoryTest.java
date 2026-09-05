@@ -21,255 +21,360 @@ package org.struct.core.factory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructField;
-import org.struct.annotation.StructOptional;
 import org.struct.annotation.StructSheet;
+import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
-import org.struct.core.converter.ConvertContext;
-import org.struct.core.converter.Converter;
+import org.struct.exception.NoSuchFieldReferenceException;
 import org.struct.util.WorkerUtil;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
-/**
- * @author TinyZ
- * @date 2022-04-14
- */
-class JdkStructFactoryTest {
+public class JdkStructFactoryTest {
 
+    private static final String WS = "classpath:/org/struct/core/";
+
+    private static <T> StructFactory parse(Class<T> clz) {
+        StructWorker<T> worker = WorkerUtil.newWorker(WS, clz);
+        StructFactory factory = WorkerUtil.structFactory(clz, worker);
+        factory.parseStruct();
+        return factory;
+    }
+
+    /**
+     * {@code parseStruct()} must be idempotent - calling it again is a no-op.
+     */
     @Test
-    public void testNormal() {
-        StructWorker<MapWithGroup1> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", MapWithGroup1.class);
-        ArrayList<MapWithGroup1> list = worker.load(ArrayList::new);
-        Assertions.assertFalse(list.isEmpty());
+    public void testParseStructIsIdempotent() {
+        StructFactory factory = parse(SimpleBean.class);
+        factory.parseStruct();
+        factory.parseStruct();
+        Assertions.assertEquals(7, factory.getFieldValuesArray(new SimpleBean(7, "x"), new String[]{"key"}));
     }
 
-    @StructSheet(fileName = "Bean.xlsx", sheetName = "MapWithGroup1")
-    public record MapWithGroup1(
-            String vg,
-            int group,
-            int v
-    ) {
-
-    }
-
+    /**
+     * {@code static} fields are not struct fields.
+     */
     @Test
-    public void testRefField() {
-        RefFieldRef ref = new RefFieldRef(1, 998);
-        RefFieldBean var0 = new RefFieldBean(1, ref);
-
-        StructWorker<RefFieldBean> worker = new StructWorker<>("classpath:/org/struct/core/", RefFieldBean.class);
-        ArrayList<RefFieldBean> list = worker.toList(ArrayList::new);
-        RefFieldBean bean = list.get(0);
-        Assertions.assertEquals(var0, bean);
+    public void testStaticFieldIsSkipped() {
+        StructFactory factory = parse(WithStaticBean.class);
+        Assertions.assertThrows(NoSuchFieldReferenceException.class,
+                () -> factory.getFieldValuesArray(new WithStaticBean(), new String[]{"CONST"}));
+        //  the regular field is still resolved
+        Assertions.assertEquals(3, factory.getFieldValuesArray(new WithStaticBean(), new String[]{"key"}));
     }
 
-    @StructSheet(fileName = "examples.xlsx", sheetName = "example_1")
-    record RefFieldBean(
-            @StructField(name = "id") int id,
-            @StructField(ref = RefFieldRef.class, refUniqueKey = "id") RefFieldRef ref
-    ) {
-        static int ids;
-    }
-
-    @StructSheet(fileName = "examples.xlsx", sheetName = "example_2")
-    record RefFieldRef(int id, long value) {
-    }
-
+    /**
+     * Two fields mapped onto the same name are a conflict: the first one wins and a
+     * warning is logged.
+     */
     @Test
-    public void testOptionalField() {
-        OptionalFieldBean var0 = new OptionalFieldBean(1, new OptionalFieldRef1(1, 998));
-        OptionalFieldBean var1 = new OptionalFieldBean(2, new OptionalFieldRef2(2, 997));
-
-        StructWorker<OptionalFieldBean> worker = new StructWorker<>("classpath:/org/struct/core/", OptionalFieldBean.class);
-        ArrayList<OptionalFieldBean> list = worker.toList(ArrayList::new);
-        Assertions.assertEquals(var0, list.get(0));
-        Assertions.assertEquals(var1, list.get(1));
+    public void testDuplicateFieldNameConflict() {
+        StructFactory factory = parse(ConflictBean.class);
+        ConflictBean bean = new ConflictBean();
+        bean.a = 11;
+        bean.b = 22;
+        //  putIfAbsent keeps the FIRST descriptor
+        Object v = factory.getFieldValuesArray(bean, new String[]{"key"});
+        Assertions.assertEquals(11, v);
     }
 
-    @StructSheet(fileName = "examples.xlsx", sheetName = "example_1")
-    record OptionalFieldBean(
-            @StructField(name = "id")
-            int id,
-            @StructOptional(value = {
-                    @StructField(ref = OptionalFieldRef1.class, refUniqueKey = "id"),
-                    @StructField(ref = OptionalFieldRef2.class, refUniqueKey = "id")
-            }) Object ref
-    ) {
+    /**
+     * A record with two components mapped onto the same name behaves the same way.
+     */
+    @Test
+    public void testDuplicateRecordComponentNameConflict() {
+        StructFactory factory = parse(ConflictRecord.class);
+        Object v = factory.getFieldValuesArray(new ConflictRecord(1, 2), new String[]{"key"});
+        Assertions.assertEquals(1, v);
     }
 
-    @StructSheet(fileName = "examples.xlsx", sheetName = "example_2")
-    record OptionalFieldRef1(int id, long value) {
+    /**
+     * A {@code null} intermediate row yields an empty {@link java.util.Optional}.
+     */
+    @Test
+    public void testNewStructInstanceWithNull() {
+        StructFactory factory = parse(SimpleBean.class);
+        Assertions.assertFalse(((java.util.Optional<?>) factory.newStructInstance(null)).isPresent());
     }
 
-    @StructSheet(fileName = "examples.xlsx", sheetName = "example_3")
-    record OptionalFieldRef2(int id, long value) {
+    /**
+     * A missing value for a {@code required} field must be reported.
+     */
+    @Test
+    public void testRequiredFieldMissing() {
+        StructFactory factory = parse(RequiredBean.class);
+        //  the data file has no "nope" column at all
+        Assertions.assertThrows(RuntimeException.class, () -> factory.newStructInstance(new StructImpl()));
     }
 
-    @Test()
-    public void testBasicType() {
-        SimpleTypeFieldBean t = new SimpleTypeFieldBean(
-                (byte) 1, (short) 2, 3, 4L, 5F, 6D, true, (short) 7, 8, 9L, 10F, 11D,
-                BigInteger.valueOf(12), BigDecimal.valueOf(13), "str",
-                new byte[]{0x0, 0x1, 0x0},
-                new short[]{1, 2, 3},
-                new int[]{4, 5, 6, 7},
-                new long[]{8, 9},
-                new float[]{10F, 11F, 12F},
-                new double[]{13D, 14D},
-                new Short[]{15, 16},
-                new Integer[]{17, 18, 19},
-                new Long[]{20L, 21L},
-                new Float[]{22F, 23F},
-                new Double[]{24D, 25D, 26D},
-                MyEnum.Three,
-                MyEnum.Two,
-                MyEnum.One
-        );
-        StructWorker<SimpleTypeFieldBean> worker = new StructWorker<>("classpath:/org/struct/core/", SimpleTypeFieldBean.class);
-        ArrayList<SimpleTypeFieldBean> list = worker.toList(ArrayList::new);
-        SimpleTypeFieldBean bean = list.get(0);
-        Assertions.assertEquals(t, bean);
+    /**
+     * A required field that resolves to an empty string is invalid too.
+     */
+    @Test
+    public void testRequiredFieldBlank() {
+        StructFactory factory = parse(RequiredBean.class);
+        StructImpl si = new StructImpl();
+        si.add("nope", "");
+        Assertions.assertThrows(RuntimeException.class, () -> factory.newStructInstance(si));
     }
 
-    @StructSheet(fileName = "examples.xlsx", sheetName = "example_1")
-    record SimpleTypeFieldBean(
-            //  primary type
-            byte mByte,
-            short mShort,
-            int mInt,
-            long mLong,
-            float mFloat,
-            double mDouble,
-            boolean mBoolean,
-            //  wrap type
-            Short wShort,
-            Integer wInteger,
-            Long wLong,
-            Float wFloat,
-            Double wDouble,
-            BigInteger wBigInteger,
-            BigDecimal wBigDecimal,
-            //  string
-            String wString,
-            //  primary type array
-            byte[] mByteAry,
-            short[] mShortAry,
-            int[] mIntAry,
-            long[] mLongAry,
-            float[] mFloatAry,
-            double[] mDoubleAry,
-            //  wrap type array
-            Short[] wShortAry,
-            Integer[] wIntegerAry,
-            Long[] wLongAry,
-            Float[] wFloatAry,
-            Double[] wDoubleAry,
-            //  enum
-            MyEnum numEnum,
-            MyEnum strEnum,
-            MyEnum lowerStrEnum
-    ) {
+    /**
+     * {@code @StructField(cached = true)} interns the resolved string.
+     */
+    @Test
+    public void testCachedFieldIsInterned() {
+        StructWorker<CachedBean> worker = WorkerUtil.newWorker(WS, CachedBean.class);
+        ArrayList<CachedBean> beans = worker.toList(ArrayList::new);
+        Assertions.assertEquals(3, beans.size());
+        //  "11" is a compile time constant and therefore already interned
+        Assertions.assertSame("11", beans.get(0).val);
+    }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            SimpleTypeFieldBean that = (SimpleTypeFieldBean) o;
-            return mByte == that.mByte && mShort == that.mShort && mInt == that.mInt && mLong == that.mLong && Float.compare(that.mFloat, mFloat) == 0 && Double.compare(that.mDouble, mDouble) == 0 && mBoolean == that.mBoolean && Objects.equals(wShort, that.wShort) && Objects.equals(wInteger, that.wInteger) && Objects.equals(wLong, that.wLong) && Objects.equals(wFloat, that.wFloat) && Objects.equals(wDouble, that.wDouble) && Objects.equals(wBigInteger, that.wBigInteger) && Objects.equals(wBigDecimal, that.wBigDecimal) && Objects.equals(wString, that.wString) && Arrays.equals(mByteAry, that.mByteAry) && Arrays.equals(mShortAry, that.mShortAry) && Arrays.equals(mIntAry, that.mIntAry) && Arrays.equals(mLongAry, that.mLongAry) && Arrays.equals(mFloatAry, that.mFloatAry) && Arrays.equals(mDoubleAry, that.mDoubleAry) && Arrays.equals(wShortAry, that.wShortAry) && Arrays.equals(wIntegerAry, that.wIntegerAry) && Arrays.equals(wLongAry, that.wLongAry) && Arrays.equals(wFloatAry, that.wFloatAry) && Arrays.equals(wDoubleAry, that.wDoubleAry) && numEnum == that.numEnum && strEnum == that.strEnum && lowerStrEnum == that.lowerStrEnum;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = Objects.hash(mByte, mShort, mInt, mLong, mFloat, mDouble, mBoolean, wShort, wInteger, wLong, wFloat, wDouble, wBigInteger, wBigDecimal, wString, numEnum, strEnum, lowerStrEnum);
-            result = 31 * result + Arrays.hashCode(mByteAry);
-            result = 31 * result + Arrays.hashCode(mShortAry);
-            result = 31 * result + Arrays.hashCode(mIntAry);
-            result = 31 * result + Arrays.hashCode(mLongAry);
-            result = 31 * result + Arrays.hashCode(mFloatAry);
-            result = 31 * result + Arrays.hashCode(mDoubleAry);
-            result = 31 * result + Arrays.hashCode(wShortAry);
-            result = 31 * result + Arrays.hashCode(wIntegerAry);
-            result = 31 * result + Arrays.hashCode(wLongAry);
-            result = 31 * result + Arrays.hashCode(wFloatAry);
-            result = 31 * result + Arrays.hashCode(wDoubleAry);
-            return result;
+    /**
+     * A reference field whose target table is empty resolves to {@code null}.
+     */
+    @Test
+    public void testReferenceFieldWithEmptyTable() {
+        StructWorker<RefEmptyBean> worker = WorkerUtil.newWorker(WS, RefEmptyBean.class);
+        ArrayList<RefEmptyBean> beans = worker.toList(ArrayList::new);
+        Assertions.assertEquals(3, beans.size());
+        for (RefEmptyBean bean : beans) {
+            Assertions.assertNull(bean.ref);
         }
     }
 
-    enum MyEnum {
-        One,
-        Two,
-        Three
-    }
-
+    /**
+     * A REQUIRED reference field whose target table is empty must be reported.
+     */
     @Test
-    public void testRecordAggregateByArrayKey() {
-        //  Record aggregate by Array key
-        StructWorker<RecordAggregateByArrayKey> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", RecordAggregateByArrayKey.class);
-        List<RecordAggregateByArrayKey> list = worker.load(ArrayList::new);
-        Assertions.assertFalse(list.isEmpty());
-        Assertions.assertEquals(3, list.get(0).beansAry.length);
-        Assertions.assertEquals(3, list.get(0).beansList.size());
+    public void testRequiredReferenceFieldWithEmptyTable() {
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            StructWorker<RefRequiredBean> worker = WorkerUtil.newWorker(WS, RefRequiredBean.class);
+            worker.toList(ArrayList::new);
+        });
     }
 
+    /**
+     * A {@code record} can be used as a struct bean; its components are mapped
+     * positionally onto the canonical constructor.
+     */
     @Test
-    public void testRecordAggregateByListKey() {
-        StructWorker<RecordAggregateByListKey> worker = WorkerUtil.newWorker("classpath:/org/struct/core/", RecordAggregateByListKey.class);
-        List<RecordAggregateByListKey> list = worker.load(ArrayList::new);
-        Assertions.assertFalse(list.isEmpty());
-        Assertions.assertEquals(3, list.get(0).beansAry.length);
-        Assertions.assertEquals(3, list.get(0).beansList.size());
+    public void testRecordBean() {
+        StructWorker<ValRecord> worker = WorkerUtil.newWorker(WS, ValRecord.class);
+        ArrayList<ValRecord> beans = worker.toList(ArrayList::new);
+        Assertions.assertEquals(3, beans.size());
+        Assertions.assertEquals(1, beans.get(0).key());
+        Assertions.assertEquals("11", beans.get(0).val());
+        Assertions.assertEquals(3, beans.get(2).key());
     }
 
-    @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
-    record RecordAggregateByArrayKey(int id,
-                                     @StructField(name = "ids")
-                                     int[] ids,
-                                     @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
-                                     RecordAggregateTargetBean[] beansAry,
-                                     @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
-                                     List<RecordAggregateTargetBean> beansList
-    ) {
+    /**
+     * A field level converter is used instead of the registry lookup.
+     */
+    @Test
+    public void testFieldLevelConverter() {
+        StructWorker<ConverterBean> worker = WorkerUtil.newWorker(WS, ConverterBean.class);
+        ArrayList<ConverterBean> beans = worker.toList(ArrayList::new);
+        Assertions.assertEquals(3, beans.size());
+        Assertions.assertEquals("11!", beans.get(0).val);
     }
 
-    @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet1")
-    record RecordAggregateByListKey(int id,
-                                    @StructField(name = "ids", converter = ListIntConverter.class)
-                                    List<Integer> idList,
-                                    @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
-                                    RecordAggregateTargetBean[] beansAry,
-                                    @StructField(ref = RecordAggregateTargetBean.class, refUniqueKey = "id", aggregateBy = "ids")
-                                    List<RecordAggregateTargetBean> beansList
-    ) {
+    /**
+     * {@code aggregateBy} with an ARRAY key: one parent row collects several
+     * children in a single lookup.
+     */
+    @Test
+    public void testAggregateByArrayKey() {
+        StructWorker<AggregateArrayBean> worker = WorkerUtil.newWorker(WS, AggregateArrayBean.class);
+        ArrayList<AggregateArrayBean> beans = worker.toList(ArrayList::new);
+        Assertions.assertEquals(2, beans.size());
+
+        AggregateArrayBean first = beans.get(0);
+        Assertions.assertEquals(1, first.id);
+        Assertions.assertNotNull(first.children);
+        Assertions.assertEquals(2, first.children.size(), "childIds=1|2 must resolve to 2 children");
+        Assertions.assertEquals(1, first.children.get(0).key);
+        Assertions.assertEquals(2, first.children.get(1).key);
     }
 
-    @StructSheet(fileName = "Bean.xlsx", sheetName = "Sheet2")
-    record RecordAggregateTargetBean(int id,
-                                     String domain,
-                                     String phylum,
-                                     String clazz,
-                                     String order,
-                                     String family,
-                                     String genus,
-                                     String species) {
+    /**
+     * {@code aggregateBy} with a COLLECTION key.
+     */
+    @Test
+    public void testAggregateByCollectionKey() {
+        StructWorker<AggregateCollectionBean> worker = WorkerUtil.newWorker(WS, AggregateCollectionBean.class);
+        ArrayList<AggregateCollectionBean> beans = worker.toList(ArrayList::new);
+        Assertions.assertEquals(2, beans.size());
+
+        AggregateCollectionBean first = beans.get(0);
+        Assertions.assertNotNull(first.children);
+        Assertions.assertEquals(2, first.children.size());
     }
 
-    static class ListIntConverter implements Converter {
+    /**
+     * {@code aggregateBy} with a SCALAR key falls back to a plain map lookup.
+     */
+    @Test
+    public void testAggregateByScalarKey() {
+        StructWorker<AggregateScalarBean> worker = WorkerUtil.newWorker(WS, AggregateScalarBean.class);
+        ArrayList<AggregateScalarBean> beans = worker.toList(ArrayList::new);
+        Assertions.assertEquals(3, beans.size());
 
-        @Override
-        public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
-            if (originValue instanceof String s) {
-                return Arrays.stream(s.split("\\|")).map(Integer::parseInt).collect(Collectors.toList());
-            }
-            return Collections.emptyList();
+        AggregateScalarBean first = beans.get(0);
+        Assertions.assertNotNull(first.child);
+        Assertions.assertEquals(1, first.child.key);
+    }
+
+    /**
+     * A REQUIRED reference field whose key matches nothing must be reported
+     * instead of silently staying {@code null}.
+     * <p>
+     * The exception surfaces as an {@link IllegalArgumentException}: the real
+     * {@link NoSuchFieldReferenceException} is thrown by the handler and is then
+     * wrapped by {@code StructWorker#handleDataFile}, which reports
+     * "unknown data file extension" once every handler has been tried.
+     */
+    @Test
+    public void testRequiredReferenceFieldWithNoMatch() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            StructWorker<NoMatchBean> worker = WorkerUtil.newWorker(WS, NoMatchBean.class);
+            worker.toList(ArrayList::new);
+        });
+    }
+
+    //  ------------------------------------------------------------------
+    //  beans
+    //  ------------------------------------------------------------------
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class SimpleBean {
+        public int key;
+        public String val;
+
+        public SimpleBean() {
+        }
+
+        public SimpleBean(int key, String val) {
+            this.key = key;
+            this.val = val;
         }
     }
 
+    @StructSheet(fileName = "tpl_val.json")
+    public static class WithStaticBean {
+        public static final String CONST = "constant";
+
+        public int key = 3;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class ConflictBean {
+        @StructField(name = "key")
+        public int a;
+        @StructField(name = "key")
+        public int b;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public record ConflictRecord(@StructField(name = "key") int first,
+                                 @StructField(name = "key") int second) {
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class RequiredBean {
+        @StructField(name = "nope", required = true)
+        public String missing;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class CachedBean {
+        @StructField(name = "val", cached = true)
+        public String val;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class RefEmptyBean {
+        public int key;
+        @StructField(ref = EmptyBean.class, refUniqueKey = "key")
+        public EmptyBean ref;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class RefRequiredBean {
+        public int key;
+        @StructField(ref = EmptyBean.class, refUniqueKey = "key", required = true)
+        public EmptyBean ref;
+    }
+
+    @StructSheet(fileName = "tpl_empty.json")
+    public static class EmptyBean {
+        public int key;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public record ValRecord(int key, String val) {
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class ConverterBean {
+        @StructField(name = "val", converter = BangConverter.class)
+        public String val;
+    }
+
+    /**
+     * A field level converter that appends a marker, so it is easy to tell whether
+     * it was used instead of the registry lookup.
+     */
+    public static class BangConverter implements org.struct.core.converter.Converter {
+
+        @Override
+        public Object convert(org.struct.core.converter.ConvertContext ctx, Object originValue, Class<?> targetType) {
+            return originValue == null ? null : String.valueOf(originValue) + "!";
+        }
+    }
+
+    @StructSheet(fileName = "tpl_aggregate.json")
+    public static class AggregateArrayBean {
+        public int id;
+        @StructField(name = "childIds")
+        public int[] childIds;
+        //  the key comes from the parent's array field
+        @StructField(ref = ChildBean.class, refUniqueKey = "key", aggregateBy = "childIds")
+        public java.util.List<ChildBean> children;
+    }
+
+    //  NOTE: a plain (non reference) List field is filled directly, so the json
+    //  value must already be an array - the separator splitting only applies to
+    //  array target types.
+    @StructSheet(fileName = "tpl_aggregate_coll.json")
+    public static class AggregateCollectionBean {
+        public int id;
+        @StructField(name = "childIds")
+        public java.util.List<Integer> childIds;
+        @StructField(ref = ChildBean.class, refUniqueKey = "key", aggregateBy = "childIds")
+        public java.util.List<ChildBean> children;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class AggregateScalarBean {
+        public int key;
+        @StructField(ref = ChildBean.class, refUniqueKey = "key", aggregateBy = "key")
+        public ChildBean child;
+    }
+
+    @StructSheet(fileName = "tpl_val.json")
+    public static class ChildBean {
+        public int key;
+        public String val;
+    }
+
+    /**
+     * The reference key never matches a row of the (non empty) target table.
+     */
+    @StructSheet(fileName = "tpl_agg_nomatch.json")
+    public static class NoMatchBean {
+        public int key;
+        @StructField(ref = ChildBean.class, refUniqueKey = "key", required = true)
+        public ChildBean child;
+    }
 }

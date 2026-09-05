@@ -80,6 +80,12 @@ public final class JdkStructFactory implements StructFactory {
     public void parseStruct() throws RuntimeException {
         if (!this.beanFieldMap.isEmpty())
             return;
+        //  A protobuf Message subclass (path A) is used as-is - the parsed message IS the
+        //  bean, and ProtobufStructHandler emits it directly without going through the
+        //  factory. Scanning its (many inherited, internal) fields would only build unused
+        //  descriptors and emit spurious conflicts, so skip it entirely.
+        if (com.google.protobuf.Message.class.isAssignableFrom(this.clzOfStruct))
+            return;
         final Map<String, FieldDescriptor> map = new HashMap<>();
         if (this.clzOfStruct.isRecord()) {
             RecordComponent[] components = this.clzOfStruct.getRecordComponents();

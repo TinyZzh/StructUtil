@@ -30,6 +30,14 @@ public class EnumConverter implements Converter {
         if (!targetType.isEnum()) {
             return originValue;
         }
+        //  A null/blank value has no enum meaning.
+        //  NOTE: without this guard, null was converted to Integer 0 and silently
+        //  resolved to the *first* enum constant. (blank behaves the same as null
+        //  because StructImpl#add already drops empty strings)
+        if (originValue == null
+                || (originValue instanceof String && ((String) originValue).isBlank())) {
+            return null;
+        }
         Object[] enums = targetType.getEnumConstants();
         //  1. int -> enum
         try {
@@ -42,17 +50,18 @@ public class EnumConverter implements Converter {
         }
         //  2. string -> enum
         if (originValue instanceof String) {
-            if (Enum.class.isAssignableFrom(targetType)) {
-                String trim = ((String) originValue).trim();
+            //  `targetType` is an enum here - it has already been checked by the
+            //  `isEnum()` guard at the top of this method - so `Enum.class.isAssignableFrom(targetType)`
+            //  is always true and re-testing it only created an unreachable branch.
+            String trim = ((String) originValue).trim();
+            try {
+                return Enum.valueOf((Class<? extends Enum>) targetType, trim);
+            } catch (Exception e1) {
                 try {
-                    return Enum.valueOf((Class<? extends Enum>) targetType, trim);
-                } catch (Exception e1) {
-                    try {
-                        //  Upper case
-                        return Enum.valueOf((Class<? extends Enum>) targetType, trim.toUpperCase());
-                    } catch (Exception e2) {
-                        //  no-op
-                    }
+                    //  Upper case
+                    return Enum.valueOf((Class<? extends Enum>) targetType, trim.toUpperCase());
+                } catch (Exception e2) {
+                    //  no-op
                 }
             }
             //  compare string ignore case.

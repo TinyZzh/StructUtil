@@ -178,7 +178,11 @@ public class ExcelUMStructHandler implements StructHandler {
             case FORMULA:
                 if (cell instanceof Cell) {
                     CellValue val = evaluator.evaluate((Cell) cell);
-                    return getExcelCellValue(val.getCellType(), cell, evaluator);
+                    //  NOTE: recurse with the *evaluated* value, not the original cell.
+                    //  POI forbids reading a typed value straight from a FORMULA cell
+                    //  (getStringCellValue()/getBooleanCellValue() throw IllegalStateException),
+                    //  which previously caused the whole cell value to be silently dropped.
+                    return getExcelCellValue(val.getCellType(), val, evaluator);
                 } else {
                     return null;
                 }

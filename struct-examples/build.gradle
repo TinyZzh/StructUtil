@@ -22,6 +22,9 @@ dependencies {
     implementation project(':struct-spring')
     implementation(project(':struct-spring-boot-starter'))
 
+    // ProtobufStructHandler 依赖；examples 的 protobuf 示例直接使用 protobuf 类型。
+    implementation("com.google.protobuf:protobuf-java:${version_options.PROTOBUF_VERSION}")
+
     implementation("org.springframework.boot:spring-boot-starter:${version_options.SPRING_BOOT_VERSION}")
 //    implementation("org.springframework.boot:spring-boot-starter-actuator:${version_options.SPRING_BOOT_VERSION}")
     implementation("org.springframework.boot:spring-boot-starter-jdbc:${version_options.SPRING_BOOT_VERSION}")
@@ -40,9 +43,74 @@ dependencies {
     implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.4")
     implementation("com.sun.xml.bind:jaxb-impl:4.0.6")
 
+    //  benchmark：写基准数据文件需要 poi / gson（struct-core 把它们声明为 implementation，不会传递过来）
+    implementation("org.apache.poi:poi:${version_options.POI_VERSION}")
+    implementation("org.apache.poi:poi-ooxml:${version_options.POI_VERSION}")
+    implementation("com.google.code.gson:gson:${version_options.GSON_VERSION}")
+    implementation("org.openjdk.jmh:jmh-core:${version_options.JMH_VERSION}")
+    annotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:${version_options.JMH_VERSION}")
+
     implementation("org.apache.logging.log4j:log4j-api:${version_options.LOG4J2_VERSION}")
     implementation("org.apache.logging.log4j:log4j-core:${version_options.LOG4J2_VERSION}")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:${version_options.LOG4J2_VERSION}")
     implementation("org.apache.logging.log4j:log4j-jul:${version_options.LOG4J2_VERSION}")
 
 }
+
+// 演示：运行 Protobuf 路径 A 示例（pb 二进制 -> Message bean，无中间层）。
+tasks.register('runProtobufExample', JavaExec) {
+    group = 'examples'
+    description = 'Run the protobuf Message-bean example'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.struct.examples.protobuf.ProtobufExample'
+}
+
+//  <editor-fold desc="   Benchmark: csv/json/xlsx/xls/xml/protobuf  ">
+
+ext.benchDataDir = "${buildDir}/bench-data"
+ext.benchRows = (project.findProperty('bench.rows') ?: '1000,10000,50000')
+
+//  基准跑动时必须静音：examples 默认的 log4j2.xml 把 org.struct 设为 DEBUG 且逐行打日志，
+//  既会淹没 JMH 的结果块，又会把"写日志"的成本算进被测格式里（csv 每行一条，protobuf 一条没有，
+//  差距会被严重夸大）。这里必须给绝对路径 —— log4j2 会把相对路径当文件找，
+//  找不到就静默回落到默认的 log4j2.xml。
+def benchLoggingArgs = ['-Dlog4j2.configurationFile='
+                        + file('src/main/resources/log4j2-benchmark.xml').absolutePath]
+
+tasks.register('generateBenchData', JavaExec) {
+    group = 'benchmark'
+    description = 'Generate the benchmark data files (csv/json/xlsx/xls/xml/protobuf) and verify them.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.struct.examples.benchmark.BenchDataGenerator'
+    args = [benchDataDir]
+    systemProperty 'bench.rows', benchRows
+    jvmArgs = ['-Xmx2g'] + benchLoggingArgs
+    outputs.dir(benchDataDir)
+}
+
+tasks.register('fileSizeReport', JavaExec) {
+    group = 'benchmark'
+    description = 'Print the on-disk and gzip size table of every generated data file.'
+    dependsOn 'generateBenchData'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.struct.examples.benchmark.FileSizeReport'
+    args = [benchDataDir]
+    systemProperty 'bench.rows', benchRows
+    jvmArgs = benchLoggingArgs
+}
+
+tasks.register('benchmark', JavaExec) {
+    group = 'benchmark'
+    description = 'Run the JMH benchmark suite. Override the JMH args with -Pbench.jmh="...".'
+    dependsOn 'generateBenchData'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.openjdk.jmh.Main'
+    systemProperty 'bench.dataDir', benchDataDir
+    systemProperty 'bench.rows', benchRows
+    def userArgs = project.findProperty('bench.jmh')
+    args = (userArgs != null
+            ? userArgs.toString().trim().split('\\s+').findAll { !it.isEmpty() }
+            : ['-prof', 'gc'])
+}
+
+//  </editor-fold>

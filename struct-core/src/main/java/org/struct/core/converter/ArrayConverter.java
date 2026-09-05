@@ -20,6 +20,7 @@ package org.struct.core.converter;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Collection;
 
 import static org.struct.core.StructInternal.ARRAY_CONVERTER_IGNORE_BLANK;
 import static org.struct.core.StructInternal.ARRAY_CONVERTER_STRING_SEPARATOR;
@@ -84,19 +85,45 @@ public class ArrayConverter implements Converter {
 
     @Override
     public Object convert(ConvertContext ctx, Object originValue, Class<?> targetType) {
-        if (!targetType.isArray() || originValue == null) {
-            return Array.newInstance(targetType.getComponentType(), 0);
+        if (!targetType.isArray()) {
+            //  this converter handles array target types only.
+            //  NOTE: previously this fell through to Array.newInstance(null, 0) -> NPE.
+            return null;
+        }
+        Class<?> componentType = targetType.getComponentType();
+        if (originValue == null) {
+            //  keep the original behaviour: an absent value becomes an EMPTY array.
+            //  this matches the framework convention of returning the type's zero
+            //  value for a null input (numbers return 0 / 0.0, BigDecimal ZERO...).
+            return Array.newInstance(componentType, 0);
+        }
+        //  the origin value already is structured (e.g. a json array), use it as is.
+        if (originValue instanceof Collection<?>) {
+            return this.toArray(ctx, ((Collection<?>) originValue).toArray(), componentType);
+        }
+        if (originValue.getClass().isArray()) {
+            int length = Array.getLength(originValue);
+            Object[] data = new Object[length];
+            for (int i = 0; i < length; i++) {
+                data[i] = Array.get(originValue, i);
+            }
+            return this.toArray(ctx, data, componentType);
         }
         String content = String.valueOf(originValue);
-        Class<?> componentType = targetType.getComponentType();
         String[] data = content.split(separator);
         if (this.isIgnoreBlank()) {
             data = Arrays.stream(data).filter(s -> !s.isEmpty()).toArray(String[]::new);
         }
+        if (this.isStrTrim()) {
+            data = Arrays.stream(data).map(String::trim).toArray(String[]::new);
+        }
+        return this.toArray(ctx, data, componentType);
+    }
+
+    private Object toArray(ConvertContext ctx, Object[] data, Class<?> componentType) {
         Object array = Array.newInstance(componentType, data.length);
         for (int i = 0; i < data.length; i++) {
-            String str = strTrim ? data[i].trim() : data[i];
-            Array.set(array, i, ConverterRegistry.convert(ctx, str, componentType));
+            Array.set(array, i, ConverterRegistry.convert(ctx, data[i], componentType));
         }
         return array;
     }

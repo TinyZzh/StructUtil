@@ -22,7 +22,7 @@ plugins {
 ext.pack_version = (hasProperty("pack_version") ? property("pack_version") : version)
 
 group = 'org.structutil'
-version = '4.1.0.beta-SNAPSHOT'
+version = '4.2.0.beta-SNAPSHOT'
 description = 'Light Flexible And High Performance Java Bean Struct Data Mapper.'
 
 ext.struct_jvm_projects = [
@@ -45,6 +45,8 @@ allprojects {
             LOG4J2_VERSION     : "2.25.2",
             GSON_VERSION       : "2.13.2",
             POI_VERSION        : "5.2.2",
+            PROTOBUF_VERSION   : "4.29.3",
+            JMH_VERSION        : "1.37",
     ]
 
     jacoco {

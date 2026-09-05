@@ -28,12 +28,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.util.ReflectionUtils;
+import org.struct.annotation.StructField;
+import org.struct.annotation.StructSheet;
 import org.struct.spring.annotation.StructScan;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 /**
@@ -93,5 +96,68 @@ class ListStructStoreTest {
         Assertions.assertTrue(store.isInitialized());
     }
 
+    /**
+     * The no-arg constructor is only meant for the spring bean definition, but it
+     * must not blow up.
+     */
+    @Test
+    public void testNoArgConstructor() {
+        ListStructStore<String> store = new ListStructStore<>();
+        Assertions.assertNull(store.clzOfBean());
+        //  the key type parameter can only be bound by the spring bean definition
+        Assertions.assertTrue(store.getAll().isEmpty());
+    }
 
+    /**
+     * The real {@code loadStructData()} implementation (the other tests all mock it
+     * out) must read the configured workspace.
+     */
+    @Test
+    public void testLoadStructDataFromWorkspace() {
+        Options options = new Options();
+        options.setWorkspace("classpath:/org/struct/spring/support/");
+        ListStructStore<StoreBean> store = new ListStructStore<>(StoreBean.class);
+        store.setOptions(options);
+
+        store.initialize();
+
+        Assertions.assertTrue(store.isInitialized());
+        Assertions.assertEquals(3, store.size());
+        Assertions.assertEquals(3, store.getAll().size());
+        Assertions.assertEquals(1, store.getAll().get(0).key);
+        Assertions.assertEquals("11", store.getAll().get(0).val);
+
+        //  the returned list is immutable
+        Assertions.assertThrows(UnsupportedOperationException.class,
+                () -> store.getAll().add(new StoreBean()));
+
+        store.dispose();
+        Assertions.assertTrue(store.getAll().isEmpty());
+    }
+
+    /**
+     * A failing load is only logged, the store still ends up "initialized".
+     * <p>
+     * NOTE: this is a known P2 issue - a configuration error lets the application
+     * start with empty data instead of failing fast.
+     */
+    @Test
+    public void testLoadStructDataFailureIsLoggedOnly() {
+        Options options = new Options();
+        options.setWorkspace("classpath:/");
+        ListStructStore<StoreBean> store = spy(new ListStructStore<>(StoreBean.class));
+        store.setOptions(options);
+        doThrow(new IllegalStateException("boom")).when(store).loadStructData();
+
+        store.initialize();
+        Assertions.assertTrue(store.isInitialized());
+        Assertions.assertEquals(0, store.size());
+        Assertions.assertTrue(store.getAll().isEmpty());
+    }
+
+    @StructSheet(fileName = "tpl_list_store.json")
+    public static class StoreBean {
+        public int key;
+        public String val;
+    }
 }

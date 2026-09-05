@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "first",
+    "ratio": 1.5,
+    "enabled": true,
+    "score": 99,
+    "tags": ["alpha", "beta"],
+    "missing": null,
+    "birth": "2020-09-15"
+  },
+  {
+    "id": 2,
+    "name": "second",
+    "ratio": 2,
+    "enabled": false,
+    "score": "88",
+    "tags": ["gamma"],
+    "missing": "ignored",
+    "birth": "2020-09-16"
+  }
+]

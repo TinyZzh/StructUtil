@@ -18,671 +18,1121 @@
 
 package org.struct.core.handler;
 
+import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.AbstractParser;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
+import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.ExtensionRegistryLite;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
+import com.google.protobuf.Parser;
+import com.google.protobuf.UnknownFieldSet;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
-import org.struct.core.StructDescriptor;
-import org.struct.core.StructImpl;
+import org.struct.core.SingleFieldDescriptor;
 import org.struct.core.StructWorker;
-import org.struct.core.handler.ProtobufStructHandler.DescriptorPool;
-import org.struct.core.handler.testproto.PersonProto;
-import org.struct.core.matcher.FileExtensionMatcher;
+import org.struct.exception.StructTransformException;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+/**
+ * The protobuf descriptors are built programmatically, so the test does not depend
+ * on a generated message class (there is no protoc step in this module).
+ */
+public class ProtobufStructHandlerTest {
 
-class ProtobufStructHandlerTest {
+    private static Descriptors.FileDescriptor FILE_DESCRIPTOR;
+    private static Descriptors.Descriptor OUTER;
+    private static Descriptors.Descriptor INNER;
 
-    @TempDir
-    Path tempDir;
-
-    // Three valid Person messages (Alice, Bob, Charlie)
-    private static final byte[] PERSON_DATA = new byte[]{
-        (byte)0x1B, (byte)0x08, (byte)0x01, (byte)0x12, (byte)0x05, (byte)0x41, (byte)0x6C, (byte)0x69, (byte)0x63, (byte)0x65, (byte)0x1A, (byte)0x0E, (byte)0x61, (byte)0x6C, (byte)0x69, (byte)0x63, 
-        (byte)0x65, (byte)0x40, (byte)0x74, (byte)0x65, (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, (byte)0x6F, (byte)0x6D, (byte)0x20, (byte)0x19, (byte)0x17, (byte)0x08, (byte)0x02, (byte)0x12, 
-        (byte)0x03, (byte)0x42, (byte)0x6F, (byte)0x62, (byte)0x1A, (byte)0x0C, (byte)0x62, (byte)0x6F, (byte)0x62, (byte)0x40, (byte)0x74, (byte)0x65, (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, 
-        (byte)0x6F, (byte)0x6D, (byte)0x20, (byte)0x1E, (byte)0x1F, (byte)0x08, (byte)0x03, (byte)0x12, (byte)0x07, (byte)0x43, (byte)0x68, (byte)0x61, (byte)0x72, (byte)0x6C, (byte)0x69, (byte)0x65, 
-        (byte)0x1A, (byte)0x10, (byte)0x63, (byte)0x68, (byte)0x61, (byte)0x72, (byte)0x6C, (byte)0x69, (byte)0x65, (byte)0x40, (byte)0x74, (byte)0x65, (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, 
-        (byte)0x6F, (byte)0x6D, (byte)0x20, (byte)0x23
-    };
-
-    // Five Person messages for testing start/end order
-    private static final byte[] PERSON_FIVE_DATA = new byte[]{
-        (byte)0x19, (byte)0x08, (byte)0x01, (byte)0x12, (byte)0x07, (byte)0x50, (byte)0x65, (byte)0x72, (byte)0x73, (byte)0x6F, (byte)0x6E, (byte)0x31, (byte)0x1A, (byte)0x0A, (byte)0x31, (byte)0x40, 
-        (byte)0x74, (byte)0x65, (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, (byte)0x6F, (byte)0x6D, (byte)0x20, (byte)0x15, (byte)0x19, (byte)0x08, (byte)0x02, (byte)0x12, (byte)0x07, (byte)0x50, 
-        (byte)0x65, (byte)0x72, (byte)0x73, (byte)0x6F, (byte)0x6E, (byte)0x32, (byte)0x1A, (byte)0x0A, (byte)0x32, (byte)0x40, (byte)0x74, (byte)0x65, (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, 
-        (byte)0x6F, (byte)0x6D, (byte)0x20, (byte)0x16, (byte)0x19, (byte)0x08, (byte)0x03, (byte)0x12, (byte)0x07, (byte)0x50, (byte)0x65, (byte)0x72, (byte)0x73, (byte)0x6F, (byte)0x6E, (byte)0x33, 
-        (byte)0x1A, (byte)0x0A, (byte)0x33, (byte)0x40, (byte)0x74, (byte)0x65, (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, (byte)0x6F, (byte)0x6D, (byte)0x20, (byte)0x17, (byte)0x19, (byte)0x08, 
-        (byte)0x04, (byte)0x12, (byte)0x07, (byte)0x50, (byte)0x65, (byte)0x72, (byte)0x73, (byte)0x6F, (byte)0x6E, (byte)0x34, (byte)0x1A, (byte)0x0A, (byte)0x34, (byte)0x40, (byte)0x74, (byte)0x65, 
-        (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, (byte)0x6F, (byte)0x6D, (byte)0x20, (byte)0x18, (byte)0x19, (byte)0x08, (byte)0x05, (byte)0x12, (byte)0x07, (byte)0x50, (byte)0x65, (byte)0x72, 
-        (byte)0x73, (byte)0x6F, (byte)0x6E, (byte)0x35, (byte)0x1A, (byte)0x0A, (byte)0x35, (byte)0x40, (byte)0x74, (byte)0x65, (byte)0x73, (byte)0x74, (byte)0x2E, (byte)0x63, (byte)0x6F, (byte)0x6D, 
-        (byte)0x20, (byte)0x19
-    };
-
-    // Empty length message (length = 0)
-    private static final byte[] PERSON_EMPTY_LEN_DATA = new byte[]{
-        (byte)0x00
-    };
-
-    // Invalid protobuf data
-    private static final byte[] PERSON_INVALID_DATA = new byte[]{
-        (byte)0x0A, (byte)0x00, (byte)0x01, (byte)0x02, (byte)0x03, (byte)0x04, (byte)0x05, (byte)0x06, (byte)0x07, (byte)0x08, (byte)0x09
-    };
-
-    @Test
-    void testDescriptorPoolClearCache() {
-        DescriptorPool pool = new DescriptorPool();
-        pool.clearCache();
-        Assertions.assertNull(pool.getDescriptor(String.class));
+    @BeforeAll
+    public static void init() throws Exception {
+        FILE_DESCRIPTOR = Descriptors.FileDescriptor.buildFrom(
+                DescriptorProtos.FileDescriptorProto.newBuilder()
+                        .setName("struct_test.proto")
+                        .setPackage("struct.test")
+                        .setSyntax("proto3")
+                        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                                .setName("Outer")
+                                .addField(newField("id", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .addField(newField("name", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .addField(newField("child", 3, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, ".struct.test.Inner"))
+                                .addField(newField("tags", 4, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_REPEATED, null))
+                                .addField(newField("children", 5, DescriptorProtos.FieldDescriptorProto.Type.TYPE_MESSAGE,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_REPEATED, ".struct.test.Inner"))
+                                .build())
+                        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                                .setName("Inner")
+                                .addField(newField("value", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .build())
+                        .build(),
+                new Descriptors.FileDescriptor[0]);
+        OUTER = FILE_DESCRIPTOR.findMessageTypeByName("Outer");
+        INNER = FILE_DESCRIPTOR.findMessageTypeByName("Inner");
+        Assertions.assertNotNull(OUTER);
+        Assertions.assertNotNull(INNER);
     }
 
-    @Test
-    void testDescriptorPoolWithCachedDescriptor() {
-        DescriptorPool pool = new DescriptorPool();
-        pool.clearCache();
-        
-        Descriptors.Descriptor mockDesc = mock(Descriptors.Descriptor.class);
-        
-        try {
-            Field field = DescriptorPool.class.getDeclaredField("cachedDescriptor");
-            field.setAccessible(true);
-            field.set(pool, mockDesc);
-            
-            Descriptors.Descriptor result = pool.getDescriptor(String.class);
-            Assertions.assertEquals(mockDesc, result);
-        } catch (Exception e) {
-            Assertions.fail("Failed to set cached descriptor: " + e.getMessage());
+    private static DescriptorProtos.FieldDescriptorProto newField(String name, int number,
+                                                                 DescriptorProtos.FieldDescriptorProto.Type type,
+                                                                 DescriptorProtos.FieldDescriptorProto.Label label,
+                                                                 String typeName) {
+        DescriptorProtos.FieldDescriptorProto.Builder builder = DescriptorProtos.FieldDescriptorProto.newBuilder()
+                .setName(name)
+                .setNumber(number)
+                .setType(type)
+                .setLabel(label);
+        if (typeName != null) {
+            builder.setTypeName(typeName);
+        }
+        return builder.build();
+    }
+
+    /**
+     * A generated protobuf class exposes a static {@code getDescriptor()} method.
+     */
+    public static class OuterHolder {
+        public static Descriptors.Descriptor getDescriptor() {
+            return OUTER;
         }
     }
 
-    @Test
-    void testMatcherOrder() {
-        FileExtensionMatcher matcher = new FileExtensionMatcher(10, FileExtensionMatcher.FILE_PROTOBUF);
-        Assertions.assertEquals(10, matcher.order());
+    private static DynamicMessage newOuterMessage() {
+        DynamicMessage child = DynamicMessage.newBuilder(INNER)
+                .setField(INNER.findFieldByName("value"), 42)
+                .build();
+        DynamicMessage.Builder builder = DynamicMessage.newBuilder(OUTER)
+                .setField(OUTER.findFieldByName("id"), 7)
+                .setField(OUTER.findFieldByName("name"), "seven")
+                .setField(OUTER.findFieldByName("child"), child);
+        builder.addRepeatedField(OUTER.findFieldByName("tags"), "alpha");
+        builder.addRepeatedField(OUTER.findFieldByName("tags"), "beta");
+        builder.addRepeatedField(OUTER.findFieldByName("children"), child);
+        builder.addRepeatedField(OUTER.findFieldByName("children"), child);
+        return builder.build();
     }
 
+    /**
+     * {@code @StructSheet#sheetName} may point at another message declared in the same
+     * {@code .proto} file. Before the fix the message name was ignored entirely.
+     */
     @Test
-    void testMatcherEquals() {
-        FileExtensionMatcher matcher1 = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF);
-        FileExtensionMatcher matcher2 = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF);
-        Assertions.assertEquals(matcher1, matcher2);
-    }
-
-    @Test
-    void testMatcherHashCode() {
-        FileExtensionMatcher matcher1 = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF);
-        FileExtensionMatcher matcher2 = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF);
-        Assertions.assertEquals(matcher1.hashCode(), matcher2.hashCode());
-    }
-
-    @Test
-    void testMatcherToString() {
-        FileExtensionMatcher matcher = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF);
-        String str = matcher.toString();
-        Assertions.assertTrue(str.contains("FileExtensionMatcher"));
-        Assertions.assertTrue(str.contains(".protobuf"));
-    }
-
-    @Test
-    void testConstructorWithDescriptorPool() {
-        DescriptorPool pool = new DescriptorPool();
-        ProtobufStructHandler handler = new ProtobufStructHandler(pool);
-        Assertions.assertNotNull(handler);
-    }
-
-    @Test
-    void testDefaultConstructor() {
+    public void testFindDescriptorByMessageName() {
         ProtobufStructHandler handler = new ProtobufStructHandler();
-        Assertions.assertNotNull(handler);
-        Assertions.assertNotNull(handler.matcher());
+        //  explicit message name is resolved
+        Assertions.assertEquals(INNER, handler.findDescriptor(OuterHolder.class, "Inner"));
+        //  the descriptor's own name resolves to itself
+        Assertions.assertEquals(OUTER, handler.findDescriptor(OuterHolder.class, "Outer"));
+        //  an unknown name falls back to the class descriptor instead of returning null
+        Assertions.assertEquals(OUTER, handler.findDescriptor(OuterHolder.class, "NotExist"));
+        //  no descriptor method at all -> null
+        Assertions.assertNull(handler.findDescriptor(String.class, "Inner"));
+    }
+
+    /**
+     * A nested message is read directly as its {@link Message}, not flattened into
+     * a {@link org.struct.core.StructImpl}. The factory pulls fields straight from
+     * the message, so the intermediate row object is gone.
+     */
+    @Test
+    public void testGetFieldValueFromNestedMessageReturnsMessage() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("child");
+
+        Object child = fd.getFieldValueFrom(newOuterMessage());
+        Assertions.assertInstanceOf(Message.class, child);
+    }
+
+    /**
+     * A repeated scalar field must become a plain {@link List} so that array /
+     * collection fields can be filled element-wise.
+     */
+    @Test
+    public void testGetFieldValueFromRepeatedScalarReturnsList() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("tags");
+
+        Object tags = fd.getFieldValueFrom(newOuterMessage());
+        Assertions.assertInstanceOf(List.class, tags);
+        Assertions.assertEquals(List.of("alpha", "beta"), tags);
+    }
+
+    /**
+     * A repeated message field must be read as a plain {@link List} of
+     * {@link Message} elements (no nested {@code StructImpl}).
+     */
+    @Test
+    public void testGetFieldValueFromRepeatedMessageReturnsListOfMessages() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("children");
+
+        Object children = fd.getFieldValueFrom(newOuterMessage());
+        Assertions.assertInstanceOf(List.class, children);
+        Assertions.assertEquals(2, ((List<?>) children).size());
+        Assertions.assertInstanceOf(Message.class, ((List<?>) children).get(0));
+    }
+
+    /**
+     * A failed parser lookup must NOT be cached: a negative entry used to make
+     * {@code containsKey} return true and {@code get} return null forever,
+     * permanently disabling the message type.
+     */
+    @Test
+    public void testNoNegativeParserCacheEntry() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertTrue(handler.parserCache.isEmpty());
+        //  java.lang.String is neither a Message nor exposes getDescriptor()
+        Assertions.assertNull(handler.findDescriptor(String.class, "Whatever"));
+        Assertions.assertTrue(handler.parserCache.isEmpty(),
+                "a failed lookup must not leave a cache entry behind");
+    }
+
+    /**
+     * The parser cache is shared, because the handler is an SPI singleton.
+     */
+    @Test
+    public void testParserCacheIsThreadSafeMap() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        handler.parserCache.put("k", DynamicMessage.newBuilder(INNER).build().getParserForType());
+        Assertions.assertEquals(1, handler.parserCache.size());
+        Assertions.assertNotNull(handler.parserCache.get("k"));
     }
 
     @Test
-    void testMatcher() {
-        ProtobufStructHandler handler = new ProtobufStructHandler();
-        Assertions.assertNotNull(handler.matcher());
-        
-        File testFile = mock(File.class);
-        doReturn(true).when(testFile).exists();
-        doReturn(true).when(testFile).canRead();
-        doReturn("test.protobuf").when(testFile).getName();
-        Assertions.assertTrue(handler.matcher().matchFile(testFile));
-        
-        File csvFile = mock(File.class);
-        doReturn(true).when(csvFile).exists();
-        doReturn(true).when(csvFile).canRead();
-        doReturn("test.csv").when(csvFile).getName();
-        Assertions.assertFalse(handler.matcher().matchFile(csvFile));
-        
-        Assertions.assertFalse(handler.matcher().matchFile(null));
+    public void testMatcher() {
+        Assertions.assertNotNull(new ProtobufStructHandler().matcher());
     }
 
-    @Test
-    void testReadDelimitedFrom() throws IOException {
-        ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        File tempFile = tempDir.resolve("delimited.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(10);
-            for (int i = 0; i < 10; i++) {
-                fos.write(i);
+    //  ==================================================================
+    //  end to end: real .protobuf binary files loaded through StructWorker
+    //  ==================================================================
+
+    private static Descriptors.Descriptor ITEM;
+
+    @BeforeAll
+    public static void initItem() throws Exception {
+        ITEM = Descriptors.FileDescriptor.buildFrom(
+                DescriptorProtos.FileDescriptorProto.newBuilder()
+                        .setName("item_e2e.proto")
+                        .setPackage("struct.e2e")
+                        .setSyntax("proto3")
+                        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                                .setName("Item")
+                                .addField(newField("id", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .addField(newField("name", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .addField(newField("price", 3, DescriptorProtos.FieldDescriptorProto.Type.TYPE_DOUBLE,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .addField(newField("tags", 4, DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_REPEATED, null))
+                                .build())
+                        .build(),
+                new Descriptors.FileDescriptor[0]).findMessageTypeByName("Item");
+        Assertions.assertNotNull(ITEM);
+    }
+
+    /**
+     * A message with a {@code snake_case} field. proto field names are snake_case by
+     * convention while the corresponding java / bean name is camelCase, so this is
+     * what exercises the JSON-name fallback.
+     */
+    private static Descriptors.Descriptor CFG;
+
+    @BeforeAll
+    public static void initCfg() throws Exception {
+        CFG = Descriptors.FileDescriptor.buildFrom(
+                DescriptorProtos.FileDescriptorProto.newBuilder()
+                        .setName("cfg.proto")
+                        .setPackage("struct.cfg")
+                        .setSyntax("proto3")
+                        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                                .setName("Cfg")
+                                .addField(newField("stack_limit", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .addField(newField("id", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .build())
+                        .build(),
+                new Descriptors.FileDescriptor[0]).findMessageTypeByName("Cfg");
+        Assertions.assertNotNull(CFG);
+    }
+
+    private static DynamicMessage newCfgMessage(int stackLimit) {
+        return DynamicMessage.newBuilder(CFG)
+                .setField(CFG.findFieldByName("stack_limit"), stackLimit)
+                .build();
+    }
+
+    /**
+     * Write {@code count} length-delimited {@code Item} messages into
+     * {@code dir/fileName}, then return the generated file.
+     */
+    private static File writeItems(Path dir, String fileName, int count) throws IOException {
+        File file = dir.resolve(fileName).toFile();
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            for (int i = 1; i <= count; i++) {
+                DynamicMessage.Builder builder = DynamicMessage.newBuilder(ITEM)
+                        .setField(ITEM.findFieldByName("id"), i)
+                        .setField(ITEM.findFieldByName("name"), "item" + i)
+                        .setField(ITEM.findFieldByName("price"), i * 1.5D);
+                builder.addRepeatedField(ITEM.findFieldByName("tags"), "t" + i);
+                builder.build().writeDelimitedTo(out);
             }
         }
-        
-        try (FileInputStream fis = new FileInputStream(tempFile)) {
-            byte[] data = handler.readDelimitedFrom(fis);
-            Assertions.assertNotNull(data);
-            Assertions.assertEquals(10, data.length);
-        }
+        return file;
     }
 
     @Test
-    void testReadDelimitedFromEmptyFile() throws IOException {
+    public void testEndToEnd(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items.protobuf", 3);
+        StructWorker<ItemBean> worker = new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBean.class);
+        ArrayList<ItemBean> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(3, beans.size());
+        ItemBean first = beans.get(0);
+        Assertions.assertEquals(1, first.id);
+        Assertions.assertEquals("item1", first.name);
+        Assertions.assertEquals(1.5D, first.price);
+        //  repeated field -> String[]
+        Assertions.assertArrayEquals(new String[]{"t1"}, first.tags);
+
+        ItemBean last = beans.get(2);
+        Assertions.assertEquals(3, last.id);
+        Assertions.assertEquals("item3", last.name);
+    }
+
+    /**
+     * {@code startOrder} skips the leading messages.
+     */
+    @Test
+    public void testEndToEndWithStartOrder(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items_start.protobuf", 5);
+        StructWorker<ItemBeanStart2> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBeanStart2.class);
+        ArrayList<ItemBeanStart2> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(4, beans.size());
+        Assertions.assertEquals(2, beans.get(0).id, "the first message must be skipped");
+    }
+
+    /**
+     * {@code endOrder} truncates the trailing messages.
+     */
+    @Test
+    public void testEndToEndWithEndOrder(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items_end.protobuf", 5);
+        StructWorker<ItemBeanEnd2> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBeanEnd2.class);
+        ArrayList<ItemBeanEnd2> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(2, beans.size());
+        Assertions.assertEquals(1, beans.get(0).id);
+        Assertions.assertEquals(2, beans.get(1).id);
+    }
+
+    /**
+     * Without an explicit {@code sheetName} the bean's simple name is used as the
+     * message name; it does not match a declared message, so the handler warns and
+     * falls back to the descriptor found on the class.
+     */
+    @Test
+    public void testEndToEndWithDefaultMessageName(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items_default.protobuf", 2);
+        StructWorker<ItemBeanDefaultName> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBeanDefaultName.class);
+        ArrayList<ItemBeanDefaultName> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(2, beans.size());
+        Assertions.assertEquals(1, beans.get(0).id);
+    }
+
+    /**
+     * A bean that is neither a protobuf Message nor exposes a descriptor cannot be
+     * parsed - it must fail loudly instead of silently loading nothing.
+     */
+    @Test
+    public void testNoParser(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "nodesc.protobuf", 1);
         ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        File emptyFile = tempDir.resolve("empty.protobuf").toFile();
-        emptyFile.createNewFile();
-        
-        try (FileInputStream fis = new FileInputStream(emptyFile)) {
-            byte[] data = handler.readDelimitedFrom(fis);
-            Assertions.assertNull(data);
-        }
+        StructWorker<NoDescriptorBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), NoDescriptorBean.class);
+        ArrayList<NoDescriptorBean> sink = new ArrayList<>();
+
+        Assertions.assertThrows(StructTransformException.class, () ->
+                handler.handle(worker, NoDescriptorBean.class, sink::add, tempDir.resolve("nodesc.protobuf").toFile()));
     }
 
+    /**
+     * Malformed content must raise a {@link StructTransformException}
+     * (wrapped {@link com.google.protobuf.InvalidProtocolBufferException}).
+     */
     @Test
-    void testReadDelimitedFromMultiByteVarint() throws IOException {
+    public void testCorruptedData(@TempDir Path tempDir) throws Exception {
+        File bad = tempDir.resolve("bad.protobuf").toFile();
+        try (FileOutputStream out = new FileOutputStream(bad)) {
+            //  an unterminated varint is not a valid length prefix
+            out.write(new byte[]{
+                    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+                    (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF});
+        }
         ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        File tempFile = tempDir.resolve("multibyte.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(0x80);
-            fos.write(0x01);
-            for (int i = 0; i < 128; i++) {
-                fos.write(i);
-            }
-        }
-        
-        try (FileInputStream fis = new FileInputStream(tempFile)) {
-            byte[] data = handler.readDelimitedFrom(fis);
-            Assertions.assertNotNull(data);
-            Assertions.assertEquals(128, data.length);
-        }
+        StructWorker<ItemBean> worker = new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBean.class);
+        ArrayList<ItemBean> sink = new ArrayList<>();
+
+        Assertions.assertThrows(StructTransformException.class, () ->
+                handler.handle(worker, ItemBean.class, sink::add, bad));
     }
 
+    /**
+     * An unreadable "file" (a directory with a matching extension) surfaces as a
+     * {@link StructTransformException} wrapping the {@link IOException}.
+     */
     @Test
-    void testReadDelimitedFromWithIncompleteData() throws IOException {
+    public void testIoFailure(@TempDir Path tempDir) {
+        File dir = tempDir.resolve("adir.protobuf").toFile();
+        Assertions.assertTrue(dir.mkdirs());
+
         ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        File tempFile = tempDir.resolve("incomplete.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(10);
-            fos.write(1);
-            fos.write(2);
+        StructWorker<ItemBean> worker = new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBean.class);
+        ArrayList<ItemBean> sink = new ArrayList<>();
+
+        Assertions.assertThrows(StructTransformException.class, () ->
+                handler.handle(worker, ItemBean.class, sink::add, dir));
+    }
+
+    @StructSheet(fileName = "items.protobuf", sheetName = "Item")
+    public static class ItemBean {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
         }
-        
-        try (FileInputStream fis = new FileInputStream(tempFile)) {
-            byte[] data = handler.readDelimitedFrom(fis);
-            Assertions.assertNull(data);
+
+        public int id;
+        public String name;
+        public double price;
+        public String[] tags;
+    }
+
+    @StructSheet(fileName = "items_start.protobuf", sheetName = "Item", startOrder = 2)
+    public static class ItemBeanStart2 {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
         }
-    }
 
-    @Test
-    void testReadDelimitedFromWithZeroLength() throws IOException {
-        ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        File tempFile = tempDir.resolve("zero.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(0);
-        }
-        
-        try (FileInputStream fis = new FileInputStream(tempFile)) {
-            byte[] data = handler.readDelimitedFrom(fis);
-            Assertions.assertNotNull(data);
-            Assertions.assertEquals(0, data.length);
-        }
-    }
-
-    @Test
-    void testMatcherWithNullFile() {
-        FileExtensionMatcher matcher = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF);
-        Assertions.assertFalse(matcher.matchFile(null));
-    }
-
-    @Test
-    void testMatcherWithNonExistentFile() {
-        FileExtensionMatcher matcher = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF);
-        File nonExistent = new File("nonexistent.protobuf");
-        Assertions.assertFalse(matcher.matchFile(nonExistent));
-    }
-
-    @Test
-    void testMatcherWithMultipleExtensions() {
-        FileExtensionMatcher matcher = new FileExtensionMatcher(FileExtensionMatcher.FILE_PROTOBUF, FileExtensionMatcher.FILE_JSON);
-        
-        File protoFile = mock(File.class);
-        doReturn(true).when(protoFile).exists();
-        doReturn(true).when(protoFile).canRead();
-        doReturn("test.protobuf").when(protoFile).getName();
-        Assertions.assertTrue(matcher.matchFile(protoFile));
-        
-        File jsonFile = mock(File.class);
-        doReturn(true).when(jsonFile).exists();
-        doReturn(true).when(jsonFile).canRead();
-        doReturn("test.json").when(jsonFile).getName();
-        Assertions.assertTrue(matcher.matchFile(jsonFile));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleWithNullDescriptor() throws IOException {
-        DescriptorPool mockPool = mock(DescriptorPool.class);
-        when(mockPool.getDescriptor(any(Class.class))).thenReturn(null);
-        
-        ProtobufStructHandler handler = new ProtobufStructHandler(mockPool);
-        
-        StructWorker<TestBean> worker = mock(StructWorker.class);
-        StructDescriptor descriptor = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(descriptor);
-        when(descriptor.getStartOrder()).thenReturn(0);
-        when(descriptor.getEndOrder()).thenReturn(0);
-        
-        File tempFile = tempDir.resolve("test.protobuf").toFile();
-        tempFile.createNewFile();
-        
-        Consumer<TestBean> consumer = mock(Consumer.class);
-        
-        Assertions.assertThrows(org.struct.exception.StructTransformException.class, () -> {
-            handler.handle(worker, TestBean.class, consumer, tempFile);
-        });
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleWithDataAndBreakOnNullData() throws IOException {
-        DescriptorPool mockPool = mock(DescriptorPool.class);
-        Descriptors.Descriptor mockDescriptor = mock(Descriptors.Descriptor.class);
-        when(mockPool.getDescriptor(any(Class.class))).thenReturn(mockDescriptor);
-        
-        ProtobufStructHandler handler = new ProtobufStructHandler(mockPool);
-        
-        File tempFile = tempDir.resolve("test.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(5);
-            fos.write(1);
-        }
-        
-        StructWorker<TestBean> worker = mock(StructWorker.class);
-        StructDescriptor descriptor = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(descriptor);
-        when(descriptor.getStartOrder()).thenReturn(0);
-        when(descriptor.getEndOrder()).thenReturn(0);
-        
-        ArrayList<TestBean> results = new ArrayList<>();
-        Consumer<TestBean> consumer = results::add;
-        
-        handler.handle(worker, TestBean.class, consumer, tempFile);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleWithIOException() throws IOException {
-        DescriptorPool mockPool = mock(DescriptorPool.class);
-        Descriptors.Descriptor mockDescriptor = mock(Descriptors.Descriptor.class);
-        when(mockPool.getDescriptor(any(Class.class))).thenReturn(mockDescriptor);
-        
-        ProtobufStructHandler handler = new ProtobufStructHandler(mockPool);
-        
-        File tempFile = tempDir.resolve("test3.protobuf").toFile();
-        
-        StructWorker<TestBean> worker = mock(StructWorker.class);
-        StructDescriptor descriptor = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(descriptor);
-        when(descriptor.getStartOrder()).thenReturn(0);
-        when(descriptor.getEndOrder()).thenReturn(0);
-        
-        ArrayList<TestBean> results = new ArrayList<>();
-        Consumer<TestBean> consumer = results::add;
-        
-        Assertions.assertThrows(org.struct.exception.StructTransformException.class, () -> {
-            handler.handle(worker, TestBean.class, consumer, tempFile);
-        });
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testConvertToStructImpl() throws Exception {
-        ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        Descriptors.Descriptor mockDescriptor = mock(Descriptors.Descriptor.class);
-        Descriptors.FieldDescriptor idField = mock(Descriptors.FieldDescriptor.class);
-        Descriptors.FieldDescriptor nameField = mock(Descriptors.FieldDescriptor.class);
-        
-        when(mockDescriptor.getFields()).thenReturn(List.of(idField, nameField));
-        when(idField.getName()).thenReturn("id");
-        when(nameField.getName()).thenReturn("name");
-        when(idField.isRepeated()).thenReturn(false);
-        when(nameField.isRepeated()).thenReturn(false);
-        
-        DynamicMessage mockMessage = mock(DynamicMessage.class);
-        when(mockMessage.getDescriptorForType()).thenReturn(mockDescriptor);
-        when(mockMessage.getField(idField)).thenReturn(1);
-        when(mockMessage.getField(nameField)).thenReturn("Test");
-        
-        StructImpl struct = handler.convertToStructImpl(mockMessage);
-        Assertions.assertNotNull(struct);
-        Assertions.assertEquals("1", struct.get("id"));
-        Assertions.assertEquals("Test", struct.get("name"));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testConvertToStructImplWithNullValue() throws Exception {
-        ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        Descriptors.Descriptor mockDescriptor = mock(Descriptors.Descriptor.class);
-        Descriptors.FieldDescriptor idField = mock(Descriptors.FieldDescriptor.class);
-        
-        when(mockDescriptor.getFields()).thenReturn(List.of(idField));
-        when(idField.getName()).thenReturn("id");
-        when(idField.isRepeated()).thenReturn(false);
-        
-        DynamicMessage mockMessage = mock(DynamicMessage.class);
-        when(mockMessage.getDescriptorForType()).thenReturn(mockDescriptor);
-        when(mockMessage.getField(idField)).thenReturn(null);
-        
-        StructImpl struct = handler.convertToStructImpl(mockMessage);
-        Assertions.assertNotNull(struct);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testConvertToStructImplWithRepeated() throws Exception {
-        ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        Descriptors.Descriptor mockDescriptor = mock(Descriptors.Descriptor.class);
-        Descriptors.FieldDescriptor tagsField = mock(Descriptors.FieldDescriptor.class);
-        
-        when(mockDescriptor.getFields()).thenReturn(List.of(tagsField));
-        when(tagsField.getName()).thenReturn("tags");
-        when(tagsField.isRepeated()).thenReturn(true);
-        
-        DynamicMessage mockMessage = mock(DynamicMessage.class);
-        when(mockMessage.getDescriptorForType()).thenReturn(mockDescriptor);
-        when(mockMessage.getField(tagsField)).thenReturn(List.of("a", "b", "c"));
-        
-        StructImpl struct = handler.convertToStructImpl(mockMessage);
-        Assertions.assertNotNull(struct);
-        Assertions.assertEquals("a,b,c", struct.get("tags"));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testConvertToStructImplWithRepeatedEmptyList() throws Exception {
-        ProtobufStructHandler handler = new ProtobufStructHandler();
-        
-        Descriptors.Descriptor mockDescriptor = mock(Descriptors.Descriptor.class);
-        Descriptors.FieldDescriptor tagsField = mock(Descriptors.FieldDescriptor.class);
-        
-        when(mockDescriptor.getFields()).thenReturn(List.of(tagsField));
-        when(tagsField.getName()).thenReturn("tags");
-        when(tagsField.isRepeated()).thenReturn(true);
-        
-        DynamicMessage mockMessage = mock(DynamicMessage.class);
-        when(mockMessage.getDescriptorForType()).thenReturn(mockDescriptor);
-        when(mockMessage.getField(tagsField)).thenReturn(List.of());
-        
-        StructImpl struct = handler.convertToStructImpl(mockMessage);
-        Assertions.assertNotNull(struct);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testHandleWithParseError() throws IOException {
-        DescriptorPool mockPool = mock(DescriptorPool.class);
-        Descriptors.Descriptor mockDescriptor = mock(Descriptors.Descriptor.class);
-        when(mockPool.getDescriptor(any(Class.class))).thenReturn(mockDescriptor);
-        
-        ProtobufStructHandler handler = new ProtobufStructHandler(mockPool);
-        
-        File tempFile = tempDir.resolve("invalid.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(10);
-        }
-        
-        StructWorker<TestBean> worker = mock(StructWorker.class);
-        StructDescriptor descriptor = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(descriptor);
-        when(descriptor.getStartOrder()).thenReturn(0);
-        when(descriptor.getEndOrder()).thenReturn(0);
-        
-        ArrayList<TestBean> results = new ArrayList<>();
-        Consumer<TestBean> consumer = results::add;
-        
-        handler.handle(worker, TestBean.class, consumer, tempFile);
-    }
-
-    @Test
-    void testFullFlowWithRealProtobufData() throws Exception {
-        PersonDescriptorPool pool = new PersonDescriptorPool();
-        ProtobufStructHandler handler = new ProtobufStructHandler(pool);
-        
-        File tempFile = tempDir.resolve("person_real.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(PERSON_DATA);
-        }
-        
-        StructWorker<PersonBean> worker = mock(StructWorker.class);
-        StructDescriptor sd = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(sd);
-        when(sd.getStartOrder()).thenReturn(0);
-        when(sd.getEndOrder()).thenReturn(0);
-        
-        ArrayList<PersonBean> results = new ArrayList<>();
-        when(worker.createInstance(any(StructImpl.class))).thenAnswer(invocation -> {
-            StructImpl struct = invocation.getArgument(0);
-            PersonBean bean = new PersonBean();
-            bean.id = Integer.parseInt((String) struct.get("id"));
-            bean.name = (String) struct.get("name");
-            bean.email = (String) struct.get("email");
-            bean.age = Integer.parseInt((String) struct.get("age"));
-            return Optional.of(bean);
-        });
-        
-        handler.handle(worker, PersonBean.class, results::add, tempFile);
-        
-        Assertions.assertEquals(3, results.size());
-        Assertions.assertEquals(1, results.get(0).id);
-        Assertions.assertEquals("Alice", results.get(0).name);
-        Assertions.assertEquals("alice@test.com", results.get(0).email);
-        Assertions.assertEquals(25, results.get(0).age);
-    }
-
-    @Test
-    void testFullFlowWithStartOrder() throws Exception {
-        PersonDescriptorPool pool = new PersonDescriptorPool();
-        ProtobufStructHandler handler = new ProtobufStructHandler(pool);
-        
-        File tempFile = tempDir.resolve("person_start.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(PERSON_FIVE_DATA);
-        }
-        
-        StructWorker<PersonBean> worker = mock(StructWorker.class);
-        StructDescriptor sd = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(sd);
-        when(sd.getStartOrder()).thenReturn(2);
-        when(sd.getEndOrder()).thenReturn(0);
-        
-        ArrayList<PersonBean> results = new ArrayList<>();
-        when(worker.createInstance(any(StructImpl.class))).thenAnswer(invocation -> {
-            StructImpl struct = invocation.getArgument(0);
-            PersonBean bean = new PersonBean();
-            bean.id = Integer.parseInt((String) struct.get("id"));
-            bean.name = (String) struct.get("name");
-            bean.email = (String) struct.get("email");
-            bean.age = Integer.parseInt((String) struct.get("age"));
-            return Optional.of(bean);
-        });
-        
-        handler.handle(worker, PersonBean.class, results::add, tempFile);
-        
-        Assertions.assertEquals(4, results.size());
-        Assertions.assertEquals(2, results.get(0).id);
-    }
-
-    @Test
-    void testFullFlowWithEndOrder() throws Exception {
-        PersonDescriptorPool pool = new PersonDescriptorPool();
-        ProtobufStructHandler handler = new ProtobufStructHandler(pool);
-        
-        File tempFile = tempDir.resolve("person_end.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(PERSON_FIVE_DATA);
-        }
-        
-        StructWorker<PersonBean> worker = mock(StructWorker.class);
-        StructDescriptor sd = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(sd);
-        when(sd.getStartOrder()).thenReturn(0);
-        when(sd.getEndOrder()).thenReturn(3);
-        
-        ArrayList<PersonBean> results = new ArrayList<>();
-        when(worker.createInstance(any(StructImpl.class))).thenAnswer(invocation -> {
-            StructImpl struct = invocation.getArgument(0);
-            PersonBean bean = new PersonBean();
-            bean.id = Integer.parseInt((String) struct.get("id"));
-            bean.name = (String) struct.get("name");
-            bean.email = (String) struct.get("email");
-            bean.age = Integer.parseInt((String) struct.get("age"));
-            return Optional.of(bean);
-        });
-        
-        handler.handle(worker, PersonBean.class, results::add, tempFile);
-        
-        Assertions.assertEquals(3, results.size());
-        Assertions.assertEquals(3, results.get(2).id);
-    }
-
-    @Test
-    void testFullFlowWithStartAndEndOrder() throws Exception {
-        PersonDescriptorPool pool = new PersonDescriptorPool();
-        ProtobufStructHandler handler = new ProtobufStructHandler(pool);
-        
-        File tempFile = tempDir.resolve("person_range.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(PERSON_FIVE_DATA);
-        }
-        
-        StructWorker<PersonBean> worker = mock(StructWorker.class);
-        StructDescriptor sd = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(sd);
-        when(sd.getStartOrder()).thenReturn(2);
-        when(sd.getEndOrder()).thenReturn(3);
-        
-        ArrayList<PersonBean> results = new ArrayList<>();
-        when(worker.createInstance(any(StructImpl.class))).thenAnswer(invocation -> {
-            StructImpl struct = invocation.getArgument(0);
-            PersonBean bean = new PersonBean();
-            bean.id = Integer.parseInt((String) struct.get("id"));
-            bean.name = (String) struct.get("name");
-            bean.email = (String) struct.get("email");
-            bean.age = Integer.parseInt((String) struct.get("age"));
-            return Optional.of(bean);
-        });
-        
-        handler.handle(worker, PersonBean.class, results::add, tempFile);
-        
-        Assertions.assertEquals(2, results.size());
-        Assertions.assertEquals(2, results.get(0).id);
-        Assertions.assertEquals(3, results.get(1).id);
-    }
-
-    @Test
-    void testFullFlowWithEmptyDataLength() throws Exception {
-        PersonDescriptorPool pool = new PersonDescriptorPool();
-        ProtobufStructHandler handler = new ProtobufStructHandler(pool);
-        
-        File tempFile = tempDir.resolve("person_empty.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(PERSON_EMPTY_LEN_DATA);
-        }
-        
-        StructWorker<PersonBean> worker = mock(StructWorker.class);
-        StructDescriptor sd = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(sd);
-        when(sd.getStartOrder()).thenReturn(0);
-        when(sd.getEndOrder()).thenReturn(0);
-        
-        ArrayList<PersonBean> results = new ArrayList<>();
-        Consumer<PersonBean> consumer = results::add;
-        
-        handler.handle(worker, PersonBean.class, consumer, tempFile);
-        
-        Assertions.assertEquals(0, results.size());
-    }
-
-    @Test
-    void testFullFlowWithInvalidData() throws Exception {
-        PersonDescriptorPool pool = new PersonDescriptorPool();
-        ProtobufStructHandler handler = new ProtobufStructHandler(pool);
-        
-        File tempFile = tempDir.resolve("person_invalid.protobuf").toFile();
-        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-            fos.write(PERSON_INVALID_DATA);
-        }
-        
-        StructWorker<PersonBean> worker = mock(StructWorker.class);
-        StructDescriptor sd = mock(StructDescriptor.class);
-        when(worker.getDescriptor()).thenReturn(sd);
-        when(sd.getStartOrder()).thenReturn(0);
-        when(sd.getEndOrder()).thenReturn(0);
-        
-        ArrayList<PersonBean> results = new ArrayList<>();
-        Consumer<PersonBean> consumer = results::add;
-        
-        handler.handle(worker, PersonBean.class, consumer, tempFile);
-        
-        Assertions.assertEquals(0, results.size());
-    }
-
-    static class TestBean {
         public int id;
         public String name;
     }
 
-    @StructSheet(fileName = "person.protobuf")
-    static class PersonBean {
-        @StructField(name = "id")
+    @StructSheet(fileName = "items_end.protobuf", sheetName = "Item", endOrder = 2)
+    public static class ItemBeanEnd2 {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
+        }
+
         public int id;
-        @StructField(name = "name")
         public String name;
-        @StructField(name = "email")
-        public String email;
-        @StructField(name = "age")
-        public int age;
     }
 
-    static class PersonDescriptorPool extends DescriptorPool {
+    @StructSheet(fileName = "items_default.protobuf")
+    public static class ItemBeanDefaultName {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
+        }
+
+        public int id;
+    }
+
+    @StructSheet(fileName = "nodesc.protobuf", sheetName = "NoSuchMessage")
+    public static class NoDescriptorBean {
+        public int id;
+    }
+
+    //  ==================================================================
+    //  Path A: the target bean IS a protoc-generated protobuf Message.
+    //  The parsed message is the bean itself - no intermediate StructImpl.
+    //  ==================================================================
+
+    /**
+     * {@code Message.class.isAssignableFrom(clz)} routes to {@link #getMessageParser(Class)},
+     * never to the descriptor fallback. This is the core of "pb -> Message bean, no StructImpl".
+     */
+    @Test
+    public void testGetParserRoutesMessageToStaticParser() throws Exception {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        //  a Message subclass must go through getMessageParser (static parser()),
+        //  not findDescriptor()/DynamicMessage.
+        Parser<?> parser = handler.getParser(FakeMessageBean.class, "Fake");
+        Assertions.assertNotNull(parser);
+        //  the cache key is messageName:className; the entry must exist after a lookup.
+        Assertions.assertFalse(handler.parserCache.isEmpty());
+    }
+
+    /**
+     * A class that claims to be a Message (or is routed as one) but has no usable
+     * static {@code parser()} must fail loudly - the previous silent downgrade to
+     * DynamicMessage produced wrong-but-empty data.
+     */
+    @Test
+    public void testMessageWithoutParserThrows() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        //  BrokenMessageBean IS a Message but has no static parser() -> getMessageParser must throw,
+        //  proving path A no longer silently downgrades to the descriptor path.
+        Assertions.assertThrows(StructTransformException.class,
+                () -> handler.getParser(BrokenMessageBean.class, "Any"));
+    }
+
+    /**
+     * The parser is built once per (message, class) pair and then served from the
+     * cache - not rebuilt for every row.
+     */
+    @Test
+    public void testParserCacheHitReturnsSameParser() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Parser<?> first = handler.getParser(FakeMessageBean.class, "Cached");
+        Parser<?> second = handler.getParser(FakeMessageBean.class, "Cached");
+
+        Assertions.assertNotNull(first);
+        Assertions.assertSame(first, second);
+        Assertions.assertEquals(1, handler.parserCache.size());
+    }
+
+    /**
+     * A Message whose {@code getParserForType()} returns null is a broken generated
+     * class. A null parser must fail loudly - returning it would NPE on the first row.
+     */
+    @Test
+    public void testMessageWithNullParserThrows() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertThrows(StructTransformException.class,
+                () -> handler.getParser(NullParserMessageBean.class, "NullParser"));
+    }
+
+    /**
+     * Generated Message classes ship a public no-arg constructor. A Message without
+     * one cannot be instantiated reflectively and must fail loudly.
+     */
+    @Test
+    public void testMessageWithoutPublicNoArgCtorThrows() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertThrows(StructTransformException.class,
+                () -> handler.getParser(PrivateCtorMessageBean.class, "PrivateCtor"));
+    }
+
+    /**
+     * Older protoc versions expose {@code descriptor()} instead of
+     * {@code getDescriptor()}. A {@code getDescriptor()} that returns null must not
+     * abort the lookup - the next candidate method name is tried.
+     */
+    @Test
+    public void testFindDescriptorSkipsNullDescriptorMethod() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertEquals(ITEM, handler.findDescriptor(NullGetDescriptorHolder.class, "Item"));
+    }
+
+    /**
+     * A null / blank message name means "use whatever descriptor the class exposes";
+     * no lookup by name is attempted.
+     */
+    @Test
+    public void testFindDescriptorWithBlankMessageName() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertEquals(OUTER, handler.findDescriptor(OuterHolder.class, null));
+        Assertions.assertEquals(OUTER, handler.findDescriptor(OuterHolder.class, ""));
+    }
+
+    /**
+     * A single (non-repeated) scalar field is read straight from the message via
+     * {@link SingleFieldDescriptor#getFieldValueFrom(Object)} - no intermediate
+     * {@link StructImpl} is ever produced in path A/path B.
+     */
+    @Test
+    public void testGetFieldValueFromScalarField() {
+        SingleFieldDescriptor idFd = new SingleFieldDescriptor();
+        idFd.setName("id");
+        Assertions.assertEquals(7, idFd.getFieldValueFrom(newOuterMessage()));
+
+        SingleFieldDescriptor nameFd = new SingleFieldDescriptor();
+        nameFd.setName("name");
+        Assertions.assertEquals("seven", nameFd.getFieldValueFrom(newOuterMessage()));
+    }
+
+    /**
+     * proto field names are {@code snake_case} by convention while the bean field is
+     * {@code camelCase}, so the protobuf JSON name is used as a fallback. Both
+     * {@code stack_limit} and {@code stackLimit} must resolve to the same field.
+     */
+    @Test
+    public void testGetFieldValueFromJsonName() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("stackLimit");
+        Assertions.assertEquals(99, fd.getFieldValueFrom(newCfgMessage(99)));
+    }
+
+    /**
+     * A name that exists neither verbatim nor as a JSON name is simply absent - it
+     * resolves to {@code null} rather than throwing.
+     */
+    @Test
+    public void testGetFieldValueFromUnknownFieldReturnsNull() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("no_such_field");
+        Assertions.assertNull(fd.getFieldValueFrom(newOuterMessage()));
+    }
+
+    /**
+     * A null / blank field name cannot be resolved; the value is absent, not an error.
+     */
+    @Test
+    public void testGetFieldValueFromBlankNameReturnsNull() {
+        SingleFieldDescriptor nullFd = new SingleFieldDescriptor();
+        nullFd.setName(null);
+        Assertions.assertNull(nullFd.getFieldValueFrom(newOuterMessage()));
+
+        SingleFieldDescriptor emptyFd = new SingleFieldDescriptor();
+        emptyFd.setName("");
+        Assertions.assertNull(emptyFd.getFieldValueFrom(newOuterMessage()));
+    }
+
+    /**
+     * An empty repeated field is "absent" - the same contract a missing
+     * {@link org.struct.core.StructImpl} key has.
+     */
+    @Test
+    public void testGetFieldValueFromEmptyRepeatedReturnsNull() {
+        DynamicMessage noTags = DynamicMessage.newBuilder(OUTER)
+                .setField(OUTER.findFieldByName("id"), 1)
+                .build();
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("tags");
+        Assertions.assertNull(fd.getFieldValueFrom(noTags));
+    }
+
+    /**
+     * proto3 omits fields holding the type default, but {@code getField} still returns
+     * that default. An unset field must read as {@code null} so that {@code required}
+     * validation and the converters see "absent" rather than {@code 0} / {@code ""}.
+     */
+    @Test
+    public void testGetFieldValueFromUnsetScalarReturnsNull() {
+        DynamicMessage onlyId = DynamicMessage.newBuilder(OUTER)
+                .setField(OUTER.findFieldByName("id"), 1)
+                .build();
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("name");
+        Assertions.assertNull(fd.getFieldValueFrom(onlyId));
+    }
+
+    /**
+     * The memoized {@link Descriptors.FieldDescriptor} is bound to the message
+     * descriptor it was resolved from. A different descriptor must force a re-resolve
+     * instead of reading a same-named field off the wrong message.
+     */
+    @Test
+    public void testFieldValueCacheAcrossDifferentDescriptors() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("id");
+
+        Assertions.assertEquals(7, fd.getFieldValueFrom(newOuterMessage()));
+
+        DynamicMessage item = DynamicMessage.newBuilder(ITEM)
+                .setField(ITEM.findFieldByName("id"), 42)
+                .build();
+        Assertions.assertEquals(42, fd.getFieldValueFrom(item));
+    }
+
+    /**
+     * End-to-end path A via the zero-annotation entry point:
+     * {@code new StructWorker<>(workspace, MessageClass, fileName)}. A protoc-generated
+     * Message subclass carries no @StructSheet (regenerated on every build), so the
+     * fileName is supplied explicitly and the message name defaults to the simple class name.
+     */
+    @Test
+    public void testZeroAnnotationMessageEntryPoint(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "fake.bin", 2);
+        //  FakeMessageBean has no @StructSheet - uses the explicit-fileName constructor.
+        StructWorker<FakeMessageBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), FakeMessageBean.class, "fake.bin");
+        ArrayList<FakeMessageBean> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(2, beans.size());
+        Assertions.assertInstanceOf(Message.class, beans.get(0));
+        Assertions.assertEquals("item1",
+                ((FakeMessageBean) beans.get(0)).<String>getField(ITEM.findFieldByName("name")));
+    }
+
+    /**
+     * A plain (non-Message) class without @StructSheet must be rejected by the
+     * explicit-fileName constructor - it cannot be loaded as a protobuf target.
+     */
+    @Test
+    public void testNonMessageWithoutAnnotationRejected() {
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new StructWorker<>(".", NotAMessageBean.class, "x.bin"));
+    }
+
+    /**
+     * A bean that is a Message subclass but fails to produce a parser must fail loudly
+     * during handling, not silently load nothing.
+     */
+    @Test
+    public void testHandleMessageWithBrokenParser(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "broken.protobuf", 1);
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        StructWorker<BrokenMessageBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), BrokenMessageBean.class);
+        ArrayList<BrokenMessageBean> sink = new ArrayList<>();
+
+        Assertions.assertThrows(StructTransformException.class, () ->
+                handler.handle(worker, BrokenMessageBean.class, sink::add,
+                        tempDir.resolve("broken.protobuf").toFile()));
+    }
+
+    /**
+     * With an empty {@code sheetName} the message name falls back to the bean's simple
+     * class name. It matches no declared message, so the handler warns and keeps the
+     * descriptor exposed by the class - the data still loads.
+     */
+    @Test
+    public void testDefaultMessageNameWhenSheetNameEmpty(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items_empty_sheet.protobuf", 2);
+        StructWorker<EmptySheetNameBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), EmptySheetNameBean.class);
+        ArrayList<EmptySheetNameBean> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(2, beans.size());
+        Assertions.assertEquals(1, beans.get(0).id);
+    }
+
+    /**
+     * {@link org.struct.core.StructDescriptor} is mutable and may carry no sheet name
+     * at all; the message name then falls back to the simple class name too.
+     */
+    @Test
+    public void testNullSheetNameFallsBackToClassName(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items.protobuf", 1);
+        StructWorker<ItemBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBean.class);
+        worker.getDescriptor().setSheetName(null);
+
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        //  normally driven by toList(); required before createInstance() can be called
+        worker.checkStructFactory();
+        ArrayList<ItemBean> beans = new ArrayList<>();
+        handler.handle(worker, ItemBean.class, beans::add, tempDir.resolve("items.protobuf").toFile());
+
+        Assertions.assertEquals(1, beans.size());
+        Assertions.assertTrue(handler.parserCache.containsKey("ItemBean:" + ItemBean.class.getName()),
+                "a null sheetName must fall back to the simple class name");
+    }
+
+    /**
+     * A truncated message met while {@code startOrder} is skipping rows must end the
+     * load - it must neither loop forever nor escape the handler.
+     */
+    @Test
+    public void testStartOrderSkipStopsOnTruncatedStream(@TempDir Path tempDir) throws Exception {
+        File file = tempDir.resolve("trunc.protobuf").toFile();
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            //  declares a 10 byte message but provides only 2 -> truncated
+            out.write(new byte[]{10, 1, 2});
+        }
+        StructWorker<TruncatedStartOrderBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), TruncatedStartOrderBean.class);
+        ArrayList<TruncatedStartOrderBean> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(0, beans.size());
+    }
+
+    /**
+     * For an {@code @StructSheet}-annotated class the annotation wins; the explicit
+     * fileName argument is ignored, keeping this entry point consistent with the
+     * primary constructor.
+     */
+    @Test
+    public void testAnnotatedClassPrefersAnnotation() {
+        StructWorker<ItemBean> worker =
+                new StructWorker<>(".", ItemBean.class, "ignored.bin");
+
+        Assertions.assertEquals("items.protobuf", worker.getDescriptor().getFileName());
+        Assertions.assertEquals("Item", worker.getDescriptor().getSheetName());
+    }
+
+    /**
+     * Minimal hand-written protobuf Message subclass standing in for a protoc-generated
+     * class. It delegates to an inner {@link DynamicMessage} and exposes a static
+     * {@code parser()} so the handler takes path A. Intentionally small (id/name only).
+     * <p>
+     * Note: this stands in for a real protoc class - the real end-to-end Message path is
+     * exercised in struct-examples with an actual generated class.
+     */
+    public static class FakeMessageBean extends AbstractMessage implements Message {
+        private final DynamicMessage inner;
+
+        public FakeMessageBean() {
+            this.inner = DynamicMessage.getDefaultInstance(ITEM);
+        }
+
+        FakeMessageBean(DynamicMessage inner) {
+            this.inner = inner;
+        }
+
+        public static Parser<FakeMessageBean> parser() {
+            return new AbstractParser<>() {
+                @Override
+                public FakeMessageBean parsePartialFrom(CodedInputStream input, ExtensionRegistryLite extensionRegistry)
+                        throws InvalidProtocolBufferException {
+                    try {
+                        DynamicMessage dm = DynamicMessage.parseFrom(ITEM, input);
+                        return new FakeMessageBean(dm);
+                    } catch (IOException e) {
+                        throw new InvalidProtocolBufferException(e);
+                    }
+                }
+            };
+        }
+
         @Override
-        public Descriptors.Descriptor getDescriptor(Class<?> clazz) {
-            return PersonProto.Person.getDescriptor();
+        public Parser<FakeMessageBean> getParserForType() {
+            return parser();
+        }
+
+        @Override
+        public Descriptors.Descriptor getDescriptorForType() {
+            return ITEM;
+        }
+
+        @Override
+        public Message getDefaultInstanceForType() {
+            return new FakeMessageBean(DynamicMessage.getDefaultInstance(ITEM));
+        }
+
+        @Override
+        public boolean isInitialized() {
+            return true;
+        }
+
+        @Override
+        public Message.Builder newBuilderForType() {
+            return null;
+        }
+
+        @Override
+        public Message.Builder toBuilder() {
+            return null;
+        }
+
+        @Override
+        public Map<Descriptors.FieldDescriptor, Object> getAllFields() {
+            return inner.getAllFields();
+        }
+
+        @Override
+        public boolean hasField(Descriptors.FieldDescriptor field) {
+            return inner.hasField(field);
+        }
+
+        @Override
+        public Object getField(Descriptors.FieldDescriptor field) {
+            return inner.getField(field);
+        }
+
+        @Override
+        public int getRepeatedFieldCount(Descriptors.FieldDescriptor field) {
+            return inner.getRepeatedFieldCount(field);
+        }
+
+        @Override
+        public Object getRepeatedField(Descriptors.FieldDescriptor field, int index) {
+            return inner.getRepeatedField(field, index);
+        }
+
+        @Override
+        public UnknownFieldSet getUnknownFields() {
+            return UnknownFieldSet.getDefaultInstance();
+        }
+
+        @Override
+        public void writeTo(CodedOutputStream output) throws IOException {
+            inner.writeTo(output);
+        }
+
+        @Override
+        public int getSerializedSize() {
+            return inner.getSerializedSize();
+        }
+    }
+
+    /** A Message subclass whose static parser() is absent - must fail loudly. */
+    @StructSheet(fileName = "broken.protobuf", sheetName = "Broken")
+    public static class BrokenMessageBean extends AbstractMessage implements Message {
+        @Override
+        public Parser<BrokenMessageBean> getParserForType() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Descriptors.Descriptor getDescriptorForType() {
+            return ITEM;
+        }
+
+        @Override
+        public Message getDefaultInstanceForType() {
+            return new BrokenMessageBean();
+        }
+
+        @Override
+        public boolean isInitialized() {
+            return true;
+        }
+
+        @Override
+        public Message.Builder newBuilderForType() {
+            return null;
+        }
+
+        @Override
+        public Message.Builder toBuilder() {
+            return null;
+        }
+
+        @Override
+        public Map<Descriptors.FieldDescriptor, Object> getAllFields() {
+            return Map.of();
+        }
+
+        @Override
+        public boolean hasField(Descriptors.FieldDescriptor field) {
+            return false;
+        }
+
+        @Override
+        public Object getField(Descriptors.FieldDescriptor field) {
+            return null;
+        }
+
+        @Override
+        public int getRepeatedFieldCount(Descriptors.FieldDescriptor field) {
+            return 0;
+        }
+
+        @Override
+        public Object getRepeatedField(Descriptors.FieldDescriptor field, int index) {
+            return null;
+        }
+
+        @Override
+        public UnknownFieldSet getUnknownFields() {
+            return UnknownFieldSet.getDefaultInstance();
+        }
+
+        @Override
+        public void writeTo(CodedOutputStream output) {
+        }
+
+        @Override
+        public int getSerializedSize() {
+            return 0;
+        }
+    }
+
+    /** A plain (non-Message) class - sanity anchor for the dynamic-message path. */
+    public static class NotAMessageBean {
+        public int id;
+    }
+
+    /** {@code sheetName} is empty, so the message name falls back to the simple class name. */
+    @StructSheet(fileName = "items_empty_sheet.protobuf", sheetName = "")
+    public static class EmptySheetNameBean {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
+        }
+
+        public int id;
+        public String name;
+    }
+
+    /** Skips the first message, so the truncated remainder is met while skipping. */
+    @StructSheet(fileName = "trunc.protobuf", sheetName = "Item", startOrder = 2)
+    public static class TruncatedStartOrderBean {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
+        }
+
+        public int id;
+    }
+
+    /** A Message whose {@code getParserForType()} returns null - a broken generated class. */
+    public static class NullParserMessageBean extends AbstractMessage implements Message {
+        @Override
+        public Parser<NullParserMessageBean> getParserForType() {
+            return null;
+        }
+
+        @Override
+        public Descriptors.Descriptor getDescriptorForType() {
+            return ITEM;
+        }
+
+        @Override
+        public Message getDefaultInstanceForType() {
+            return new NullParserMessageBean();
+        }
+
+        @Override
+        public boolean isInitialized() {
+            return true;
+        }
+
+        @Override
+        public Message.Builder newBuilderForType() {
+            return null;
+        }
+
+        @Override
+        public Message.Builder toBuilder() {
+            return null;
+        }
+
+        @Override
+        public Map<Descriptors.FieldDescriptor, Object> getAllFields() {
+            return Map.of();
+        }
+
+        @Override
+        public boolean hasField(Descriptors.FieldDescriptor field) {
+            return false;
+        }
+
+        @Override
+        public Object getField(Descriptors.FieldDescriptor field) {
+            return null;
+        }
+
+        @Override
+        public int getRepeatedFieldCount(Descriptors.FieldDescriptor field) {
+            return 0;
+        }
+
+        @Override
+        public Object getRepeatedField(Descriptors.FieldDescriptor field, int index) {
+            return null;
+        }
+
+        @Override
+        public UnknownFieldSet getUnknownFields() {
+            return UnknownFieldSet.getDefaultInstance();
+        }
+
+        @Override
+        public void writeTo(CodedOutputStream output) {
+        }
+
+        @Override
+        public int getSerializedSize() {
+            return 0;
+        }
+    }
+
+    /** A Message without a public no-arg constructor - cannot be instantiated reflectively. */
+    public static class PrivateCtorMessageBean extends AbstractMessage implements Message {
+        private PrivateCtorMessageBean() {
+        }
+
+        @Override
+        public Parser<PrivateCtorMessageBean> getParserForType() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Descriptors.Descriptor getDescriptorForType() {
+            return ITEM;
+        }
+
+        @Override
+        public Message getDefaultInstanceForType() {
+            return null;
+        }
+
+        @Override
+        public boolean isInitialized() {
+            return true;
+        }
+
+        @Override
+        public Message.Builder newBuilderForType() {
+            return null;
+        }
+
+        @Override
+        public Message.Builder toBuilder() {
+            return null;
+        }
+
+        @Override
+        public Map<Descriptors.FieldDescriptor, Object> getAllFields() {
+            return Map.of();
+        }
+
+        @Override
+        public boolean hasField(Descriptors.FieldDescriptor field) {
+            return false;
+        }
+
+        @Override
+        public Object getField(Descriptors.FieldDescriptor field) {
+            return null;
+        }
+
+        @Override
+        public int getRepeatedFieldCount(Descriptors.FieldDescriptor field) {
+            return 0;
+        }
+
+        @Override
+        public Object getRepeatedField(Descriptors.FieldDescriptor field, int index) {
+            return null;
+        }
+
+        @Override
+        public UnknownFieldSet getUnknownFields() {
+            return UnknownFieldSet.getDefaultInstance();
+        }
+
+        @Override
+        public void writeTo(CodedOutputStream output) {
+        }
+
+        @Override
+        public int getSerializedSize() {
+            return 0;
+        }
+    }
+
+    /** Exposes a {@code getDescriptor()} returning null and a legacy {@code descriptor()} that works. */
+    public static class NullGetDescriptorHolder {
+        public static Descriptors.Descriptor getDescriptor() {
+            return null;
+        }
+
+        public static Descriptors.Descriptor descriptor() {
+            return ITEM;
         }
     }
 }
