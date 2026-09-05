@@ -250,6 +250,38 @@ public class ProtobufStructHandlerTest {
     }
 
     /**
+     * A message with a {@code snake_case} field. proto field names are snake_case by
+     * convention while the corresponding java / bean name is camelCase, so this is
+     * what exercises the JSON-name fallback.
+     */
+    private static Descriptors.Descriptor CFG;
+
+    @BeforeAll
+    public static void initCfg() throws Exception {
+        CFG = Descriptors.FileDescriptor.buildFrom(
+                DescriptorProtos.FileDescriptorProto.newBuilder()
+                        .setName("cfg.proto")
+                        .setPackage("struct.cfg")
+                        .setSyntax("proto3")
+                        .addMessageType(DescriptorProtos.DescriptorProto.newBuilder()
+                                .setName("Cfg")
+                                .addField(newField("stack_limit", 1, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .addField(newField("id", 2, DescriptorProtos.FieldDescriptorProto.Type.TYPE_INT32,
+                                        DescriptorProtos.FieldDescriptorProto.Label.LABEL_OPTIONAL, null))
+                                .build())
+                        .build(),
+                new Descriptors.FileDescriptor[0]).findMessageTypeByName("Cfg");
+        Assertions.assertNotNull(CFG);
+    }
+
+    private static DynamicMessage newCfgMessage(int stackLimit) {
+        return DynamicMessage.newBuilder(CFG)
+                .setField(CFG.findFieldByName("stack_limit"), stackLimit)
+                .build();
+    }
+
+    /**
      * Write {@code count} length-delimited {@code Item} messages into
      * {@code dir/fileName}, then return the generated file.
      */
@@ -467,6 +499,65 @@ public class ProtobufStructHandlerTest {
     }
 
     /**
+     * The parser is built once per (message, class) pair and then served from the
+     * cache - not rebuilt for every row.
+     */
+    @Test
+    public void testParserCacheHitReturnsSameParser() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Parser<?> first = handler.getParser(FakeMessageBean.class, "Cached");
+        Parser<?> second = handler.getParser(FakeMessageBean.class, "Cached");
+
+        Assertions.assertNotNull(first);
+        Assertions.assertSame(first, second);
+        Assertions.assertEquals(1, handler.parserCache.size());
+    }
+
+    /**
+     * A Message whose {@code getParserForType()} returns null is a broken generated
+     * class. A null parser must fail loudly - returning it would NPE on the first row.
+     */
+    @Test
+    public void testMessageWithNullParserThrows() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertThrows(StructTransformException.class,
+                () -> handler.getParser(NullParserMessageBean.class, "NullParser"));
+    }
+
+    /**
+     * Generated Message classes ship a public no-arg constructor. A Message without
+     * one cannot be instantiated reflectively and must fail loudly.
+     */
+    @Test
+    public void testMessageWithoutPublicNoArgCtorThrows() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertThrows(StructTransformException.class,
+                () -> handler.getParser(PrivateCtorMessageBean.class, "PrivateCtor"));
+    }
+
+    /**
+     * Older protoc versions expose {@code descriptor()} instead of
+     * {@code getDescriptor()}. A {@code getDescriptor()} that returns null must not
+     * abort the lookup - the next candidate method name is tried.
+     */
+    @Test
+    public void testFindDescriptorSkipsNullDescriptorMethod() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertEquals(ITEM, handler.findDescriptor(NullGetDescriptorHolder.class, "Item"));
+    }
+
+    /**
+     * A null / blank message name means "use whatever descriptor the class exposes";
+     * no lookup by name is attempted.
+     */
+    @Test
+    public void testFindDescriptorWithBlankMessageName() {
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        Assertions.assertEquals(OUTER, handler.findDescriptor(OuterHolder.class, null));
+        Assertions.assertEquals(OUTER, handler.findDescriptor(OuterHolder.class, ""));
+    }
+
+    /**
      * A single (non-repeated) scalar field is read straight from the message via
      * {@link SingleFieldDescriptor#getFieldValueFrom(Object)} - no intermediate
      * {@link StructImpl} is ever produced in path A/path B.
@@ -480,6 +571,90 @@ public class ProtobufStructHandlerTest {
         SingleFieldDescriptor nameFd = new SingleFieldDescriptor();
         nameFd.setName("name");
         Assertions.assertEquals("seven", nameFd.getFieldValueFrom(newOuterMessage()));
+    }
+
+    /**
+     * proto field names are {@code snake_case} by convention while the bean field is
+     * {@code camelCase}, so the protobuf JSON name is used as a fallback. Both
+     * {@code stack_limit} and {@code stackLimit} must resolve to the same field.
+     */
+    @Test
+    public void testGetFieldValueFromJsonName() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("stackLimit");
+        Assertions.assertEquals(99, fd.getFieldValueFrom(newCfgMessage(99)));
+    }
+
+    /**
+     * A name that exists neither verbatim nor as a JSON name is simply absent - it
+     * resolves to {@code null} rather than throwing.
+     */
+    @Test
+    public void testGetFieldValueFromUnknownFieldReturnsNull() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("no_such_field");
+        Assertions.assertNull(fd.getFieldValueFrom(newOuterMessage()));
+    }
+
+    /**
+     * A null / blank field name cannot be resolved; the value is absent, not an error.
+     */
+    @Test
+    public void testGetFieldValueFromBlankNameReturnsNull() {
+        SingleFieldDescriptor nullFd = new SingleFieldDescriptor();
+        nullFd.setName(null);
+        Assertions.assertNull(nullFd.getFieldValueFrom(newOuterMessage()));
+
+        SingleFieldDescriptor emptyFd = new SingleFieldDescriptor();
+        emptyFd.setName("");
+        Assertions.assertNull(emptyFd.getFieldValueFrom(newOuterMessage()));
+    }
+
+    /**
+     * An empty repeated field is "absent" - the same contract a missing
+     * {@link org.struct.core.StructImpl} key has.
+     */
+    @Test
+    public void testGetFieldValueFromEmptyRepeatedReturnsNull() {
+        DynamicMessage noTags = DynamicMessage.newBuilder(OUTER)
+                .setField(OUTER.findFieldByName("id"), 1)
+                .build();
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("tags");
+        Assertions.assertNull(fd.getFieldValueFrom(noTags));
+    }
+
+    /**
+     * proto3 omits fields holding the type default, but {@code getField} still returns
+     * that default. An unset field must read as {@code null} so that {@code required}
+     * validation and the converters see "absent" rather than {@code 0} / {@code ""}.
+     */
+    @Test
+    public void testGetFieldValueFromUnsetScalarReturnsNull() {
+        DynamicMessage onlyId = DynamicMessage.newBuilder(OUTER)
+                .setField(OUTER.findFieldByName("id"), 1)
+                .build();
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("name");
+        Assertions.assertNull(fd.getFieldValueFrom(onlyId));
+    }
+
+    /**
+     * The memoized {@link Descriptors.FieldDescriptor} is bound to the message
+     * descriptor it was resolved from. A different descriptor must force a re-resolve
+     * instead of reading a same-named field off the wrong message.
+     */
+    @Test
+    public void testFieldValueCacheAcrossDifferentDescriptors() {
+        SingleFieldDescriptor fd = new SingleFieldDescriptor();
+        fd.setName("id");
+
+        Assertions.assertEquals(7, fd.getFieldValueFrom(newOuterMessage()));
+
+        DynamicMessage item = DynamicMessage.newBuilder(ITEM)
+                .setField(ITEM.findFieldByName("id"), 42)
+                .build();
+        Assertions.assertEquals(42, fd.getFieldValueFrom(item));
     }
 
     /**
@@ -527,6 +702,76 @@ public class ProtobufStructHandlerTest {
         Assertions.assertThrows(StructTransformException.class, () ->
                 handler.handle(worker, BrokenMessageBean.class, sink::add,
                         tempDir.resolve("broken.protobuf").toFile()));
+    }
+
+    /**
+     * With an empty {@code sheetName} the message name falls back to the bean's simple
+     * class name. It matches no declared message, so the handler warns and keeps the
+     * descriptor exposed by the class - the data still loads.
+     */
+    @Test
+    public void testDefaultMessageNameWhenSheetNameEmpty(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items_empty_sheet.protobuf", 2);
+        StructWorker<EmptySheetNameBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), EmptySheetNameBean.class);
+        ArrayList<EmptySheetNameBean> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(2, beans.size());
+        Assertions.assertEquals(1, beans.get(0).id);
+    }
+
+    /**
+     * {@link org.struct.core.StructDescriptor} is mutable and may carry no sheet name
+     * at all; the message name then falls back to the simple class name too.
+     */
+    @Test
+    public void testNullSheetNameFallsBackToClassName(@TempDir Path tempDir) throws Exception {
+        writeItems(tempDir, "items.protobuf", 1);
+        StructWorker<ItemBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), ItemBean.class);
+        worker.getDescriptor().setSheetName(null);
+
+        ProtobufStructHandler handler = new ProtobufStructHandler();
+        //  normally driven by toList(); required before createInstance() can be called
+        worker.checkStructFactory();
+        ArrayList<ItemBean> beans = new ArrayList<>();
+        handler.handle(worker, ItemBean.class, beans::add, tempDir.resolve("items.protobuf").toFile());
+
+        Assertions.assertEquals(1, beans.size());
+        Assertions.assertTrue(handler.parserCache.containsKey("ItemBean:" + ItemBean.class.getName()),
+                "a null sheetName must fall back to the simple class name");
+    }
+
+    /**
+     * A truncated message met while {@code startOrder} is skipping rows must end the
+     * load - it must neither loop forever nor escape the handler.
+     */
+    @Test
+    public void testStartOrderSkipStopsOnTruncatedStream(@TempDir Path tempDir) throws Exception {
+        File file = tempDir.resolve("trunc.protobuf").toFile();
+        try (FileOutputStream out = new FileOutputStream(file)) {
+            //  declares a 10 byte message but provides only 2 -> truncated
+            out.write(new byte[]{10, 1, 2});
+        }
+        StructWorker<TruncatedStartOrderBean> worker =
+                new StructWorker<>(tempDir.toAbsolutePath().toString(), TruncatedStartOrderBean.class);
+        ArrayList<TruncatedStartOrderBean> beans = worker.toList(ArrayList::new);
+
+        Assertions.assertEquals(0, beans.size());
+    }
+
+    /**
+     * For an {@code @StructSheet}-annotated class the annotation wins; the explicit
+     * fileName argument is ignored, keeping this entry point consistent with the
+     * primary constructor.
+     */
+    @Test
+    public void testAnnotatedClassPrefersAnnotation() {
+        StructWorker<ItemBean> worker =
+                new StructWorker<>(".", ItemBean.class, "ignored.bin");
+
+        Assertions.assertEquals("items.protobuf", worker.getDescriptor().getFileName());
+        Assertions.assertEquals("Item", worker.getDescriptor().getSheetName());
     }
 
     /**
@@ -710,5 +955,184 @@ public class ProtobufStructHandlerTest {
     /** A plain (non-Message) class - sanity anchor for the dynamic-message path. */
     public static class NotAMessageBean {
         public int id;
+    }
+
+    /** {@code sheetName} is empty, so the message name falls back to the simple class name. */
+    @StructSheet(fileName = "items_empty_sheet.protobuf", sheetName = "")
+    public static class EmptySheetNameBean {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
+        }
+
+        public int id;
+        public String name;
+    }
+
+    /** Skips the first message, so the truncated remainder is met while skipping. */
+    @StructSheet(fileName = "trunc.protobuf", sheetName = "Item", startOrder = 2)
+    public static class TruncatedStartOrderBean {
+        public static Descriptors.Descriptor getDescriptor() {
+            return ITEM;
+        }
+
+        public int id;
+    }
+
+    /** A Message whose {@code getParserForType()} returns null - a broken generated class. */
+    public static class NullParserMessageBean extends AbstractMessage implements Message {
+        @Override
+        public Parser<NullParserMessageBean> getParserForType() {
+            return null;
+        }
+
+        @Override
+        public Descriptors.Descriptor getDescriptorForType() {
+            return ITEM;
+        }
+
+        @Override
+        public Message getDefaultInstanceForType() {
+            return new NullParserMessageBean();
+        }
+
+        @Override
+        public boolean isInitialized() {
+            return true;
+        }
+
+        @Override
+        public Message.Builder newBuilderForType() {
+            return null;
+        }
+
+        @Override
+        public Message.Builder toBuilder() {
+            return null;
+        }
+
+        @Override
+        public Map<Descriptors.FieldDescriptor, Object> getAllFields() {
+            return Map.of();
+        }
+
+        @Override
+        public boolean hasField(Descriptors.FieldDescriptor field) {
+            return false;
+        }
+
+        @Override
+        public Object getField(Descriptors.FieldDescriptor field) {
+            return null;
+        }
+
+        @Override
+        public int getRepeatedFieldCount(Descriptors.FieldDescriptor field) {
+            return 0;
+        }
+
+        @Override
+        public Object getRepeatedField(Descriptors.FieldDescriptor field, int index) {
+            return null;
+        }
+
+        @Override
+        public UnknownFieldSet getUnknownFields() {
+            return UnknownFieldSet.getDefaultInstance();
+        }
+
+        @Override
+        public void writeTo(CodedOutputStream output) {
+        }
+
+        @Override
+        public int getSerializedSize() {
+            return 0;
+        }
+    }
+
+    /** A Message without a public no-arg constructor - cannot be instantiated reflectively. */
+    public static class PrivateCtorMessageBean extends AbstractMessage implements Message {
+        private PrivateCtorMessageBean() {
+        }
+
+        @Override
+        public Parser<PrivateCtorMessageBean> getParserForType() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Descriptors.Descriptor getDescriptorForType() {
+            return ITEM;
+        }
+
+        @Override
+        public Message getDefaultInstanceForType() {
+            return null;
+        }
+
+        @Override
+        public boolean isInitialized() {
+            return true;
+        }
+
+        @Override
+        public Message.Builder newBuilderForType() {
+            return null;
+        }
+
+        @Override
+        public Message.Builder toBuilder() {
+            return null;
+        }
+
+        @Override
+        public Map<Descriptors.FieldDescriptor, Object> getAllFields() {
+            return Map.of();
+        }
+
+        @Override
+        public boolean hasField(Descriptors.FieldDescriptor field) {
+            return false;
+        }
+
+        @Override
+        public Object getField(Descriptors.FieldDescriptor field) {
+            return null;
+        }
+
+        @Override
+        public int getRepeatedFieldCount(Descriptors.FieldDescriptor field) {
+            return 0;
+        }
+
+        @Override
+        public Object getRepeatedField(Descriptors.FieldDescriptor field, int index) {
+            return null;
+        }
+
+        @Override
+        public UnknownFieldSet getUnknownFields() {
+            return UnknownFieldSet.getDefaultInstance();
+        }
+
+        @Override
+        public void writeTo(CodedOutputStream output) {
+        }
+
+        @Override
+        public int getSerializedSize() {
+            return 0;
+        }
+    }
+
+    /** Exposes a {@code getDescriptor()} returning null and a legacy {@code descriptor()} that works. */
+    public static class NullGetDescriptorHolder {
+        public static Descriptors.Descriptor getDescriptor() {
+            return null;
+        }
+
+        public static Descriptors.Descriptor descriptor() {
+            return ITEM;
+        }
     }
 }
