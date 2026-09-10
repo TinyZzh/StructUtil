@@ -19,13 +19,14 @@
 package org.struct.spring.support;
 
 /**
- * {@link MapStructStore} key's resolver.
+ * The spring compatible shell of {@link org.struct.store.StructKeyResolver}.
  *
  * @author TinyZ.
  * @version 2020.07.17
+ * @deprecated use {@link org.struct.store.StructKeyResolver} instead. this shell will be removed in 6.0.
  */
+@Deprecated(since = "5.0.0", forRemoval = true)
 @FunctionalInterface
-public interface StructKeyResolver<K, B> {
+public interface StructKeyResolver<K, B> extends org.struct.store.StructKeyResolver<K, B> {
 
-    K resolve(B bean);
 }

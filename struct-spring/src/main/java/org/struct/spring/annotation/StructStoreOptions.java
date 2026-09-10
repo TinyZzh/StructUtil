@@ -18,8 +18,8 @@
 
 package org.struct.spring.annotation;
 
-import org.struct.spring.support.StructConstant;
-import org.struct.spring.support.StructStore;
+import org.struct.store.StoreConstant;
+import org.struct.store.StructStore;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -43,7 +43,7 @@ public @interface StructStoreOptions {
      *
      * @return struct store's workspace directory.
      */
-    String workspace() default StructConstant.STRUCT_WORKSPACE;
+    String workspace() default StoreConstant.STRUCT_WORKSPACE;
 
     /**
      * Lazy load struct data. default: false.

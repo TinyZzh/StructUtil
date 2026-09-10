@@ -16,35 +16,26 @@
  *  limitations under the License.
  */
 
-package org.struct.spring.support;
+package org.struct.store;
 
 /**
+ * The {@link StructStore}'s options. a plain mutable java bean so that it can be
+ * injected by any container (spring, guice) or built by hand.
+ * <p>
+ * NOTE: this class intentionally has no {@code generate(...)} factory. assembling the
+ * options from a framework specific configuration is the framework's responsibility,
+ * see {@code org.struct.spring.support.StoreOptionsFactory}.
+ *
  * @author TinyZ.
  * @version 2020.09.19
  */
-class Options {
+public class StoreOptions {
 
-    private String workspace = StructConstant.STRUCT_WORKSPACE;
+    private String workspace = StoreConstant.STRUCT_WORKSPACE;
 
     private boolean lazyLoad = false;
 
     private boolean waitForInit = false;
-
-    public static Options generate(org.struct.spring.annotation.StructStoreOptions annotation) {
-        Options controller = new Options();
-        controller.setWorkspace(annotation.workspace());
-        controller.setLazyLoad(annotation.lazyLoad());
-        controller.setWaitForInit(annotation.waitForInit());
-        return controller;
-    }
-
-    public static Options generate(StructStoreConfig config) {
-        Options controller = new Options();
-        controller.setWorkspace(config.getWorkspace());
-        controller.setLazyLoad(config.isLazyLoad());
-        controller.setWaitForInit(config.isSyncWaitForInit());
-        return controller;
-    }
 
     public String getWorkspace() {
         return workspace;

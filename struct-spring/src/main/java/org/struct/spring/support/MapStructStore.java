@@ -18,48 +18,49 @@
 
 package org.struct.spring.support;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.struct.core.TypeRefFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.struct.spring.exceptions.NoSuchKeyResolverException;
+import org.struct.store.StoreConstant;
 import org.struct.util.Reflects;
-import org.struct.util.WorkerUtil;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
+ * The spring compatible shell of {@link org.struct.store.MapStructStore}.
+ * <p>
+ * The shell keeps resolving the {@link org.struct.store.StructKeyResolver} from the spring
+ * {@code ApplicationContext}; the core store only accepts a resolved instance.
+ *
  * @author TinyZ.
  * @version 2020.07.12
+ * @deprecated use {@link org.struct.store.MapStructStore} instead. this shell will be removed in 6.0.
  */
-public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapStructStore.class);
+@Deprecated(since = "5.0.0", forRemoval = true)
+public class MapStructStore<K, B> extends org.struct.store.MapStructStore<K, B>
+        implements ApplicationContextAware, InitializingBean, DisposableBean {
 
     /**
-     * {@link StructKeyResolver}'s bean name.
+     * {@link org.struct.store.StructKeyResolver}'s bean name.
      *
-     * @see StructConstant#KEY_RESOLVER_BEAN_NAME
+     * @see StoreConstant#KEY_RESOLVER_BEAN_NAME
      */
     protected String keyResolverBeanName;
     /**
-     * {@link StructKeyResolver}'s bean class.
+     * {@link org.struct.store.StructKeyResolver}'s bean class.
      *
-     * @see StructConstant#KEY_RESOLVER_BEAN_CLASS
+     * @see StoreConstant#KEY_RESOLVER_BEAN_CLASS
      */
-    protected Class<? extends StructKeyResolver<K, B>> keyResolverBeanClass;
-    protected StructKeyResolver<K, B> keyResolver;
+    protected Class<? extends org.struct.store.StructKeyResolver<K, B>> keyResolverBeanClass;
     /**
-     * the cached struct data map.
+     * Spring application context.
      */
-    private volatile Map<K, B> cached = Collections.EMPTY_MAP;
+    protected ApplicationContext applicationContext;
 
     /**
      * Only for spring framework bean definition.
@@ -69,98 +70,67 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
     }
 
     public MapStructStore(Class<B> clzOfBean) {
-        this.clzOfBean = clzOfBean;
+        super(clzOfBean);
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
         resolveKeyResolver();
-        super.afterPropertiesSet();
+        StoreLifecycleSupport.afterPropertiesSet(this, this.applicationContext);
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        this.dispose();
     }
 
     /**
      * If {@link #keyResolver}'s value is null,
      * try resolve the store's {@link #keyResolver} by {@link #keyResolverBeanName} or {@link #keyResolverBeanClass}.
      */
-    private void resolveKeyResolver() {
-        StructKeyResolver<K, B> resolver = this.keyResolver;
+    protected void resolveKeyResolver() {
+        org.struct.store.StructKeyResolver<K, B> resolver = this.keyResolver;
         if (null == resolver) {
             String beanName = this.keyResolverBeanName;
             if (beanName != null && !beanName.isEmpty()) {
-                resolver = this.applicationContext.getBean(beanName, StructKeyResolver.class);
+                resolver = this.applicationContext.getBean(beanName, org.struct.store.StructKeyResolver.class);
             }
         }
-        Class<? extends StructKeyResolver<K, B>> beanClass = this.keyResolverBeanClass;
+        Class<? extends org.struct.store.StructKeyResolver<K, B>> beanClass = this.keyResolverBeanClass;
         if (null != beanClass) {
             if (null == resolver
-                    && !Objects.equals(StructKeyResolver.class, beanClass)) {
-                Map<String, ? extends StructKeyResolver> beansOfTypeMap = this.applicationContext.getBeansOfType(beanClass);
+                    && !Objects.equals(org.struct.store.StructKeyResolver.class, beanClass)) {
+                Map<String, ? extends org.struct.store.StructKeyResolver<K, B>> beansOfTypeMap
+                        = this.applicationContext.getBeansOfType(beanClass);
+                //  any bean of that type will do - the caller asked for a specific class.
                 if (!beansOfTypeMap.isEmpty()) {
-                    for (StructKeyResolver value : beansOfTypeMap.values()) {
-                        resolver = value;
-                        break;
-                    }
+                    resolver = beansOfTypeMap.values().iterator().next();
                 }
             }
-            //  create new key resolver out of spring framework.
+            //  create new key resolver out of spring framework. an interface is abstract too.
             if (null == resolver
-                    && !Modifier.isAbstract(beanClass.getModifiers())
-                    && !Modifier.isInterface(beanClass.getModifiers())) {
+                    && !Modifier.isAbstract(beanClass.getModifiers())) {
                 resolver = Reflects.newInstance(beanClass);
             }
         }
         if (null == resolver) {
-            throw new NoSuchKeyResolverException("No such KeyResolver. the store:" + this.getClass().getSimpleName() + ", struct:" + clzOfBean()
+            throw noSuchKeyResolverException("No such KeyResolver. the store:" + this.getClass().getSimpleName() + ", struct:" + clzOfBean()
                     + ", keyBeanName:" + this.keyResolverBeanName + ", keyBeanClass:" + this.keyResolverBeanClass);
         }
         this.keyResolver = resolver;
     }
 
+    /**
+     * Keep the spring's exception type for the existing catch clauses.
+     */
     @Override
-    public void initialize() {
-        if (!casStatusInit()) {
-            if (this.options.isWaitForInit())
-                this.waitForDone();
-            return;
-        }
-        try {
-            Map<K, B> collected = this.loadStructData();
-            this.cached = collected;
-            this.size = collected.size();
-            LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
-        } catch (Exception e) {
-            LOGGER.info("initialize [{} - {}] store failure.", this.clzOfBean.getName(), this.identify(), e);
-        } finally {
-            casStatusDone();
-        }
-    }
-
-    protected Map<K, B> loadStructData() {
-        Map<K, B> map = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
-                .toMap((TypeRefFactory<Map<K, B>>) HashMap::new, b -> keyResolver.resolve(b));
-        return Collections.unmodifiableMap(map);
-    }
-
-    @Override
-    public void dispose() {
-        //  reset status.
-        this.casStatusReset();
-        this.cached = Collections.EMPTY_MAP;
-    }
-
-    @Override
-    public List<B> getAll() {
-        return Collections.unmodifiableList(new ArrayList<>(this.cached.values()));
-    }
-
-    @Override
-    public B get(K key) {
-        return this.cached.get(key);
-    }
-
-    @Override
-    public List<B> lookup(Predicate<B> filter) {
-        return this.cached.values().stream().filter(filter).filter(Objects::nonNull).collect(Collectors.toList());
+    protected RuntimeException noSuchKeyResolverException(String msg) {
+        return new NoSuchKeyResolverException(msg);
     }
 
     public String getKeyResolverBeanName() {
@@ -171,20 +141,12 @@ public class MapStructStore<K, B> extends AbstractStructStore<K, B> {
         this.keyResolverBeanName = keyResolverBeanName;
     }
 
-    public Class<? extends StructKeyResolver<K, B>> getKeyResolverBeanClass() {
+    public Class<? extends org.struct.store.StructKeyResolver<K, B>> getKeyResolverBeanClass() {
         return keyResolverBeanClass;
     }
 
-    public void setKeyResolverBeanClass(Class<? extends StructKeyResolver<K, B>> keyResolverBeanClass) {
+    public void setKeyResolverBeanClass(Class<? extends org.struct.store.StructKeyResolver<K, B>> keyResolverBeanClass) {
         this.keyResolverBeanClass = keyResolverBeanClass;
-    }
-
-    public StructKeyResolver<K, B> getKeyResolver() {
-        return keyResolver;
-    }
-
-    public void setKeyResolver(StructKeyResolver<K, B> keyResolver) {
-        this.keyResolver = keyResolver;
     }
 
     @Override

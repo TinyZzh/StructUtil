@@ -23,15 +23,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.struct.annotation.StructSheet;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.struct.spring.annotation.AutoStruct;
 import org.struct.spring.annotation.StructStoreOptions;
+import org.struct.store.StoreOptions;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * @author TinyZ.
@@ -57,7 +66,7 @@ class ClassPathStructScannerTest {
         Assertions.assertNotNull(definition);
     }
 
-    @AutoStruct(mapKey = "id", keyResolverBeanClass = MapKeyFieldResolver.class)
+    @AutoStruct(mapKey = "id", keyResolverBeanClass = org.struct.store.MapKeyFieldResolver.class)
     @StructSheet(fileName = "t.xlsx", sheetName = "Sheet1")
     class Clz {
 
@@ -155,7 +164,7 @@ class ClassPathStructScannerTest {
     }
 
     /**
-     * {@code @StructStoreOptions} is converted into an {@link Options} property.
+     * {@code @StructStoreOptions} is converted into a core {@link StoreOptions} property.
      */
     @Test
     public void testStructStoreOptionsProperty() {
@@ -163,8 +172,9 @@ class ClassPathStructScannerTest {
                 scanner().generateStructStoreBeanDefinition(beanDefinition(WithOptionsClz.class));
         Object options = definition.getPropertyValues().get(StructConstant.KEY_OPTIONS);
         Assertions.assertNotNull(options);
-        Assertions.assertEquals("/ws/", ((Options) options).getWorkspace());
-        Assertions.assertTrue(((Options) options).isLazyLoad());
+        Assertions.assertInstanceOf(StoreOptions.class, options);
+        Assertions.assertEquals("/ws/", ((StoreOptions) options).getWorkspace());
+        Assertions.assertTrue(((StoreOptions) options).isLazyLoad());
     }
 
     /**
@@ -211,6 +221,166 @@ class ClassPathStructScannerTest {
     class CustomStoreClz {
     }
 
-    abstract static class AbstractKeyResolver implements StructKeyResolver<Integer, Object> {
+    abstract static class AbstractKeyResolver implements org.struct.store.StructKeyResolver<Integer, Object> {
+    }
+
+    //  ------------------------------------------------------------------
+    //  registerBeanDefinition branches
+    //  ------------------------------------------------------------------
+
+    /**
+     * A plain struct bean gets a generated store bean definition.
+     */
+    @Test
+    public void testRegisterBeanDefinitionGeneratesStore() {
+        BeanDefinitionRegistry registry = mock(BeanDefinitionRegistry.class);
+        GenericBeanDefinition gbd = new GenericBeanDefinition();
+        gbd.setBeanClass(PlainClz.class);
+
+        scanner().registerBeanDefinition(new BeanDefinitionHolder(gbd, "plainClz"), registry);
+
+        verify(registry).registerBeanDefinition(eq("plainClzStructStore"), any(BeanDefinition.class));
+    }
+
+    /**
+     * An abstract store is skipped instead of being registered.
+     */
+    @Test
+    public void testRegisterBeanDefinitionSkipsAbstractStore() {
+        BeanDefinitionRegistry registry = mock(BeanDefinitionRegistry.class);
+        GenericBeanDefinition gbd = new GenericBeanDefinition();
+        gbd.setBeanClass(AbstractStoreImpl.class);
+
+        scanner().registerBeanDefinition(new BeanDefinitionHolder(gbd, "abstractStore"), registry);
+
+        verifyNoInteractions(registry);
+    }
+
+    /**
+     * A store interface is skipped instead of being registered.
+     */
+    @Test
+    public void testRegisterBeanDefinitionSkipsStoreInterface() {
+        BeanDefinitionRegistry registry = mock(BeanDefinitionRegistry.class);
+        GenericBeanDefinition gbd = new GenericBeanDefinition();
+        gbd.setBeanClass(StoreIface.class);
+
+        scanner().registerBeanDefinition(new BeanDefinitionHolder(gbd, "storeIface"), registry);
+
+        verifyNoInteractions(registry);
+    }
+
+    /**
+     * A raw store (its generic types can't be resolved) is rejected explicitly instead of being
+     * registered with a null bean type.
+     */
+    @Test
+    public void testRegisterBeanDefinitionRejectsRawStore() {
+        BeanDefinitionRegistry registry = mock(BeanDefinitionRegistry.class);
+        GenericBeanDefinition gbd = new GenericBeanDefinition();
+        gbd.setBeanClass(RawStore.class);
+
+        Assertions.assertThrows(IllegalArgumentException.class, () ->
+                scanner().registerBeanDefinition(new BeanDefinitionHolder(gbd, "rawStore"), registry));
+    }
+
+    /**
+     * A bean class name that can't be resolved fails fast.
+     */
+    @Test
+    public void testRegisterBeanDefinitionUnresolvableClass() {
+        BeanDefinitionRegistry registry = mock(BeanDefinitionRegistry.class);
+        GenericBeanDefinition gbd = new GenericBeanDefinition();
+        gbd.setBeanClassName("com.not.exist.Clz");
+
+        Assertions.assertThrows(IllegalStateException.class, () ->
+                scanner().registerBeanDefinition(new BeanDefinitionHolder(gbd, "ghost"), registry));
+    }
+
+    /**
+     * A custom store whose generic types resolve gets registered as is.
+     */
+    @Test
+    public void testRegisterBeanDefinitionCustomStore() {
+        BeanDefinitionRegistry registry = mock(BeanDefinitionRegistry.class);
+        GenericBeanDefinition gbd = new GenericBeanDefinition();
+        gbd.setBeanClass(CustomStoreImpl.class);
+
+        scanner().registerBeanDefinition(new BeanDefinitionHolder(gbd, "customStore"), registry);
+
+        verify(registry).registerBeanDefinition(eq("customStore"), any(BeanDefinition.class));
+        Assertions.assertEquals(String.class, gbd.getPropertyValues().get(StructConstant.CLZ_OF_BEAN));
+    }
+
+    //  ------------------------------------------------------------------
+    //  include / exclude filters
+    //  ------------------------------------------------------------------
+
+    /**
+     * A scanner that can actually read the classpath.
+     */
+    private static ClassPathStructScanner scanningScanner() {
+        ClassPathStructScanner scanner = new ClassPathStructScanner(mock(BeanDefinitionRegistry.class), false,
+                new StandardEnvironment(), new DefaultResourceLoader());
+        scanner.registerFilters();
+        return scanner;
+    }
+
+    /**
+     * The core store implementations and everything under {@code org.struct.offheap} are internal -
+     * they must never be registered as user stores.
+     */
+    @Test
+    public void testExcludeFilterSkipsInternalPackages() {
+        Assertions.assertTrue(scanningScanner().doScan("org.struct.store").isEmpty());
+        Assertions.assertTrue(scanningScanner().doScan("org.struct.offheap").isEmpty());
+    }
+
+    /**
+     * The include filter matches a concrete store that directly extends the core skeleton, and
+     * ignores plain / abstract classes.
+     */
+    @Test
+    public void testIncludeFilterMatchesCoreStoreSubclasses() {
+        java.util.Set<BeanDefinitionHolder> holders = scanningScanner().doScan("org.struct.scanfixture");
+        Assertions.assertEquals(1, holders.size());
+        //  the nested class is named ScanFixtures.DirectCoreStore by the bean name generator
+        Assertions.assertTrue(holders.iterator().next().getBeanName().contains("DirectCoreStore"));
+    }
+
+    /**
+     * An abstract key resolver is never wired in as a {@code keyResolverBeanClass} property.
+     */
+    @Test
+    public void testAbstractKeyResolverIsNotSetAsProperty() {
+        GenericBeanDefinition gbd = new GenericBeanDefinition();
+        gbd.setBeanClass(MapStructStore.class);
+        AutoStruct anno = AnnotationUtils.findAnnotation(AbstractKeyResolverClz.class, AutoStruct.class);
+
+        scanner().handleStructStoreProperty(gbd, anno, null);
+
+        Assertions.assertNull(gbd.getPropertyValues().get(StructConstant.KEY_RESOLVER_BEAN_CLASS));
+    }
+
+    interface StoreIface extends org.struct.store.StructStore<Integer, String> {
+    }
+
+    /**
+     * Deliberately an inner (non independent) class: the {@code @ComponentScan} based tests in this
+     * package would otherwise pick it up and try to register it as a real store bean.
+     */
+    @SuppressWarnings({"removal", "rawtypes"})
+    class RawStore extends org.struct.store.MapStructStore {
+    }
+
+    @SuppressWarnings("removal")
+    abstract static class AbstractStoreImpl extends MapStructStore<Integer, String> {
+    }
+
+    /**
+     * Deliberately an inner (non independent) class, see {@link RawStore}.
+     */
+    @SuppressWarnings("removal")
+    class CustomStoreImpl extends MapStructStore<Integer, String> {
     }
 }

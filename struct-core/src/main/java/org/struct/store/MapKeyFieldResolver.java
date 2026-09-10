@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package org.struct.spring.support;
+package org.struct.store;
 
 import org.struct.util.Reflects;
 

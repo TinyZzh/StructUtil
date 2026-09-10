@@ -20,144 +20,39 @@ package org.struct.spring.support;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.util.ReflectionUtils;
-import org.struct.annotation.StructField;
-import org.struct.annotation.StructSheet;
-import org.struct.spring.annotation.StructScan;
-
-import java.util.ArrayList;
-import java.util.Collections;
+import org.springframework.context.ApplicationContext;
 
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
 
 /**
+ * The spring {@link ListStructStore} shell only adds the life cycle bridging; the behaviour
+ * itself is covered by {@code org.struct.store.ListStructStoreTest}.
+ *
  * @author TinyZ.
- * @date 2020-10-13.
  */
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = StructScannerRegistrarTest.class)
-@ComponentScan(basePackages = "org.struct.spring.support")
-@Configuration
-@StructScan(basePackages = "org.struct.spring.support")
+@SuppressWarnings("removal")
 class ListStructStoreTest {
 
-    @Mock
-    private StructStoreConfig config;
-
-
     @Test
-    public void test() {
-        ListStructStore<String> lss = spy(new ListStructStore<>(String.class));
-        doReturn(Collections.singletonList("xx")).when(lss).loadStructData();
-        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
-            lss.get("xx");
-        });
-        lss.initialize();
-        System.out.println(lss);
-        Assertions.assertEquals(Collections.singletonList("xx"), lss.lookup(x -> x.equals("xx")));
-        Assertions.assertEquals(1, lss.getAll().size());
-        Assertions.assertEquals("xx", lss.getAll().get(0));
+    public void testLifecycle() throws Exception {
+        StructStoreConfig config = new StructStoreConfig();
+        config.setLazyLoad(true);
+        ApplicationContext ctx = mock(ApplicationContext.class);
+        doReturn(config).when(ctx).getBean(StructStoreConfig.class);
+
+        ListStructStore<String> store = new ListStructStore<>(String.class);
+        store.setApplicationContext(ctx);
+        store.afterPropertiesSet();
+        Assertions.assertNotNull(store.getOptions());
+        //  the key based access stays unsupported.
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> store.get("xx"));
+        store.destroy();
     }
 
     @Test
-    public void test2() {
-        ListStructStore<String> lss = spy(new ListStructStore<>(String.class));
-        doReturn(Collections.singletonList("xx")).when(lss).loadStructData();
-        lss.dispose();
-    }
-
-    @Test
-    public void testInitSuc() {
-        ListStructStore<Object> store = spy(new ListStructStore<>(Object.class));
-        doReturn(new ArrayList<>()).when(store).loadStructData();
-        store.initialize();
-        Assertions.assertTrue(store.isInitialized());
-    }
-
-    @Test
-    public void testInitFailure() {
-        ListStructStore<Object> store = spy(new ListStructStore<>(Object.class));
-        doReturn(new ArrayList<>()).when(store).loadStructData();
-        store.casStatusInit();
-        store.casStatusDone();
-        Options options = new Options();
-        options.setWaitForInit(true);
-        store.setOptions(options);
-        store.initialize();
-        Assertions.assertTrue(store.isInitialized());
-    }
-
-    /**
-     * The no-arg constructor is only meant for the spring bean definition, but it
-     * must not blow up.
-     */
-    @Test
-    public void testNoArgConstructor() {
-        ListStructStore<String> store = new ListStructStore<>();
-        Assertions.assertNull(store.clzOfBean());
-        //  the key type parameter can only be bound by the spring bean definition
-        Assertions.assertTrue(store.getAll().isEmpty());
-    }
-
-    /**
-     * The real {@code loadStructData()} implementation (the other tests all mock it
-     * out) must read the configured workspace.
-     */
-    @Test
-    public void testLoadStructDataFromWorkspace() {
-        Options options = new Options();
-        options.setWorkspace("classpath:/org/struct/spring/support/");
-        ListStructStore<StoreBean> store = new ListStructStore<>(StoreBean.class);
-        store.setOptions(options);
-
-        store.initialize();
-
-        Assertions.assertTrue(store.isInitialized());
-        Assertions.assertEquals(3, store.size());
-        Assertions.assertEquals(3, store.getAll().size());
-        Assertions.assertEquals(1, store.getAll().get(0).key);
-        Assertions.assertEquals("11", store.getAll().get(0).val);
-
-        //  the returned list is immutable
-        Assertions.assertThrows(UnsupportedOperationException.class,
-                () -> store.getAll().add(new StoreBean()));
-
-        store.dispose();
-        Assertions.assertTrue(store.getAll().isEmpty());
-    }
-
-    /**
-     * A failing load is only logged, the store still ends up "initialized".
-     * <p>
-     * NOTE: this is a known P2 issue - a configuration error lets the application
-     * start with empty data instead of failing fast.
-     */
-    @Test
-    public void testLoadStructDataFailureIsLoggedOnly() {
-        Options options = new Options();
-        options.setWorkspace("classpath:/");
-        ListStructStore<StoreBean> store = spy(new ListStructStore<>(StoreBean.class));
-        store.setOptions(options);
-        doThrow(new IllegalStateException("boom")).when(store).loadStructData();
-
-        store.initialize();
-        Assertions.assertTrue(store.isInitialized());
-        Assertions.assertEquals(0, store.size());
-        Assertions.assertTrue(store.getAll().isEmpty());
-    }
-
-    @StructSheet(fileName = "tpl_list_store.json")
-    public static class StoreBean {
-        public int key;
-        public String val;
+    public void testIsCoreStore() {
+        Assertions.assertTrue(org.struct.store.StructStore.class.isAssignableFrom(ListStructStore.class));
+        Assertions.assertInstanceOf(org.struct.store.ListStructStore.class, new ListStructStore<String>());
     }
 }

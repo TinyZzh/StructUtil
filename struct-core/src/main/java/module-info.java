@@ -39,6 +39,7 @@ module struct.core {
     exports org.struct.core.matcher;
     exports org.struct.exception;
     exports org.struct.spi;
+    exports org.struct.store;
     exports org.struct.util;
     exports org.struct.support;
 

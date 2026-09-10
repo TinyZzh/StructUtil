@@ -18,31 +18,29 @@
 
 package org.struct.spring.support;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.struct.util.WorkerUtil;
-
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 /**
+ * The spring compatible shell of {@link org.struct.store.ListStructStore}.
+ * <p>
  * Not support all <code>key</code> related method. like {@link #get(Object)}.
  *
  * @author TinyZ.
  * @version 2020.07.12
+ * @deprecated use {@link org.struct.store.ListStructStore} instead. this shell will be removed in 6.0.
  */
-public class ListStructStore<B> extends AbstractStructStore<Object, B> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ListStructStore.class);
+@Deprecated(since = "5.0.0", forRemoval = true)
+public class ListStructStore<B> extends org.struct.store.ListStructStore<B>
+        implements ApplicationContextAware, InitializingBean, DisposableBean {
 
     /**
-     * the cached struct data map.
+     * Spring application context.
      */
-    private volatile List<B> cached = Collections.EMPTY_LIST;
+    protected ApplicationContext applicationContext;
 
     /**
      * Only for spring framework bean definition.
@@ -56,57 +54,17 @@ public class ListStructStore<B> extends AbstractStructStore<Object, B> {
     }
 
     @Override
-    public void initialize() {
-        if (!casStatusInit()) {
-            if (this.options.isWaitForInit())
-                this.waitForDone();
-            return;
-        }
-        try {
-            List<B> collected = this.loadStructData();
-            this.cached = collected;
-            this.size = collected.size();
-            LOGGER.info("initialize [{} - {}] store successfully. total size:{}", this.clzOfBean.getName(), this.identify(), this.size);
-        } catch (Exception e) {
-            LOGGER.info("initialize [{} - {}] store failure.", this.clzOfBean.getName(), this.identify(), e);
-        } finally {
-            casStatusDone();
-        }
-    }
-
-    protected List<B> loadStructData() {
-        LinkedList<B> list = WorkerUtil.newWorker(this.options.getWorkspace(), this.clzOfBean())
-                .toList(LinkedList::new);
-        return Collections.unmodifiableList(list);
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 
     @Override
-    public void dispose() {
-        //  reset status.
-        this.casStatusReset();
-        this.cached = Collections.EMPTY_LIST;
+    public void afterPropertiesSet() throws Exception {
+        StoreLifecycleSupport.afterPropertiesSet(this, this.applicationContext);
     }
 
     @Override
-    public List<B> getAll() {
-        return Collections.unmodifiableList(this.cached);
-    }
-
-    @Override
-    public B get(Object key) {
-        //  not implement
-        throw new UnsupportedOperationException(this.getClass() + " Unsupported the @get operation.");
-    }
-
-    @Override
-    public List<B> lookup(Predicate<B> filter) {
-        return this.cached.stream().filter(filter).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    @Override
-    public String toString() {
-        return "ListStructStore{" +
-                "clzOfBean=" + clzOfBean +
-                '}';
+    public void destroy() throws Exception {
+        this.dispose();
     }
 }

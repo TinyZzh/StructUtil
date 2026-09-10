@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,7 +44,15 @@ public class StructScannerRegistrarTest implements ApplicationContextAware {
 
     private ApplicationContext ctx;
 
-
+    /**
+     * The scanned stores fall back to this global configuration for their options.
+     */
+    @Bean
+    StructStoreConfig config() {
+        StructStoreConfig config = new StructStoreConfig();
+        config.setLazyLoad(true);
+        return config;
+    }
 
     @Test
     public void test() {

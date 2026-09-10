@@ -18,8 +18,8 @@
 
 package org.struct.spring.annotation;
 
-import org.struct.spring.support.StructKeyResolver;
-import org.struct.spring.support.StructStore;
+import org.struct.store.StructKeyResolver;
+import org.struct.store.StructStore;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -48,16 +48,16 @@ public @interface AutoStruct {
     Class<? extends StructStore> clzOfStore() default StructStore.class;
 
     /**
-     * Set {@link org.struct.spring.support.MapKeyFieldResolver} for bean's field.
+     * Set {@link org.struct.store.MapKeyFieldResolver} for bean's field.
      *
      * @return key field resolver.
-     * @see org.struct.spring.support.MapKeyFieldResolver
+     * @see org.struct.store.MapKeyFieldResolver
      * @since 3.5
      */
     String mapKey() default "";
 
     /**
-     * @return {@link org.struct.spring.support.MapStructStore}'s {@link StructKeyResolver}'s bean name.
+     * @return {@link org.struct.store.MapStructStore}'s {@link StructKeyResolver}'s bean name.
      */
     String keyResolverBeanName() default "";
 

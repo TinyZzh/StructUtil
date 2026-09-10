@@ -16,20 +16,16 @@
  *  limitations under the License.
  */
 
-package org.struct.spring.support;
+package org.struct.store;
 
 /**
- * The spring compatible shell of {@link org.struct.store.StructStore}.
- * <p>
- * The store implementation has been sunk into {@code struct-core}. this interface only remains so
- * that the existing {@code import org.struct.spring.support.StructStore;} keeps compiling.
- * <strong>All the type judgements must use {@link org.struct.store.StructStore}.</strong>
+ * {@link MapStructStore} key's resolver.
  *
  * @author TinyZ.
- * @version 2020.07.12
- * @deprecated use {@link org.struct.store.StructStore} instead. this shell will be removed in 6.0.
+ * @version 2020.07.17
  */
-@Deprecated(since = "5.0.0", forRemoval = true)
-public interface StructStore<K, B> extends org.struct.store.StructStore<K, B> {
+@FunctionalInterface
+public interface StructKeyResolver<K, B> {
 
+    K resolve(B bean);
 }
