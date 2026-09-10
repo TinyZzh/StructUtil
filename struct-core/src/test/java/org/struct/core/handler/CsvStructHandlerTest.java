@@ -190,5 +190,30 @@ class CsvStructHandlerTest {
         }
     }
 
+    @Test
+    public void testEmptyField() {
+        //  a row with an empty value exercises the `d.isEmpty()` true branch in RowWithSeparatorStructHandler.
+        StructWorker<EmptyFieldBean> worker = new StructWorker<>("classpath:/org/struct/core/", EmptyFieldBean.class);
+        ArrayList<EmptyFieldBean> list = worker.toList(ArrayList::new);
+        Assertions.assertEquals(2, list.size());
+        Assertions.assertNull(list.get(0).name);
+        Assertions.assertEquals("second", list.get(1).name);
+    }
+
+    @StructSheet(fileName = "examples_empty.csv")
+    static class EmptyFieldBean {
+
+        private int id;
+        private String name;
+
+        public EmptyFieldBean() {
+        }
+
+        public EmptyFieldBean(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
+
 }
 

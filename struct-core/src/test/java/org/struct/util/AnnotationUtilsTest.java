@@ -62,4 +62,51 @@ public class AnnotationUtilsTest {
 
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.ANNOTATION_TYPE, ElementType.FIELD, ElementType.METHOD})
+    public @interface MetaMarker {
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.ANNOTATION_TYPE, ElementType.FIELD, ElementType.METHOD})
+    @MetaMarker
+    public @interface Marker {
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.ANNOTATION_TYPE, ElementType.FIELD, ElementType.METHOD})
+    @Marker
+    public @interface SubMarker {
+    }
+
+    public static class ElementHolder {
+        @Marker
+        private int direct;
+        @SubMarker
+        private int meta;
+        @MetaMarker
+        private int plain;
+
+        public int getDirect() {
+            return direct;
+        }
+
+        @Marker
+        public int getMarker() {
+            return direct;
+        }
+    }
+
+    @Test
+    public void testFindAnnotationOnAnnotatedElement() throws Exception {
+        //  direct annotation on a field -> found without entering the loop.
+        Assertions.assertNotNull(AnnotationUtils.findAnnotation(Marker.class, ElementHolder.class.getDeclaredField("direct")));
+        //  annotation reachable only via meta-annotation -> loop finds it.
+        Assertions.assertNotNull(AnnotationUtils.findAnnotation(Marker.class, ElementHolder.class.getDeclaredField("meta")));
+        //  annotation not present and not meta-annotated -> null.
+        Assertions.assertNull(AnnotationUtils.findAnnotation(Marker.class, ElementHolder.class.getDeclaredField("plain")));
+        //  same coverage on a method element.
+        Assertions.assertNotNull(AnnotationUtils.findAnnotation(Marker.class, ElementHolder.class.getMethod("getMarker")));
+    }
+
 }

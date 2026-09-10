@@ -179,4 +179,73 @@ class FileWatcherServiceTest {
             FileWatcherService.newBuilder().setScheduleTimeUnit(null);
         });
     }
+
+    /**
+     * Two threads racing into {@code bootstrap()} - only one of them may create the task, the
+     * other one has to see the already scheduled future.
+     */
+    @Test
+    public void testBootstrapRace() throws Exception {
+        for (int round = 0; round < 50; round++) {
+            FileWatcherService fws = FileWatcherService.newBuilder()
+                    .setWatchService(mock(WatchService.class))
+                    .setScheduleInitialDelay(10L)
+                    .setScheduleTimeUnit(TimeUnit.DAYS)
+                    .setScheduleDelay(999L)
+                    .setExecutor(Executors.newScheduledThreadPool(2, r -> new Thread(r, "race")))
+                    .build();
+            int n = 4;
+            java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+            Thread[] threads = new Thread[n];
+            for (int i = 0; i < n; i++) {
+                threads[i] = new Thread(() -> {
+                    try {
+                        start.await();
+                    } catch (InterruptedException ignored) {
+                    }
+                    try {
+                        fws.bootstrap();
+                    } catch (IllegalStateException ignored) {
+                        //  the guard already rejected a second bootstrap, that's fine.
+                    }
+                });
+                threads[i].start();
+            }
+            start.countDown();
+            for (Thread t : threads) {
+                t.join(5_000L);
+            }
+            //  whatever the interleaving, the service is up exactly once.
+            Assertions.assertThrows(IllegalStateException.class, fws::bootstrap);
+        }
+    }
+
+    /**
+     * A watch key that was never registered (or whose directory is gone) is ignored, and a key
+     * that can't be reset is dropped from the registry.
+     */
+    @Test
+    public void testProcessStaleKey() throws Exception {
+        WatchService ws = mock(WatchService.class);
+        WatchKey wk = mock(WatchKey.class);
+        doReturn(wk).when(ws).poll();
+        doReturn(List.of()).when(wk).pollEvents();
+        //  the key can't be reset any more -> it must be unregistered.
+        doReturn(false).when(wk).reset();
+
+        FileWatcherService fws = FileWatcherService.newBuilder().setWatchService(ws).build();
+        Map<WatchKey, Path> keys = spy(new ConcurrentHashMap<>());
+        Field field = FileWatcherService.class.getDeclaredField("keys");
+        field.setAccessible(true);
+        field.set(fws, keys);
+        //  the key is not in the registry -> the event is dropped.
+        fws.run();
+        Assertions.assertTrue(keys.isEmpty());
+
+        //  now register it and let the failed reset remove it.
+        Path p = Paths.get("./");
+        keys.put(wk, p);
+        fws.run();
+        Assertions.assertTrue(keys.isEmpty());
+    }
 }

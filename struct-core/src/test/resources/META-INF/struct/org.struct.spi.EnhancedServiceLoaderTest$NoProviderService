@@ -1,0 +1,4 @@
+# a blank line and a comment-ish entry are skipped
+
+org.struct.spi.EnhancedServiceLoaderTest$PlainNoProviderService
+
