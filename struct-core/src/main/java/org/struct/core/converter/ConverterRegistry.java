@@ -64,15 +64,13 @@ public final class ConverterRegistry {
     }
 
     public static void register(Class<?> actualType, Class<? extends Converter> clzOfConverter, Object... params) {
+        //  NOTE: an interface is abstract too, so isAbstract() already covers it.
         if (Modifier.isAbstract(clzOfConverter.getModifiers())
-                || Modifier.isInterface(clzOfConverter.getModifiers())
                 || clzOfConverter.isAnonymousClass()) {
             throw new IllegalArgumentException("clazz :" + clzOfConverter.getName() + " must be real class.");
         }
+        //  Reflects.newInstance either returns a non-null instance or throws, so a null check is dead code.
         Converter converter = Reflects.newInstance(clzOfConverter, params);
-        if (null == converter) {
-            throw new IllegalArgumentException("clazz :" + clzOfConverter.getName() + " could't new instance.");
-        }
         register(actualType, converter);
     }
 

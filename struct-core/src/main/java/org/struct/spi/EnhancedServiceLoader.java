@@ -198,6 +198,10 @@ final class EnhancedServiceLoader<S> {
             LOGGER.info("load " + service.getSimpleName() + "[" + alias + "] extension by class[" + service.getName() + "] completed.");
             return obj;
         } catch (Throwable e) {
+            //  NOTE: this branch is reachable and MUST be kept. ServiceNotFoundException extends RuntimeException,
+            //  and createExtensionInstance wraps every instantiation failure into a ServiceNotFoundException that
+            //  carries the real cause. Re-throwing it as-is preserves that cause chain; wrapping it again (without
+            //  the cause) would swallow the root cause and mislabel instantiation failures as "not found provider".
             if (e instanceof ServiceNotFoundException) {
                 throw (ServiceNotFoundException) e;
             } else {

@@ -125,8 +125,7 @@ public class EmbeddedConverters implements Converters {
                 return false;
             } else if (originValue.getClass() == Boolean.class) {
                 return originValue;
-            } else if (originValue.getClass().isPrimitive()) {
-                return 1 == (int) originValue;
+                //  NOTE: a boxed value's getClass() is never primitive, that branch was dead.
             } else if (originValue instanceof String) {
                 return ConverterUtil.isBooleanTrue((String) originValue);
             } else if (originValue instanceof Number) {

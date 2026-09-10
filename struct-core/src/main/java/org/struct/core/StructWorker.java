@@ -303,8 +303,8 @@ public class StructWorker<T> {
     private Consumer<T> wrapCellHandler(StructDescriptor descriptor, Consumer<T> cellHandler) {
         Consumer<T> handler = cellHandler;
         Class<? extends StructBeanFilter> clzOfFilter = descriptor.getFilter();
+        //  NOTE: an interface is abstract too, so isAbstract() already covers it.
         if (StructBeanFilter.class != clzOfFilter
-                && !Modifier.isInterface(clzOfFilter.getModifiers())
                 && !Modifier.isAbstract(clzOfFilter.getModifiers())
         ) {
             try {

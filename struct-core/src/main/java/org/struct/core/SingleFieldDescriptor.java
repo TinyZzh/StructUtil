@@ -95,8 +95,8 @@ public class SingleFieldDescriptor extends FieldDescriptor {
                 this.setAggregateType(annotation.aggregateType());
             }
             Class<? extends Converter> c = annotation.converter();
+            //  NOTE: an interface is abstract too, so isAbstract() already covers it.
             if (Converter.class != c
-                    && !Modifier.isInterface(c.getModifiers())
                     && !Modifier.isAbstract(c.getModifiers())
             ) {
                 this.setConverter(ConverterRegistry.lookupOrDefault(c, c));
