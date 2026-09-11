@@ -48,7 +48,40 @@ class StructPropertiesTest {
         Assertions.assertEquals("a", properties.getArrayConverter().getStringSeparator());
         Assertions.assertTrue(properties.getArrayConverter().isIgnoreBlank());
         Assertions.assertTrue(properties.getArrayConverter().isIgnoreBlank());
-        Assertions.assertTrue(properties.isStructRequiredDefault());
-        Assertions.assertTrue(properties.isIgnoreEmptyRow());
+    }
+
+    /**
+     * Every field participates in {@code equals} - flip them one by one so that no short circuit
+     * hides a missing field.
+     */
+    @Test
+    public void testEqualsFields() {
+        StructProperties a = new StructProperties();
+
+        StructProperties b = new StructProperties();
+        b.setStructRequiredDefault(!a.isStructRequiredDefault());
+        Assertions.assertNotEquals(a, b);
+
+        b = new StructProperties();
+        b.setIgnoreEmptyRow(!a.isIgnoreEmptyRow());
+        Assertions.assertNotEquals(a, b);
+
+        b = new StructProperties();
+        b.setAllowCircularReferences(!a.isAllowCircularReferences());
+        Assertions.assertNotEquals(a, b);
+
+        //  the nested converter is compared too, null vs non-null and both non-null but different.
+        b = new StructProperties();
+        b.setArrayConverter(new ArrayConverterProperties());
+        Assertions.assertNotEquals(a, b);
+
+        StructProperties c = new StructProperties();
+        c.setArrayConverter(new ArrayConverterProperties());
+        Assertions.assertEquals(b, c);
+
+        ArrayConverterProperties acp = new ArrayConverterProperties();
+        acp.setStringSeparator("|x|");
+        c.setArrayConverter(acp);
+        Assertions.assertNotEquals(b, c);
     }
 }

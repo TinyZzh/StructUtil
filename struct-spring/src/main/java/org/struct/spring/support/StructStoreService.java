@@ -26,6 +26,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
- * default {@link StructStore}'s service implements.
+ * default {@link org.struct.store.StructStore}'s service implements.
  *
  * @author TinyZ.
  * @version 2020.07.15
@@ -44,7 +45,7 @@ public class StructStoreService implements BeanPostProcessor, SmartInitializingS
 
     private StructStoreConfig config;
 
-    private final ConcurrentHashMap<Class<?>, StructStore> structMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Class<?>, org.struct.store.StructStore> structMap = new ConcurrentHashMap<>();
 
     public StructStoreService() {
     }
@@ -59,9 +60,9 @@ public class StructStoreService implements BeanPostProcessor, SmartInitializingS
         Class<?> targetClass = AopUtils.isAopProxy(bean) ? AopUtils.getTargetClass(bean) : bean.getClass();
         if (StructStoreConfig.class.isAssignableFrom(targetClass) && null == this.config) {
             this.config = (StructStoreConfig) bean;
-        } else if (StructStore.class.isAssignableFrom(targetClass)) {
-            StructStore store = (StructStore) bean;
-            StructStore prev = structMap.putIfAbsent(store.clzOfBean(), store);
+        } else if (org.struct.store.StructStore.class.isAssignableFrom(targetClass)) {
+            org.struct.store.StructStore store = (org.struct.store.StructStore) bean;
+            org.struct.store.StructStore prev = structMap.putIfAbsent(store.clzOfBean(), store);
             if (null != prev) {
                 LOGGER.debug("struct:{} has bean registered by {}.", store.clzOfBean().getName(), prev);
             } else {
@@ -81,6 +82,9 @@ public class StructStoreService implements BeanPostProcessor, SmartInitializingS
 
     @Override
     public void destroy() throws Exception {
+        for (org.struct.store.StructStore store : this.structMap.values()) {
+            store.dispose();
+        }
         this.structMap.clear();
     }
 
@@ -92,8 +96,17 @@ public class StructStoreService implements BeanPostProcessor, SmartInitializingS
         return this.structMap.isEmpty();
     }
 
-    private <K, B> Optional<StructStore<K, B>> lookup(Class<B> clzOfBean) {
-        Optional<StructStore<K, B>> optional = Optional.ofNullable(structMap.get(clzOfBean));
+    /**
+     * @return all the registered struct stores.
+     */
+    public Collection<? extends org.struct.store.StructStore> stores() {
+        return Collections.unmodifiableCollection(this.structMap.values());
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <K, B> Optional<org.struct.store.StructStore<K, B>> lookup(Class<B> clzOfBean) {
+        Optional<org.struct.store.StructStore<K, B>> optional =
+                Optional.ofNullable((org.struct.store.StructStore<K, B>) structMap.get(clzOfBean));
         if (config.isLazyLoad()) {
             optional.ifPresent(ss -> {
                 if (!ss.isInitialized()) {
@@ -105,19 +118,19 @@ public class StructStoreService implements BeanPostProcessor, SmartInitializingS
     }
 
     public <K, B> void initialize(Class<B> clzOfBean) {
-        lookup(clzOfBean).ifPresent(StructStore::initialize);
+        lookup(clzOfBean).ifPresent(org.struct.store.StructStore::initialize);
     }
 
     public <K, B> void reload(Class<B> clzOfBean) {
-        lookup(clzOfBean).ifPresent(StructStore::reload);
+        lookup(clzOfBean).ifPresent(org.struct.store.StructStore::reload);
     }
 
     public <K, B> void dispose(Class<B> clzOfBean) {
-        lookup(clzOfBean).ifPresent(StructStore::dispose);
+        lookup(clzOfBean).ifPresent(org.struct.store.StructStore::dispose);
     }
 
     public <K, B> List<B> getAll(Class<B> clzOfBean) {
-        return lookup(clzOfBean).map(StructStore::getAll).orElse(Collections.emptyList());
+        return lookup(clzOfBean).map(org.struct.store.StructStore::getAll).orElse(Collections.emptyList());
     }
 
     public <K, B> B get(Class<B> clzOfBean, K key) {

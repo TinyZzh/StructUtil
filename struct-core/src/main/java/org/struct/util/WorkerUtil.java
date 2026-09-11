@@ -109,9 +109,9 @@ public final class WorkerUtil {
         if (!(Collection.class.isAssignableFrom(clzOfList))) {
             throw new IllegalArgumentException("class " + clzOfList + " is not Collection.");
         }
-        if (clzOfList.isInterface()
-                || Modifier.isInterface(clzOfList.getModifiers())
-                || Modifier.isAbstract(clzOfList.getModifiers())) {
+        //  NOTE: clz.isInterface() and Modifier.isInterface() are the same thing, and an interface
+        //  is abstract too - isAbstract() covers all of them.
+        if (Modifier.isAbstract(clzOfList.getModifiers())) {
             if (Set.class.isAssignableFrom(clzOfList)) {
                 list = new HashSet<>();
             } else {
@@ -126,9 +126,9 @@ public final class WorkerUtil {
 
     public static <T> Map<Object, T> newMap(Class<?> clzOfMap) throws Exception {
         Map<Object, T> map;
+        //  NOTE: an interface is abstract too, so isAbstract() already covers it.
         if (clzOfMap == null
                 || Modifier.isAbstract(clzOfMap.getModifiers())
-                || Modifier.isInterface(clzOfMap.getModifiers())
         ) {
             map = new HashMap<>();
         } else {

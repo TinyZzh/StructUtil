@@ -21,29 +21,20 @@ package org.struct.spring.support;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.struct.spring.annotation.StructStoreOptions;
+import org.struct.store.StoreOptions;
 import org.struct.util.AnnotationUtils;
 
 /**
+ * The spring side keeps assembling the core {@link StoreOptions} out of the spring carriers.
+ *
  * @author TinyZ.
- * @date 2020-10-12.
  */
-class OptionsTest {
-
-    @Test
-    public void test() {
-        Options options = new Options();
-        options.setWorkspace("xx");
-        options.setLazyLoad(false);
-        options.setWaitForInit(false);
-        Assertions.assertEquals("xx", options.getWorkspace());
-        Assertions.assertFalse(options.isLazyLoad());
-        Assertions.assertFalse(options.isWaitForInit());
-    }
+class StoreOptionsFactoryTest {
 
     @Test
     public void testGenerateAnnotation() {
         StructStoreOptions annotation = AnnotationUtils.findAnnotation(StructStoreOptions.class, AnnotationClz.class);
-        Options options = Options.generate(annotation);
+        StoreOptions options = StoreOptionsFactory.generate(annotation);
         Assertions.assertEquals("xx", options.getWorkspace());
         Assertions.assertFalse(options.isLazyLoad());
         Assertions.assertFalse(options.isWaitForInit());
@@ -55,7 +46,7 @@ class OptionsTest {
         config.setWorkspace("xx");
         config.setLazyLoad(false);
         config.setSyncWaitForInit(false);
-        Options options = Options.generate(config);
+        StoreOptions options = StoreOptionsFactory.generate(config);
         Assertions.assertEquals("xx", options.getWorkspace());
         Assertions.assertFalse(options.isWaitForInit());
         Assertions.assertFalse(options.isLazyLoad());
@@ -65,5 +56,4 @@ class OptionsTest {
     static class AnnotationClz {
 
     }
-
 }

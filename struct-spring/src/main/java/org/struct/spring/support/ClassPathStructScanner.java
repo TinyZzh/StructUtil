@@ -37,6 +37,7 @@ import org.springframework.util.ClassUtils;
 import org.struct.annotation.StructSheet;
 import org.struct.spring.annotation.AutoStruct;
 import org.struct.spring.annotation.StructStoreOptions;
+import org.struct.store.StoreConstant;
 
 import java.lang.reflect.Modifier;
 import java.util.Set;
@@ -64,11 +65,17 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
     }
 
     public void registerFilters() {
-        this.addExcludeFilter((mr, mrf) ->
-                !mr.getClassMetadata().isConcrete()
-                        || mr.getClassMetadata().getClassName().equals(MapStructStore.class.getName())
-                        || mr.getClassMetadata().getClassName().equals(ListStructStore.class.getName())
-        );
+        this.addExcludeFilter((mr, mrf) -> {
+            String className = mr.getClassMetadata().getClassName();
+            return !mr.getClassMetadata().isConcrete()
+                    //  the core store implementations and the offheap stores must never be scanned.
+                    || className.startsWith("org.struct.store.")
+                    || className.startsWith("org.struct.offheap.")
+                    //  the deprecated spring shells are base classes, not user stores.
+                    || className.equals(MapStructStore.class.getName())
+                    || className.equals(ListStructStore.class.getName())
+                    ;
+        });
         //  1. AutoStruct annotation.
         this.addIncludeFilter((mr, mrf) ->
                 mr.getAnnotationMetadata().hasAnnotation(AutoStruct.class.getName())
@@ -78,15 +85,14 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
         this.addIncludeFilter((mr, mrf) -> {
             ClassMetadata cm = mr.getClassMetadata();
             if (cm.isConcrete()) {
-                if (cm.hasSuperClass()) {
-                    if (AbstractStructStore.class.getName().equals(cm.getSuperClassName())) {
-                        return true;
-                    }
+                //  NOTE: every concrete class but Object has a super class, and Object is never scanned.
+                if (org.struct.store.AbstractStructStore.class.getName().equals(cm.getSuperClassName())) {
+                    return true;
                 }
                 ClassLoader classLoader = ClassPathStructScanner.class.getClassLoader();
                 try {
                     Class<?> clzOfBean = ClassUtils.forName(cm.getClassName(), classLoader);
-                    if (StructStore.class.isAssignableFrom(clzOfBean)) {
+                    if (org.struct.store.StructStore.class.isAssignableFrom(clzOfBean)) {
                         return true;
                     }
                 } catch (ClassNotFoundException e) {
@@ -117,16 +123,21 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                 throw new IllegalStateException(e);
             }
         }
-        if (StructStore.class.isAssignableFrom(gbd.getBeanClass())) {
+        if (org.struct.store.StructStore.class.isAssignableFrom(gbd.getBeanClass())) {
             int modifiers = gbd.getBeanClass().getModifiers();
-            if (Modifier.isAbstract(modifiers)
-                    || Modifier.isInterface(modifiers)) {
+            //  NOTE: an interface is abstract too, so isAbstract() already covers it.
+            if (Modifier.isAbstract(modifiers)) {
                 //  ignore abstract class and interface.
                 return;
             }
             //  register custom struct store.
-            Class<?>[] typeArguments = GenericTypeResolver.resolveTypeArguments(gbd.getBeanClass(), StructStore.class);
-            gbd.getPropertyValues().add(StructConstant.CLZ_OF_BEAN, typeArguments[1]);
+            Class<?>[] typeArguments = GenericTypeResolver.resolveTypeArguments(gbd.getBeanClass(), org.struct.store.StructStore.class);
+            //  resolveTypeArguments() either resolves both [K, B] or gives up with null.
+            if (null == typeArguments) {
+                throw new IllegalArgumentException("can't resolve the struct store's generic types [K, B]. store:"
+                        + gbd.getBeanClassName());
+            }
+            gbd.getPropertyValues().add(StoreConstant.CLZ_OF_BEAN, typeArguments[1]);
             this.handleStructStoreProperty(gbd,
                     AnnotationUtils.findAnnotation(gbd.getBeanClass(), AutoStruct.class),
                     AnnotationUtils.findAnnotation(gbd.getBeanClass(), StructStoreOptions.class)
@@ -134,7 +145,7 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
             super.registerBeanDefinition(definitionHolder, registry);
         } else {
             //  Generate struct store by struct bean's definition
-            String mapperBeanName = definitionHolder.getBeanName() + StructStore.class.getSimpleName();
+            String mapperBeanName = definitionHolder.getBeanName() + org.struct.store.StructStore.class.getSimpleName();
             AnnotatedGenericBeanDefinition mbd = this.generateStructStoreBeanDefinition(gbd);
             AnnotationConfigUtils.processCommonDefinitionAnnotations(mbd);
             BeanDefinitionHolder mapperDefinitionHolder = new BeanDefinitionHolder(mbd, mapperBeanName);
@@ -147,10 +158,10 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
         AutoStruct anno = AnnotationUtils.findAnnotation(gbd.getBeanClass(), AutoStruct.class);
         if (anno != null) {
             int modifiers;
-            if (anno.clzOfStore() != StructStore.class) {
+            if (anno.clzOfStore() != org.struct.store.StructStore.class) {
                 //  custom struct store
-                modifiers = anno.clzOfStore().getModifiers();
-                if (Modifier.isAbstract(modifiers) || Modifier.isInterface(modifiers)) {
+                //  custom struct store. an interface is abstract too.
+                if (Modifier.isAbstract(anno.clzOfStore().getModifiers())) {
                     throw new IllegalArgumentException("the struct store class:{" + anno.clzOfStore() + "} is illegal. holder:"
                             + gbd.getBeanClassName());
                 }
@@ -160,9 +171,9 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
                 if (!anno.mapKey().isEmpty() || !anno.keyResolverBeanName().isEmpty()) {
                     clzOfStore = MapStructStore.class;
                 }
-                if (StructKeyResolver.class != anno.keyResolverBeanClass()) {
-                    modifiers = anno.keyResolverBeanClass().getModifiers();
-                    if (Modifier.isAbstract(modifiers) || Modifier.isInterface(modifiers)) {
+                if (org.struct.store.StructKeyResolver.class != anno.keyResolverBeanClass()) {
+                    //  an interface is abstract too.
+                    if (Modifier.isAbstract(anno.keyResolverBeanClass().getModifiers())) {
                         throw new IllegalArgumentException("the key resolver class:{" + anno.clzOfStore() + "} is illegal. holder:"
                                 + gbd.getBeanClassName());
                     }
@@ -187,23 +198,22 @@ public class ClassPathStructScanner extends ClassPathBeanDefinitionScanner {
 
     void handleStructStoreProperty(GenericBeanDefinition gbd, AutoStruct anno, StructStoreOptions annoOptions) {
         MutablePropertyValues propertyValues = gbd.getPropertyValues();
-        if (null != anno && MapStructStore.class.isAssignableFrom(gbd.getBeanClass())) {
+        if (null != anno && org.struct.store.MapStructStore.class.isAssignableFrom(gbd.getBeanClass())) {
             if (!anno.mapKey().isEmpty()) {
-                propertyValues.add(StructConstant.KEY_RESOLVER, new MapKeyFieldResolver(anno.mapKey()));
+                propertyValues.add(StoreConstant.KEY_RESOLVER, new org.struct.store.MapKeyFieldResolver(anno.mapKey()));
             }
             if (!anno.keyResolverBeanName().isEmpty()) {
-                propertyValues.add(StructConstant.KEY_RESOLVER_BEAN_NAME, anno.keyResolverBeanName());
+                propertyValues.add(StoreConstant.KEY_RESOLVER_BEAN_NAME, anno.keyResolverBeanName());
             }
-            Class<? extends StructKeyResolver> clzOfKrb = anno.keyResolverBeanClass();
-            if ((StructKeyResolver.class != clzOfKrb
-                    && !Modifier.isAbstract(clzOfKrb.getModifiers())
-                    && !Modifier.isInterface(clzOfKrb.getModifiers()))) {
-                propertyValues.add(StructConstant.KEY_RESOLVER_BEAN_CLASS, clzOfKrb);
+            Class<? extends org.struct.store.StructKeyResolver> clzOfKrb = anno.keyResolverBeanClass();
+            //  an interface is abstract too.
+            if (org.struct.store.StructKeyResolver.class != clzOfKrb
+                    && !Modifier.isAbstract(clzOfKrb.getModifiers())) {
+                propertyValues.add(StoreConstant.KEY_RESOLVER_BEAN_CLASS, clzOfKrb);
             }
         }
         if (annoOptions != null) {
-            propertyValues.add(StructConstant.KEY_OPTIONS, Options.generate(annoOptions));
+            propertyValues.add(StoreConstant.KEY_OPTIONS, StoreOptionsFactory.generate(annoOptions));
         }
     }
-
 }

@@ -99,8 +99,29 @@ public class XmlStructHandlerTest {
                 handler.handle(worker, BasicXmlBeanWithFilter.class, beans::add, new File(WorkerUtil.resolveFilePath(WORKSPACE, FILE))));
     }
 
+    /**
+     * Without a {@code startOrder} (the default 0) the leading rows are kept.
+     */
+    @Test
+    public void testNoStartOrder() {
+        XmlStructHandler handler = new XmlStructHandler();
+        StructWorker<BasicXmlBeanNoOrder> worker = WorkerUtil.newWorker(WORKSPACE, BasicXmlBeanNoOrder.class);
+        worker.checkStructFactory();
+        List<BasicXmlBeanNoOrder> beans = new ArrayList<>();
+        handler.handle(worker, BasicXmlBeanNoOrder.class, beans::add, new File(WorkerUtil.resolveFilePath(WORKSPACE, FILE)));
+        Assertions.assertEquals(3, beans.size());
+        Assertions.assertEquals(1, beans.get(0).id);
+    }
+
     private static final String FILE = "tpl_xml_struct_handler.xml";
     private static final String WORKSPACE = "classpath:";
+
+    @XmlRootElement(name = "child")
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @StructSheet(fileName = FILE)
+    static class BasicXmlBeanNoOrder {
+        public int id;
+    }
 
     @XmlRootElement(name = "child")
     @XmlAccessorType(XmlAccessType.FIELD)

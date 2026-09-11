@@ -22,9 +22,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.struct.annotation.StructField;
 import org.struct.annotation.StructSheet;
+import org.struct.core.FieldDescriptor;
+import org.struct.core.SingleFieldDescriptor;
 import org.struct.core.StructImpl;
 import org.struct.core.StructWorker;
 import org.struct.exception.NoSuchFieldReferenceException;
+import org.struct.exception.UnSupportConvertOperationException;
 import org.struct.util.WorkerUtil;
 
 import java.util.ArrayList;
@@ -242,6 +245,50 @@ public class JdkStructFactoryTest {
         });
     }
 
+    /**
+     * Before {@code parseStruct()} the field list is empty rather than {@code null}.
+     */
+    @Test
+    public void testBeanFieldsBeforeParse() {
+        StructWorker<SimpleBean> worker = WorkerUtil.newWorker(WS, SimpleBean.class);
+        StructFactory factory = WorkerUtil.structFactory(SimpleBean.class, worker);
+        Assertions.assertTrue(((JdkStructFactory) factory).beanFields().isEmpty());
+    }
+
+    /**
+     * A {@code record} bean fed from a raw {@link StructImpl} row - the resolved values are pushed
+     * back into the row so that later fields can reference them.
+     */
+    @Test
+    public void testRecordFromStructImpl() {
+        StructFactory factory = parse(ValRecord.class);
+        StructImpl si = new StructImpl();
+        si.add("key", "5");
+        si.add("val", "hello");
+        Object instance = factory.newStructInstance(si);
+        Assertions.assertTrue(instance instanceof java.util.Optional);
+        ValRecord rec = (ValRecord) ((java.util.Optional<?>) instance).orElseThrow();
+        Assertions.assertEquals(5, rec.key());
+        Assertions.assertEquals("hello", rec.val());
+    }
+
+    /**
+     * An {@code aggregateBy} key that resolves to a {@code Map} is not supported.
+     */
+    @Test
+    public void testAggregateByMapKeyIsRejected() {
+        JdkStructFactory factory = (JdkStructFactory) parse(AggregateMapKeyBean.class);
+        //  resolve the aggregate field's descriptor and drive it with a Map key
+        FieldDescriptor fd = factory.beanFields().stream()
+                .filter(f -> "children".equals(f.getName()))
+                .findFirst()
+                .orElseThrow();
+        AggregateMapKeyBean bean = new AggregateMapKeyBean();
+        bean.childIds = new java.util.HashMap<>();
+        Assertions.assertThrows(UnSupportConvertOperationException.class,
+                () -> factory.handleReferenceFieldValue(bean, (SingleFieldDescriptor) fd));
+    }
+
     //  ------------------------------------------------------------------
     //  beans
     //  ------------------------------------------------------------------
@@ -366,6 +413,18 @@ public class JdkStructFactoryTest {
     public static class ChildBean {
         public int key;
         public String val;
+    }
+
+    /**
+     * The aggregate key comes from a {@code Map} field, which is not a supported key type.
+     */
+    @StructSheet(fileName = "tpl_val.json")
+    public static class AggregateMapKeyBean {
+        public int key;
+        @StructField(name = "childIds")
+        public java.util.Map<String, Integer> childIds;
+        @StructField(ref = ChildBean.class, refUniqueKey = "key", aggregateBy = "childIds")
+        public java.util.List<ChildBean> children;
     }
 
     /**

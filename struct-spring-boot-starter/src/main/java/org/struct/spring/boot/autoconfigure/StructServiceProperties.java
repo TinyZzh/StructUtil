@@ -19,7 +19,7 @@
 package org.struct.spring.boot.autoconfigure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.struct.spring.support.StructConstant;
+import org.struct.store.StoreConstant;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 @ConfigurationProperties(prefix = StarterConstant.SERVICE)
 public class StructServiceProperties {
 
-    private String workspace = StructConstant.STRUCT_WORKSPACE;
+    private String workspace = StoreConstant.STRUCT_WORKSPACE;
     private boolean lazyLoad = true;
     private boolean watchFile = true;
     private long scheduleInitialDelay = 10000L;

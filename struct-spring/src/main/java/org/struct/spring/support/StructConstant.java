@@ -18,18 +18,24 @@
 
 package org.struct.spring.support;
 
+import org.struct.store.StoreConstant;
+
 /**
+ * The spring compatible shell of {@link StoreConstant}. all the values are delegated.
+ *
  * @author TinyZ.
  * @version 2020.07.09
+ * @deprecated use {@link StoreConstant} instead. this shell will be removed in 6.0.
  */
+@Deprecated(since = "5.0.0", forRemoval = true)
 public final class StructConstant {
 
-    public static final String CLZ_OF_BEAN = "clzOfBean";
-    public static final String KEY_RESOLVER = "keyResolver";
-    public static final String KEY_RESOLVER_BEAN_NAME = "keyResolverBeanName";
-    public static final String KEY_RESOLVER_BEAN_CLASS = "keyResolverBeanClass";
-    public static final String KEY_OPTIONS = "options";
+    public static final String CLZ_OF_BEAN = StoreConstant.CLZ_OF_BEAN;
+    public static final String KEY_RESOLVER = StoreConstant.KEY_RESOLVER;
+    public static final String KEY_RESOLVER_BEAN_NAME = StoreConstant.KEY_RESOLVER_BEAN_NAME;
+    public static final String KEY_RESOLVER_BEAN_CLASS = StoreConstant.KEY_RESOLVER_BEAN_CLASS;
+    public static final String KEY_OPTIONS = StoreConstant.KEY_OPTIONS;
 
-    public static final String STRUCT_WORKSPACE = "./data/";
+    public static final String STRUCT_WORKSPACE = StoreConstant.STRUCT_WORKSPACE;
 
 }

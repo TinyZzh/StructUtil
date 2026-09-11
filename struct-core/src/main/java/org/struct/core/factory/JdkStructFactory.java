@@ -47,6 +47,7 @@ import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,6 +134,21 @@ public final class JdkStructFactory implements StructFactory {
         //  try resolve field reference.
         worker.handleReferenceFieldValue(this, descriptor);
         return descriptor;
+    }
+
+    /**
+     * The ordered field descriptors of {@link #clzOfStruct}.
+     * <p>
+     * The order is significant: for a {@code record} bean it is the component order,
+     * which {@link #newStructInstance(Object)} uses to resolve the canonical
+     * constructor's parameter types.
+     *
+     * @return the ordered, unmodifiable field descriptor list. Empty until
+     *         {@link #parseStruct()} has been called.
+     */
+    public List<FieldDescriptor> beanFields() {
+        List<FieldDescriptor> list = this.beanFieldsList;
+        return list == null ? List.of() : Collections.unmodifiableList(list);
     }
 
     @Override

@@ -18,77 +18,39 @@
 
 package org.struct.spring.support;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.struct.store.StoreOptions;
 
 /**
+ * The spring compatible shell of {@link org.struct.store.AbstractStructStore}.
+ * <p>
+ * The core store doesn't implement any life cycle callback; this shell bridges the spring's
+ * {@link InitializingBean} / {@link DisposableBean} callbacks to the explicit
+ * {@link org.struct.store.StructStore#initialize()} / {@link org.struct.store.StructStore#dispose()}.
+ *
  * @author TinyZ.
  * @version 2020.07.12
+ * @deprecated use {@link org.struct.store.AbstractStructStore} instead. this shell will be removed in 6.0.
  */
-public abstract class AbstractStructStore<K, B>
-        implements StructStore<K, B>, ApplicationContextAware, InitializingBean, DisposableBean {
+@Deprecated(since = "5.0.0", forRemoval = true)
+public abstract class AbstractStructStore<K, B> extends org.struct.store.AbstractStructStore<K, B>
+        implements ApplicationContextAware, InitializingBean, DisposableBean {
 
-    private static final int NORMAL = 0;
-    private static final int INITIALIZING = 1;
-    private static final int DONE = 2;
-    private static final AtomicIntegerFieldUpdater<AbstractStructStore> STATUS_UPDATER
-            = AtomicIntegerFieldUpdater.newUpdater(AbstractStructStore.class, "status");
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractStructStore.class);
-
-    /**
-     * the class of struct bean instances.
-     *
-     * @see StructConstant#CLZ_OF_BEAN
-     */
-    protected Class<B> clzOfBean;
-    /**
-     * Struct util options.
-     * <p>
-     * Options priority:
-     * 1. {@link org.struct.spring.annotation.StructStoreOptions}
-     * 2. {@link StructStoreConfig}'s global configuration
-     *
-     * @see StructConstant#KEY_OPTIONS
-     */
-    protected Options options;
-    /**
-     * store element's amount.
-     */
-    protected volatile int size;
     /**
      * Spring application context.
      */
     protected ApplicationContext applicationContext;
-    /**
-     * Store's status.
-     *
-     * @see #NORMAL
-     * @see #INITIALIZING
-     * @see #DONE
-     */
-    private volatile int status;
-
-    /// --------------- constructor ------------------
 
     public AbstractStructStore() {
         //  spring bean definition
     }
 
     public AbstractStructStore(Class<B> clzOfBean) {
-        this.clzOfBean = clzOfBean;
+        super(clzOfBean);
     }
 
     @Override
@@ -98,15 +60,7 @@ public abstract class AbstractStructStore<K, B>
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (null == this.options) {
-            StructStoreConfig config = this.applicationContext.getBean(StructStoreConfig.class);
-            Objects.requireNonNull(config, "config");
-            this.options = Options.generate(config);
-        }
-        LOGGER.debug("struct:{} store autowired properties completed.", clzOfBean());
-        if (!this.options.isLazyLoad()) {
-            this.initialize();
-        }
+        StoreLifecycleSupport.afterPropertiesSet(this, this.applicationContext);
     }
 
     @Override
@@ -115,90 +69,7 @@ public abstract class AbstractStructStore<K, B>
     }
 
     @Override
-    public String identify() {
-        return this.clzOfBean.getSimpleName() + StructStore.class.getSimpleName();
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return DONE == STATUS_UPDATER.get(this);
-    }
-
-    @Override
-    public Class<B> clzOfBean() {
-        return this.clzOfBean;
-    }
-
-    public Class<B> getClzOfBean() {
-        return clzOfBean;
-    }
-
-    @Override
-    public void setClzOfBean(Class<B> clzOfBean) {
-        this.clzOfBean = clzOfBean;
-    }
-
-    public void setOptions(Options options) {
+    public void setOptions(StoreOptions options) {
         this.options = options;
-    }
-
-    @Override
-    public void reload() {
-        if (!isInitialized())
-            return;
-        casStatusReset();
-        this.initialize();
-    }
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public B getOrDefault(K key, B dv) {
-        return Optional.ofNullable(this.get(key)).orElse(dv);
-    }
-
-    @Override
-    public Optional<B> tryGet(K key) {
-        return Optional.ofNullable(this.get(key));
-    }
-
-    @Override
-    public List<B> lookup(K... keys) {
-        return Stream.of(keys).map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    //  cas
-
-    protected boolean casStatusInit() {
-        return STATUS_UPDATER.compareAndSet(this, NORMAL, INITIALIZING);
-    }
-
-    protected boolean casStatusDone() {
-        return STATUS_UPDATER.compareAndSet(this, INITIALIZING, DONE);
-    }
-
-    /**
-     * Wait for {@link #status} value change until the value equals {@link #DONE}.
-     * Avoid multiple threads read {@link StructStore} data's operation, before {@link StructStore} initialize done.
-     */
-    protected void waitForDone() {
-        this.waitForStatus(DONE);
-    }
-
-    private void waitForStatus(int expect) {
-        for (; ; ) {
-            if (expect == STATUS_UPDATER.get(this)) {
-                break;
-            }
-        }
-    }
-
-    protected void casStatusReset() {
-        while (!STATUS_UPDATER.compareAndSet(this, STATUS_UPDATER.get(this), NORMAL)) {
-
-        }
     }
 }

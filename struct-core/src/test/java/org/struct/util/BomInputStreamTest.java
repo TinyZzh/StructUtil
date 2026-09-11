@@ -40,6 +40,18 @@ class BomInputStreamTest {
         Assertions.assertEquals("abc", readBytes(new byte[]{(byte) 0xFF, (byte) 0xFE, 'a', 'b', 'c', '\r'}));
     }
 
+    @Test
+    public void testReadWithoutBom() throws Exception {
+        //  a stream with no leading BOM: unread == n (> 0) so the bytes are pushed back and read verbatim.
+        Assertions.assertEquals("abc", readBytes(new byte[]{'a', 'b', 'c', '\r'}));
+    }
+
+    @Test
+    public void testReadEmptyStream() throws Exception {
+        //  an empty stream yields n == 0, so `unread > 0` is false and nothing is pushed back.
+        Assertions.assertNull(readBytes(new byte[0]));
+    }
+
     private String readBytes(byte[] bytes) throws Exception {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
              BomInputStream bis = new BomInputStream(bais);

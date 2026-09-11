@@ -45,8 +45,8 @@ public class OptionalDescriptor extends FieldDescriptor {
             this.setName(anno.name());
         }
         String name = this.getName();
-        //  handle default field name.
-        if (null == name || name.isEmpty()) {
+        //  handle default field name. name is null here whenever no explicit (non-empty) name was set.
+        if (null == name) {
             if (fieldOrRc instanceof RecordComponent rc) {
                 this.setName(rc.getName());
             } else {

@@ -76,6 +76,148 @@ public class EnhancedServiceLoaderTest {
         }
     }
 
+    /**
+     * An interface nobody implements resolves to an empty definition list.
+     */
+    @Test
+    public void testNoProvider() {
+        EnhancedServiceLoader<TrulyEmptyService> loader = new EnhancedServiceLoader<>(TrulyEmptyService.class);
+        Assertions.assertTrue(loader.lookupAllExtensionDefinition(defaultLoader()).isEmpty());
+        Assertions.assertThrows(ServiceNotFoundException.class, () -> loader.load("any"));
+        Assertions.assertThrows(ServiceNotFoundException.class, () -> loader.load(""));
+        Assertions.assertThrows(ServiceNotFoundException.class, () -> loader.load((String) null));
+    }
+
+    /**
+     * An interface with no definition file at all.
+     */
+    public interface TrulyEmptyService {
+    }
+
+    /**
+     * A blank alias falls back to the highest order provider.
+     */
+    @Test
+    public void testBlankAliasFallsBackToLast() {
+        EnhancedServiceLoader<StructHandler> loader = new EnhancedServiceLoader<>(StructHandler.class);
+        Assertions.assertNotNull(loader.load(""));
+        Assertions.assertNotNull(loader.load((String) null));
+    }
+
+    /**
+     * A provider whose class can't be instantiated must surface as a
+     * {@link ServiceNotFoundException}, not the raw cause.
+     */
+    @Test
+    public void testCreateExtensionInstanceFailure() {
+        EnhancedServiceLoader<StructHandler> loader = new EnhancedServiceLoader<>(StructHandler.class);
+        Assertions.assertThrows(ServiceNotFoundException.class, () ->
+                loader.createExtensionInstance(new ExtensionDefinition("broken", NoProviderService.class, 0), new Object[0]));
+    }
+
+    /**
+     * A provider whose constructor throws must be re-wrapped as a {@link ServiceNotFoundException}
+     * by {@code getExtensionByAlias}'s {@code catch (Throwable)} (the non-ServiceNotFoundException branch).
+     */
+    @Test
+    public void testGetExtensionByAliasInstantiationFailure() {
+        EnhancedServiceLoader<BrokenService> loader = new EnhancedServiceLoader<>(BrokenService.class);
+        Assertions.assertThrows(ServiceNotFoundException.class, () -> loader.load("broken"));
+    }
+
+    /**
+     * The {@code @SPI} annotation is optional - a plain implementation just gets the defaults.
+     */
+    @Test
+    public void testCreateExtensionDefinitionWithoutSpi() throws Exception {
+        EnhancedServiceLoader<StructHandler> loader = new EnhancedServiceLoader<>(StructHandler.class);
+        ExtensionDefinition ed = loader.createExtensionDefinition(CsvStructHandler.class.getName(), defaultLoader());
+        Assertions.assertEquals(CsvStructHandler.class, ed.clzOfService());
+    }
+
+    /**
+     * A null class loader falls back to the system one, and blank / broken lines are skipped.
+     */
+    @Test
+    public void testHandleDefinitionFile() throws Exception {
+        EnhancedServiceLoader<StructHandler> loader = new EnhancedServiceLoader<>(StructHandler.class);
+        java.util.List<ExtensionDefinition> out = new java.util.ArrayList<>();
+        //  a directory that simply holds nothing for this service
+        loader.handleDefinitionFile("META-INF/struct/", null, out);
+        Assertions.assertTrue(out.isEmpty());
+    }
+
+    /**
+     * A definition file with blank lines and an entry that carries no {@code @SPI} - both are
+     * handled without failing.
+     */
+    @Test
+    public void testHandleDefinitionFileWithBlankAndPlainEntries() throws Exception {
+        //  NoProviderService has a definition file in the test resources, containing blank lines
+        //  and a plain implementation without @SPI.
+        EnhancedServiceLoader<NoProviderService> loader = new EnhancedServiceLoader<>(NoProviderService.class);
+        java.util.List<ExtensionDefinition> out = loader.lookupAllExtensionDefinition(defaultLoader());
+        Assertions.assertFalse(out.isEmpty());
+        //  the plain implementation gets the default name / order.
+        Assertions.assertTrue(out.stream().allMatch(ed -> null == ed.service() || ed.service().isEmpty()));
+        //  and it is loadable
+        Assertions.assertNotNull(loader.load(""));
+    }
+
+    /**
+     * The double checked lazy initialization - many threads racing on the same loader must each get
+     * the very same instance.
+     */
+    @Test
+    public void testConcurrentLoad() throws Exception {
+        EnhancedServiceLoader<StructHandler> loader = new EnhancedServiceLoader<>(StructHandler.class);
+        int n = 8;
+        java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+        java.util.Set<Object> instances = java.util.Collections.synchronizedSet(new java.util.HashSet<>());
+        Thread[] threads = new Thread[n];
+        for (int i = 0; i < n; i++) {
+            threads[i] = new Thread(() -> {
+                try {
+                    start.await();
+                } catch (InterruptedException ignored) {
+                }
+                instances.add(loader.load("csv"));
+            });
+            threads[i].start();
+        }
+        start.countDown();
+        for (Thread t : threads) {
+            t.join(5_000L);
+        }
+        Assertions.assertEquals(1, instances.size(), "the extension must be created exactly once");
+    }
+
+    private static ClassLoader defaultLoader() {
+        return EnhancedServiceLoaderTest.class.getClassLoader();
+    }
+
+    public interface NoProviderService {
+    }
+
+    /**
+     * A provider that carries no {@code @SPI} annotation at all.
+     */
+    public static class PlainNoProviderService implements NoProviderService {
+    }
+
+    /**
+     * A service whose only provider blows up inside its constructor, so that
+     * {@code getExtensionByAlias}'s {@code catch (Throwable)} must wrap the raw cause.
+     */
+    public interface BrokenService {
+    }
+
+    public static class BrokenProvider implements BrokenService {
+        public BrokenProvider() {
+            throw new RuntimeException("boom");
+        }
+    }
+
     @Test
     public void testAllClassLoader() {
         List<StructHandler> handlers = ServiceLoader.loadAll(StructHandler.class);

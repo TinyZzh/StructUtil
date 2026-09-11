@@ -19,7 +19,7 @@
 package org.struct.examples;
 
 import org.springframework.stereotype.Component;
-import org.struct.spring.support.StructKeyResolver;
+import org.struct.store.StructKeyResolver;
 
 /**
  * @author TinyZ.

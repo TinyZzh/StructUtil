@@ -53,6 +53,39 @@ class FileExtensionMatcherTest {
     }
 
     @Test
+    public void testConstructorsRejectEmptyExtensions() {
+        //  the extension array must carry at least one element.
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new FileExtensionMatcher(10L, 1, (String[]) null));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> new FileExtensionMatcher(10L, 1, new String[0]));
+    }
+
+    @Test
+    public void testMatchFileNull() {
+        FileExtensionMatcher fem = new FileExtensionMatcher(FileExtensionMatcher.FILE_BINARY);
+        Assertions.assertFalse(fem.matchFile(null));
+    }
+
+    @Test
+    public void testEqualsBranches() {
+        FileExtensionMatcher o0 = new FileExtensionMatcher(10L, 1, ".a");
+
+        //  the identity shortcut
+        Assertions.assertTrue(o0.equals(o0));
+        //  null is never equal
+        Assertions.assertFalse(o0.equals(null));
+        //  a different type is never equal
+        Assertions.assertFalse(o0.equals(".a"));
+        //  same threshold, different extension
+        Assertions.assertNotEquals(o0, new FileExtensionMatcher(10L, 1, ".b"));
+        //  different threshold, same extension
+        Assertions.assertNotEquals(o0, new FileExtensionMatcher(20L, 1, ".a"));
+        //  fully equal
+        Assertions.assertEquals(o0, new FileExtensionMatcher(10L, 1, ".a"));
+    }
+
+    @Test
     public void testMatchFile() {
         FileExtensionMatcher fem = new FileExtensionMatcher(100L, FileExtensionMatcher.FILE_BINARY);
         File file = mock(File.class);
@@ -79,6 +112,14 @@ class FileExtensionMatcherTest {
         doReturn(10L).when(file).length();
         doReturn("xx.binary").when(file).getName();
         Assertions.assertTrue(fem.matchFile(file));
+    }
+
+    @Test
+    public void testMatchFileNotExists() {
+        FileExtensionMatcher fem = new FileExtensionMatcher(FileExtensionMatcher.FILE_BINARY);
+        //  a mock File defaults exists()/canRead() to false: covers the !file.exists() branch.
+        File file = mock(File.class);
+        Assertions.assertFalse(fem.matchFile(file));
     }
 
 }
